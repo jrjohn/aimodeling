@@ -13,6 +13,19 @@ The architecture is divided into the following layers:
 -   **Data Layer**: Responsible for providing data to the application from various sources like network and local database.
 -   **Domain Layer**: (Implicit) Contains the business logic of the application. While not a separate package, the interaction between ViewModels and Repositories can be considered part of this layer.
 
+## Core Library
+-   Kotlin: Use version 2.2.21.
+-   Coroutines: Integrate Kotlin Coroutines for asynchronous operations.
+-   Jetpack Compose: Use for the entire UI layer.
+-   Hilt: Implement for dependency injection.
+-   Navigation Compose: Use for screen navigation.
+-   Theme: Create a complete theme with a ColorScheme and support for edge-to-edge display.
+-   Room: Use for the local database.
+-   WorkManager: Use for background data synchronization.
+-   DataStore: Use for managing sync versions.
+-   Unit Testing: Include a unit testing framework (JUnit, Mockito, Turbine).
+-   Logging: Implement a logging framework (Timber).
+
 ## Layers
 
 ### UI Layer
@@ -104,15 +117,4 @@ package "Background Processing" {
 
 @enduml
 ```
-## Core Library
--   Kotlin: Use version 2.2.21.
--   Coroutines: Integrate Kotlin Coroutines for asynchronous operations.
--   Jetpack Compose: Use for the entire UI layer.
--   Hilt: Implement for dependency injection.
--   Navigation Compose: Use for screen navigation.
--   Theme: Create a complete theme with a ColorScheme and support for edge-to-edge display.
--   Room: Use for the local database.
--   WorkManager: Use for background data synchronization.
--   DataStore: Use for managing sync versions.
--   Unit Testing: Include a unit testing framework (JUnit, Mockito, Turbine).
--   Logging: Implement a logging framework (Timber).
+
