@@ -52,6 +52,8 @@ The application uses [WorkManager](https://developer.android.com/topic/libraries
 
 ## UML Diagram (PlantUML)
 
+![image](https://github.com/jrjohn/aimodeling/blob/main/architecture.png)
+
 ```plantuml
 @startuml
 !theme vibrant
