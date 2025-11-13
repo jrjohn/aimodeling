@@ -1,6 +1,8 @@
 package com.example.aimodel.di
 
+import com.example.aimodel.BuildConfig
 import com.example.aimodel.data.remote.ApiService
+import com.example.aimodel.data.remote.JsonLoggingInterceptor
 import com.example.aimodel.data.remote.createApiService
 import de.jensklingenberg.ktorfit.Ktorfit
 import dagger.Module
@@ -38,13 +40,23 @@ object NetworkModule {
                 })
             }
 
+            // Option 1: Built-in Ktor Logging (basic logging)
             install(Logging) {
                 logger = object : Logger {
                     override fun log(message: String) {
-                        Timber.tag("HTTP").d(message)
+                        Timber.tag("HTTP Client").v(message)
                     }
                 }
-                level = LogLevel.ALL
+                level = LogLevel.HEADERS  // Use BODY for full logging, HEADERS for headers only
+                sanitizeHeader { header -> header == "x-api-key" }
+            }
+
+            // Option 2: Custom JSON Logging Interceptor (formatted JSON logging)
+            // Uncomment to use custom interceptor instead of or in addition to built-in logging
+            install(JsonLoggingInterceptor) {
+                enabled = BuildConfig.DEBUG  // Only log in debug builds
+                logHeaders = true
+                sanitizedHeaders = setOf("x-api-key", "Authorization", "Cookie")
             }
 
             defaultRequest {
