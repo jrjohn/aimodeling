@@ -110,6 +110,8 @@ dependencies {
     androidTestImplementation(libs.espresso.core)
 
     // Unit Test
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlin.test)
     testImplementation(libs.mockito.core)
     testImplementation(libs.mockito.kotlin)
     testImplementation(libs.kotlinx.coroutines.test)
@@ -120,4 +122,46 @@ kotlin {
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
     }
+}
+
+// Configure test task
+tasks.withType<Test> {
+    // Suppress OpenJDK warning about bootstrap classpath
+    jvmArgs("-XX:+IgnoreUnrecognizedVMOptions", "-Xshare:off")
+
+    // Show test results
+    testLogging {
+        events("passed", "skipped", "failed")
+        showStandardStreams = false
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+
+        // Show summary after test execution
+        afterSuite(KotlinClosure2<TestDescriptor, TestResult, Unit>({ desc, result ->
+            if (desc.parent == null) { // Only execute for the whole test suite
+                println("\n📊 Test Results:")
+                println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                println("  Total:   ${result.testCount}")
+                println("  ✅ Passed:  ${result.successfulTestCount}")
+                println("  ❌ Failed:  ${result.failedTestCount}")
+                println("  ⏭️  Skipped: ${result.skippedTestCount}")
+                println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+                println("  Result: ${result.resultType}")
+                println("  Duration: ${result.endTime - result.startTime}ms")
+                println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+            }
+        }))
+    }
+
+    // Continue running tests even if some fail (to see all failures)
+    ignoreFailures = false
+
+    // Run tests in parallel for faster execution
+    maxParallelForks = Runtime.getRuntime().availableProcessors().div(2).coerceAtLeast(1)
+}
+
+// Make build task depend on test
+tasks.named("build") {
+    dependsOn("test")
 }

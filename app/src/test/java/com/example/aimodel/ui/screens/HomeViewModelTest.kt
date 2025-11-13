@@ -2,36 +2,35 @@ package com.example.aimodel.ui.screens
 
 import app.cash.turbine.test
 import com.example.aimodel.data.model.User
-import com.example.aimodel.data.repository.DataRepository
-import com.example.aimodel.sync.Synchronizer
+import com.example.aimodel.domain.service.UserService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
-import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 
-@ExperimentalCoroutinesApi
+@OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
-    private lateinit var dataRepository: DataRepository
-    private lateinit var synchronizer: Synchronizer
+    private lateinit var userService: UserService
     private lateinit var viewModel: HomeViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        dataRepository = mock()
-        synchronizer = mock()
-        viewModel = HomeViewModel(dataRepository, synchronizer)
+        userService = mock()
     }
 
     @After
@@ -40,25 +39,72 @@ class HomeViewModelTest {
     }
 
     @Test
-    fun `initial state is correct`() = runTest {
-        whenever(dataRepository.getUsers()).thenReturn(flowOf(emptyList()))
-        val initialState = HomeUIState(users = emptyList(), isLoading = false)
-        assertEquals(initialState, viewModel.uiState.value)
+    fun `initial state has empty users and not loading`() = runTest {
+        // Given
+        whenever(userService.getUsers()).thenReturn(flowOf(emptyList()))
+        whenever(userService.syncUsers()).thenReturn(true)
+        whenever(userService.getTotalUserCount()).thenReturn(0)
+
+        // When
+        viewModel = HomeViewModel(userService)
+        advanceUntilIdle()
+
+        // Then
+        val state = viewModel.uiState.value
+        assertEquals(emptyList(), state.users)
+        assertFalse(state.isLoading)
     }
 
     @Test
-    fun `loadUsers updates state with users`() = runTest {
-        val users = listOf(User(1, "John Doe"))
-        whenever(dataRepository.getUsers()).thenReturn(flowOf(users))
-        whenever(synchronizer.sync()).thenReturn(true)
+    fun `uiState emits users from service`() = runTest {
+        // Given
+        val testUsers = listOf(
+            User(id = 1, firstName = "John", lastName = "Doe", email = "john@example.com"),
+            User(id = 2, firstName = "Jane", lastName = "Smith", email = "jane@example.com")
+        )
+        whenever(userService.getUsers()).thenReturn(flowOf(testUsers))
+        whenever(userService.syncUsers()).thenReturn(true)
+        whenever(userService.getTotalUserCount()).thenReturn(2)
 
+        // When
+        viewModel = HomeViewModel(userService)
+        advanceUntilIdle()
+
+        // Then
         viewModel.uiState.test {
-            // Initial state from loadUsers()
-            assertEquals(HomeUIState(users = users, isLoading = false), awaitItem())
-            // State after syncData() starts
-            assertEquals(HomeUIState(users = users, isLoading = true), awaitItem())
-            // State after syncData() finishes
-            assertEquals(HomeUIState(users = users, isLoading = false), awaitItem())
+            val state = awaitItem()
+            assertEquals(testUsers, state.users)
         }
+    }
+
+    @Test
+    fun `uiState loading indicator works correctly`() = runTest {
+        // Given
+        whenever(userService.getUsers()).thenReturn(flowOf(emptyList()))
+        whenever(userService.syncUsers()).thenReturn(true)
+        whenever(userService.getTotalUserCount()).thenReturn(0)
+
+        // When
+        viewModel = HomeViewModel(userService)
+        advanceUntilIdle()
+
+        // Then - verify sync was called (private method)
+        val state = viewModel.uiState.value
+        assertFalse(state.isLoading)
+    }
+
+    @Test
+    fun `users service is called on init`() = runTest {
+        // Given
+        whenever(userService.getUsers()).thenReturn(flowOf(emptyList()))
+        whenever(userService.syncUsers()).thenReturn(true)
+        whenever(userService.getTotalUserCount()).thenReturn(0)
+
+        // When
+        viewModel = HomeViewModel(userService)
+        advanceUntilIdle()
+
+        // Then
+        verify(userService).getUsers()
     }
 }

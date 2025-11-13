@@ -94,17 +94,27 @@ class UserViewModel @Inject constructor(
     }
 
     private fun loadNextPage() {
-        val currentState = _uiState.value
-        Timber.d("loadNextPage called - currentPage: ${currentState.currentPage}, totalPages: ${currentState.totalPages}, isLoadingMore: ${currentState.isLoadingMore}")
+        // Atomically check and set loading flag to prevent race conditions
+        var shouldLoad = false
+        var nextPage = 1
 
-        if (currentState.isLoadingMore || currentState.currentPage >= currentState.totalPages) {
-            Timber.d("loadNextPage skipped - already loading or no more pages")
-            return
+        _uiState.update { currentState ->
+            Timber.d("loadNextPage called - currentPage: ${currentState.currentPage}, totalPages: ${currentState.totalPages}, isLoadingMore: ${currentState.isLoadingMore}")
+
+            if (currentState.isLoadingMore || currentState.currentPage >= currentState.totalPages) {
+                Timber.d("loadNextPage skipped - already loading or no more pages")
+                currentState // Return unchanged state
+            } else {
+                shouldLoad = true
+                nextPage = currentState.currentPage + 1
+                currentState.copy(isLoadingMore = true) // Set loading flag
+            }
         }
 
+        // Only proceed if we successfully set the loading flag
+        if (!shouldLoad) return
+
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoadingMore = true) }
-            val nextPage = currentState.currentPage + 1
             Timber.d("Loading page $nextPage")
 
             userService.getUsersPage(nextPage).fold(
