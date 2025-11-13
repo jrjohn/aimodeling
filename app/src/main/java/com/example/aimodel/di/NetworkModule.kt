@@ -60,8 +60,8 @@ object NetworkModule {
             }
 
             defaultRequest {
-                // reqres.in free tier requires this specific API key
-                header("x-api-key", "reqres-free-v1")
+                // Use API key from BuildConfig
+                header("x-api-key", BuildConfig.API_KEY)
                 contentType(ContentType.Application.Json)
             }
 
