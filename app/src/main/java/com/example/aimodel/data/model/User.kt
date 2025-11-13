@@ -8,5 +8,11 @@ import kotlinx.serialization.Serializable
 @Entity
 data class User(
     @PrimaryKey val id: Int,
+    val email: String = "",
+    val firstName: String = "",
+    val lastName: String = "",
+    val avatar: String = ""
+) {
     val name: String
-)
+        get() = "$firstName $lastName".trim().ifEmpty { email }
+}

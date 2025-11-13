@@ -31,7 +31,9 @@ fun HomeScreen(
             if (uiState.isLoading) {
                 Text(text = "Loading...")
             } else {
-                Text(text = "Home Screen, ${uiState.users.size} users")
+                Text(text = "Home Screen")
+                Text(text = "Total Users: ${uiState.totalUserCount}")
+                Text(text = "Loaded: ${uiState.users.size} users")
                 Button(onClick = onNavigateToUserCrud) {
                     Text(text = "Go to User CRUD")
                 }

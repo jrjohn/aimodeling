@@ -6,6 +6,7 @@ import de.jensklingenberg.ktorfit.http.GET
 import de.jensklingenberg.ktorfit.http.POST
 import de.jensklingenberg.ktorfit.http.PUT
 import de.jensklingenberg.ktorfit.http.Path
+import de.jensklingenberg.ktorfit.http.Query
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -41,14 +42,21 @@ data class CreateUserRequest(
 data class CreateUserResponse(
     val name: String,
     val job: String,
-    val id: String,
-    val createdAt: String
+    val id: String? = null,
+    val createdAt: String? = null,
+    val updatedAt: String? = null
 )
 
 interface ApiService {
 
     @GET("users")
     suspend fun getUsers(): UsersResponse
+
+    @GET("users")
+    suspend fun getUsersPage(
+        @Query("page") page: Int,
+        @Query("per_page") perPage: Int = 6
+    ): UsersResponse
 
     @POST("users")
     suspend fun createUser(@Body request: CreateUserRequest): CreateUserResponse

@@ -15,12 +15,20 @@ class UserServiceImpl @Inject constructor(
         return dataRepository.getUsers()
     }
 
-    override suspend fun createUser(name: String, job: String): Boolean {
-        return dataRepository.createUser(name, job)
+    override suspend fun getUsersPage(page: Int): Result<Pair<List<User>, Int>> {
+        return dataRepository.getUsersPage(page)
     }
 
-    override suspend fun updateUser(id: Int, name: String, job: String): Boolean {
-        return dataRepository.updateUser(id, name, job)
+    override suspend fun getTotalUserCount(): Int {
+        return dataRepository.getTotalUserCount()
+    }
+
+    override suspend fun createUser(user: User): Boolean {
+        return dataRepository.createUser(user)
+    }
+
+    override suspend fun updateUser(user: User): Boolean {
+        return dataRepository.updateUser(user)
     }
 
     override suspend fun deleteUser(id: Int): Boolean {

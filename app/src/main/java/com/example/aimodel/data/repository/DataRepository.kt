@@ -5,7 +5,9 @@ import kotlinx.coroutines.flow.Flow
 
 interface DataRepository {
     fun getUsers(): Flow<List<User>>
-    suspend fun createUser(name: String, job: String): Boolean
-    suspend fun updateUser(id: Int, name: String, job: String): Boolean
+    suspend fun getUsersPage(page: Int): Result<Pair<List<User>, Int>>
+    suspend fun getTotalUserCount(): Int
+    suspend fun createUser(user: User): Boolean
+    suspend fun updateUser(user: User): Boolean
     suspend fun deleteUser(id: Int): Boolean
 }

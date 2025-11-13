@@ -19,6 +19,7 @@ sealed class HomeUIEvent {
 
 data class HomeUIState(
     val users: List<User> = emptyList(),
+    val totalUserCount: Int = 0,
     val isLoading: Boolean = false
 )
 
@@ -56,7 +57,12 @@ class HomeViewModel @Inject constructor(
             if (!syncSuccessful) {
                 _event.value = HomeUIEvent.ShowSnackbar("Sync failed")
             }
-            _uiState.value = _uiState.value.copy(isLoading = false)
+            // Fetch total user count from API
+            val totalCount = userService.getTotalUserCount()
+            _uiState.value = _uiState.value.copy(
+                isLoading = false,
+                totalUserCount = totalCount
+            )
         }
     }
 
