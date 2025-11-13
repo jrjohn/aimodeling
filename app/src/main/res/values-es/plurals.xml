@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Sync Status -->
+    <plurals name="sync_pending_changes">
+        <item quantity="one">%1$d cambio esperando sincronizar</item>
+        <item quantity="other">%1$d cambios esperando sincronizar</item>
+    </plurals>
+
+    <!-- Time -->
+    <plurals name="time_minutes">
+        <item quantity="one">hace %1$d minuto</item>
+        <item quantity="other">hace %1$d minutos</item>
+    </plurals>
+
+    <plurals name="time_hours">
+        <item quantity="one">hace %1$d hora</item>
+        <item quantity="other">hace %1$d horas</item>
+    </plurals>
+
+    <plurals name="time_days">
+        <item quantity="one">hace %1$d día</item>
+        <item quantity="other">hace %1$d días</item>
+    </plurals>
+</resources>

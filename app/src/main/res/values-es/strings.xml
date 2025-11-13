@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Name -->
+    <string name="app_name">AI Model</string>
+
+    <!-- Common Actions -->
+    <string name="action_retry">Reintentar</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_save">Guardar</string>
+    <string name="action_delete">Eliminar</string>
+    <string name="action_edit">Editar</string>
+    <string name="action_refresh">Actualizar</string>
+    <string name="action_sync">Sincronizar</string>
+    <string name="action_sync_now">Sincronizar ahora</string>
+
+    <!-- User Management -->
+    <string name="user_created_success">Usuario creado exitosamente</string>
+    <string name="user_updated_success">Usuario actualizado exitosamente</string>
+    <string name="user_deleted_success">Usuario eliminado exitosamente</string>
+    <string name="user_create_failed">Error al crear usuario</string>
+    <string name="user_update_failed">Error al actualizar usuario</string>
+    <string name="user_delete_failed">Error al eliminar usuario</string>
+
+    <!-- Loading States -->
+    <string name="loading_users">Cargando usuarios…</string>
+    <string name="loading_more">Cargando más…</string>
+    <string name="syncing">Sincronizando…</string>
+
+    <!-- Error Messages - Network -->
+    <string name="error_no_connection">Sin conexión a internet</string>
+    <string name="error_no_connection_sync">Sin conexión a internet. Los cambios se sincronizarán cuando esté en línea.</string>
+    <string name="error_network">Error de red: %1$s</string>
+    <string name="error_connection_timeout">Tiempo de conexión agotado</string>
+    <string name="error_unknown_host">Sin conexión a internet</string>
+    <string name="error_please_retry">Por favor, inténtelo de nuevo.</string>
+
+    <!-- Error Messages - Server -->
+    <string name="error_server_issues">El servidor está experimentando problemas. Por favor, inténtelo más tarde.</string>
+    <string name="error_client">Error del cliente: %1$d</string>
+    <string name="error_server">Error del servidor: %1$d</string>
+    <string name="error_authentication_required">Autenticación requerida</string>
+    <string name="error_sign_in_again">Por favor, inicie sesión nuevamente.</string>
+
+    <!-- Error Messages - Validation -->
+    <string name="error_email_required">La dirección de correo electrónico es obligatoria</string>
+    <string name="error_email_invalid">Formato de correo electrónico no válido</string>
+    <string name="error_email_too_long">La dirección de correo electrónico es demasiado larga</string>
+    <string name="error_name_required">Se requiere nombre o apellido</string>
+    <string name="error_name_required_create">El nombre es obligatorio</string>
+    <string name="error_first_name_too_long">El nombre es demasiado largo (máximo 100 caracteres)</string>
+    <string name="error_last_name_too_long">El apellido es demasiado largo (máximo 100 caracteres)</string>
+    <string name="error_avatar_invalid">Formato de URL de avatar no válido</string>
+    <string name="error_temp_email_not_allowed">No se permiten direcciones de correo electrónico temporales</string>
+
+    <!-- Error Messages - Conflicts -->
+    <string name="error_conflict">Conflicto de datos detectado</string>
+    <string name="error_conflict_refresh">Por favor, actualice y vuelva a intentarlo.</string>
+
+    <!-- Error Messages - Generic -->
+    <string name="error_unknown">Algo salió mal. Por favor, inténtelo de nuevo.</string>
+    <string name="error_failed_load_users">Error al cargar usuarios</string>
+    <string name="error_failed_load_more_users">Error al cargar más usuarios</string>
+    <string name="error_failed_load_page">Error al cargar página %1$d</string>
+
+    <!-- Sync Status Messages -->
+    <string name="sync_status_syncing">Sincronizando…</string>
+    <string name="sync_status_failed">Sincronización fallida: %1$s</string>
+    <string name="sync_status_pending_changes">%1$d cambio esperando sincronizar</string>
+    <string name="sync_status_pending_changes_plural">%1$d cambios esperando sincronizar</string>
+    <string name="sync_status_last_synced">Última sincronización %1$s</string>
+    <string name="sync_status_not_synced">Aún no sincronizado</string>
+
+    <!-- Time Relative -->
+    <string name="time_just_now">justo ahora</string>
+    <string name="time_minutes_ago">hace %1$d minuto</string>
+    <string name="time_minutes_ago_plural">hace %1$d minutos</string>
+    <string name="time_hours_ago">hace %1$d hora</string>
+    <string name="time_hours_ago_plural">hace %1$d horas</string>
+    <string name="time_days_ago">hace %1$d día</string>
+    <string name="time_days_ago_plural">hace %1$d días</string>
+    <string name="time_over_week_ago">hace más de una semana</string>
+
+    <!-- Pagination -->
+    <string name="pagination_page_info">Página %1$d de %2$d</string>
+    <string name="pagination_showing_users">Mostrando %1$d usuarios</string>
+
+    <!-- Empty States -->
+    <string name="empty_no_users">No se encontraron usuarios</string>
+    <string name="empty_no_results">No se encontraron resultados</string>
+
+    <!-- Screen Titles -->
+    <string name="screen_title_home">Inicio</string>
+    <string name="screen_title_users">Usuarios</string>
+
+    <!-- Dialog Titles -->
+    <string name="dialog_title_create_user">Crear usuario</string>
+    <string name="dialog_title_edit_user">Editar usuario</string>
+    <string name="dialog_title_delete_user">Eliminar usuario</string>
+    <string name="dialog_message_delete_confirm">¿Está seguro de que desea eliminar este usuario?</string>
+
+    <!-- Form Fields -->
+    <string name="field_first_name">Nombre</string>
+    <string name="field_last_name">Apellido</string>
+    <string name="field_email">Correo electrónico</string>
+    <string name="field_avatar">URL del avatar</string>
+
+    <!-- Accessibility -->
+    <string name="content_description_user_avatar">Avatar del usuario</string>
+    <string name="content_description_refresh">Actualizar</string>
+    <string name="content_description_sync">Sincronizar</string>
+    <string name="content_description_loading">Cargando</string>
+</resources>

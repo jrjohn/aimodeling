@@ -2,6 +2,8 @@ package com.example.aimodel.ui.screens
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.aimodel.R
+import com.example.aimodel.core.common.StringProvider
 import com.example.aimodel.data.model.User
 import com.example.aimodel.domain.service.UserService
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -35,16 +37,42 @@ sealed interface UserEffect {
 }
 
 data class UserUiState(
-    val users: List<User> = emptyList(),
+    val userPages: Map<Int, List<User>> = emptyMap(), // All loaded pages
     val isLoading: Boolean = false,
     val isLoadingMore: Boolean = false,
     val currentPage: Int = 1,
     val totalPages: Int = 1
-)
+) {
+    /**
+     * Returns all users from loaded pages in order
+     */
+    val allUsers: List<User>
+        get() = userPages.entries
+            .sortedBy { it.key }
+            .flatMap { it.value }
+
+    /**
+     * Returns users for the current page
+     */
+    val users: List<User>
+        get() = userPages[currentPage] ?: emptyList()
+
+    /**
+     * Checks if a specific page is loaded
+     */
+    fun isPageLoaded(page: Int): Boolean = userPages.containsKey(page)
+
+    /**
+     * Gets the number of loaded pages
+     */
+    val loadedPagesCount: Int
+        get() = userPages.size
+}
 
 @HiltViewModel
 class UserViewModel @Inject constructor(
-    private val userService: UserService
+    private val userService: UserService,
+    private val stringProvider: StringProvider
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(UserUiState())
@@ -78,7 +106,7 @@ class UserViewModel @Inject constructor(
                 onSuccess = { (users, totalPages) ->
                     _uiState.update {
                         it.copy(
-                            users = users,
+                            userPages = mapOf(1 to users), // Reset cache with page 1
                             currentPage = 1,
                             totalPages = totalPages,
                             isLoading = false
@@ -87,7 +115,9 @@ class UserViewModel @Inject constructor(
                 },
                 onFailure = { error ->
                     _uiState.update { it.copy(isLoading = false) }
-                    _effect.send(UserEffect.ShowError(error.message ?: "Failed to load users"))
+                    _effect.send(UserEffect.ShowError(
+                        error.message ?: stringProvider.getString(R.string.error_failed_load_users)
+                    ))
                 }
             )
         }
@@ -122,7 +152,7 @@ class UserViewModel @Inject constructor(
                     Timber.d("Successfully loaded ${newUsers.size} users from page $nextPage")
                     _uiState.update {
                         it.copy(
-                            users = it.users + newUsers,
+                            userPages = it.userPages + (nextPage to newUsers), // Add page to cache
                             currentPage = nextPage,
                             totalPages = totalPages,
                             isLoadingMore = false
@@ -132,7 +162,9 @@ class UserViewModel @Inject constructor(
                 onFailure = { error ->
                     Timber.e(error, "Failed to load page $nextPage")
                     _uiState.update { it.copy(isLoadingMore = false) }
-                    _effect.send(UserEffect.ShowError(error.message ?: "Failed to load more users"))
+                    _effect.send(UserEffect.ShowError(
+                        error.message ?: stringProvider.getString(R.string.error_failed_load_more_users)
+                    ))
                 }
             )
         }
@@ -143,10 +175,14 @@ class UserViewModel @Inject constructor(
             Timber.d("Creating user: name=${user.name}, email=${user.email}, avatar=${user.avatar}")
             val success = userService.createUser(user)
             if (success) {
-                _effect.send(UserEffect.ShowSuccess("User created successfully"))
+                _effect.send(UserEffect.ShowSuccess(
+                    stringProvider.getString(R.string.user_created_success)
+                ))
                 loadUsers() // Refresh the list
             } else {
-                _effect.send(UserEffect.ShowError("Failed to create user"))
+                _effect.send(UserEffect.ShowError(
+                    stringProvider.getString(R.string.user_create_failed)
+                ))
             }
         }
     }
@@ -156,10 +192,14 @@ class UserViewModel @Inject constructor(
             Timber.d("Updating user ${user.id}: name=${user.name}, email=${user.email}, avatar=${user.avatar}")
             val success = userService.updateUser(user)
             if (success) {
-                _effect.send(UserEffect.ShowSuccess("User updated successfully"))
+                _effect.send(UserEffect.ShowSuccess(
+                    stringProvider.getString(R.string.user_updated_success)
+                ))
                 loadUsers() // Refresh the list
             } else {
-                _effect.send(UserEffect.ShowError("Failed to update user"))
+                _effect.send(UserEffect.ShowError(
+                    stringProvider.getString(R.string.user_update_failed)
+                ))
             }
         }
     }
@@ -169,14 +209,21 @@ class UserViewModel @Inject constructor(
             Timber.d("Deleting user ${user.id}: ${user.name}")
             val success = userService.deleteUser(user.id)
             if (success) {
-                // Remove from local state immediately for better UX
-                _uiState.update {
-                    it.copy(users = it.users.filter { u -> u.id != user.id })
+                // Remove from all cached pages for better UX
+                _uiState.update { state ->
+                    val updatedPages = state.userPages.mapValues { (_, users) ->
+                        users.filter { u -> u.id != user.id }
+                    }
+                    state.copy(userPages = updatedPages)
                 }
-                _effect.send(UserEffect.ShowSuccess("User deleted successfully"))
+                _effect.send(UserEffect.ShowSuccess(
+                    stringProvider.getString(R.string.user_deleted_success)
+                ))
                 Timber.d("User ${user.id} deleted successfully")
             } else {
-                _effect.send(UserEffect.ShowError("Failed to delete user"))
+                _effect.send(UserEffect.ShowError(
+                    stringProvider.getString(R.string.user_delete_failed)
+                ))
             }
         }
     }
@@ -207,6 +254,15 @@ class UserViewModel @Inject constructor(
     }
 
     private fun loadSpecificPage(page: Int) {
+        val currentState = _uiState.value
+
+        // Check if page is already cached
+        if (currentState.isPageLoaded(page)) {
+            Timber.d("Page $page already loaded, switching to it")
+            _uiState.update { it.copy(currentPage = page) }
+            return
+        }
+
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
             Timber.d("Loading specific page $page")
@@ -216,7 +272,7 @@ class UserViewModel @Inject constructor(
                     Timber.d("Successfully loaded ${users.size} users from page $page")
                     _uiState.update {
                         it.copy(
-                            users = users,
+                            userPages = it.userPages + (page to users), // Add page to cache
                             currentPage = page,
                             totalPages = totalPages,
                             isLoading = false
@@ -226,7 +282,9 @@ class UserViewModel @Inject constructor(
                 onFailure = { error ->
                     Timber.e(error, "Failed to load page $page")
                     _uiState.update { it.copy(isLoading = false) }
-                    _effect.send(UserEffect.ShowError(error.message ?: "Failed to load page $page"))
+                    _effect.send(UserEffect.ShowError(
+                        error.message ?: stringProvider.getString(R.string.error_failed_load_page, page)
+                    ))
                 }
             )
         }

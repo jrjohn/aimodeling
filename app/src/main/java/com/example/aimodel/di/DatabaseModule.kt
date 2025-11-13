@@ -2,6 +2,8 @@ package com.example.aimodel.di
 
 import android.content.Context
 import androidx.room.Room
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.aimodel.data.local.AppDatabase
 import com.example.aimodel.data.local.UserChangeDao
 import com.example.aimodel.data.local.UserDao
@@ -16,6 +18,14 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object DatabaseModule {
 
+    private val MIGRATION_3_4 = object : Migration(3, 4) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // Add updatedAt and version columns to users table
+            db.execSQL("ALTER TABLE User ADD COLUMN updatedAt INTEGER NOT NULL DEFAULT ${System.currentTimeMillis()}")
+            db.execSQL("ALTER TABLE User ADD COLUMN version INTEGER NOT NULL DEFAULT 1")
+        }
+    }
+
     @Provides
     @Singleton
     fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
@@ -23,7 +33,10 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             "aimodel.db"
-        ).fallbackToDestructiveMigration(dropAllTables = true).build()
+        )
+            .addMigrations(MIGRATION_3_4)
+            .fallbackToDestructiveMigration(dropAllTables = true) // Fallback only if migration fails
+            .build()
     }
 
     @Provides

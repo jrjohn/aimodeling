@@ -1,6 +1,8 @@
 package com.example.aimodel.ui.screens
 
 import app.cash.turbine.test
+import com.example.aimodel.R
+import com.example.aimodel.core.common.StringProvider
 import com.example.aimodel.data.model.User
 import com.example.aimodel.domain.service.UserService
 import kotlinx.coroutines.Dispatchers
@@ -14,6 +16,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
@@ -26,6 +29,7 @@ class UserViewModelTest {
 
     private lateinit var viewModel: UserViewModel
     private lateinit var userService: UserService
+    private lateinit var stringProvider: StringProvider
     private val testDispatcher = StandardTestDispatcher()
 
     private val testUsers = listOf(
@@ -37,6 +41,20 @@ class UserViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         userService = mock()
+        stringProvider = mock()
+
+        // Mock string resources
+        whenever(stringProvider.getString(R.string.user_created_success)).thenReturn("User created successfully")
+        whenever(stringProvider.getString(R.string.user_create_failed)).thenReturn("Failed to create user")
+        whenever(stringProvider.getString(R.string.user_updated_success)).thenReturn("User updated successfully")
+        whenever(stringProvider.getString(R.string.user_update_failed)).thenReturn("Failed to update user")
+        whenever(stringProvider.getString(R.string.user_deleted_success)).thenReturn("User deleted successfully")
+        whenever(stringProvider.getString(R.string.user_delete_failed)).thenReturn("Failed to delete user")
+        whenever(stringProvider.getString(R.string.error_failed_load_users)).thenReturn("Failed to load users")
+        whenever(stringProvider.getString(R.string.error_failed_load_more_users)).thenReturn("Failed to load more users")
+        whenever(stringProvider.getString(eq(R.string.error_failed_load_page), any())).thenAnswer { invocation ->
+            "Failed to load page ${invocation.getArgument<Int>(1)}"
+        }
     }
 
     @After
@@ -50,7 +68,7 @@ class UserViewModelTest {
         whenever(userService.getUsersPage(1)).thenReturn(Result.success(Pair(testUsers, 5)))
 
         // When
-        viewModel = UserViewModel(userService)
+        viewModel = UserViewModel(userService, stringProvider)
         advanceUntilIdle()
 
         // Then
@@ -69,7 +87,7 @@ class UserViewModelTest {
         whenever(userService.getUsersPage(1)).thenReturn(Result.failure(Exception(errorMessage)))
 
         // When
-        viewModel = UserViewModel(userService)
+        viewModel = UserViewModel(userService, stringProvider)
 
         // Then
         viewModel.effect.test {
@@ -88,7 +106,7 @@ class UserViewModelTest {
         whenever(userService.getUsersPage(1)).thenReturn(Result.success(Pair(page1Users, 5)))
         whenever(userService.getUsersPage(2)).thenReturn(Result.success(Pair(page2Users, 5)))
 
-        viewModel = UserViewModel(userService)
+        viewModel = UserViewModel(userService, stringProvider)
         advanceUntilIdle()
 
         // When
@@ -97,7 +115,8 @@ class UserViewModelTest {
 
         // Then
         val state = viewModel.uiState.value
-        assertEquals(page1Users + page2Users, state.users)
+        assertEquals(page2Users, state.users) // Current page users
+        assertEquals(page1Users + page2Users, state.allUsers) // All loaded users
         assertEquals(2, state.currentPage)
         assertFalse(state.isLoadingMore)
         verify(userService).getUsersPage(2)
@@ -109,7 +128,7 @@ class UserViewModelTest {
         whenever(userService.getUsersPage(1)).thenReturn(Result.success(Pair(testUsers, 5)))
         whenever(userService.getUsersPage(2)).thenReturn(Result.success(Pair(emptyList(), 5)))
 
-        viewModel = UserViewModel(userService)
+        viewModel = UserViewModel(userService, stringProvider)
         advanceUntilIdle()
 
         // When - trigger LoadNextPage once, should work
@@ -128,7 +147,7 @@ class UserViewModelTest {
     fun `LoadNextPage should not load if on last page`() = runTest {
         // Given
         whenever(userService.getUsersPage(1)).thenReturn(Result.success(Pair(testUsers, 1)))
-        viewModel = UserViewModel(userService)
+        viewModel = UserViewModel(userService, stringProvider)
         advanceUntilIdle()
 
         // When
@@ -146,7 +165,7 @@ class UserViewModelTest {
         whenever(userService.getUsersPage(1)).thenReturn(Result.success(Pair(testUsers, 5)))
         whenever(userService.createUser(newUser)).thenReturn(true)
 
-        viewModel = UserViewModel(userService)
+        viewModel = UserViewModel(userService, stringProvider)
         advanceUntilIdle()
 
         // When
@@ -173,7 +192,7 @@ class UserViewModelTest {
         whenever(userService.getUsersPage(1)).thenReturn(Result.success(Pair(testUsers, 5)))
         whenever(userService.createUser(newUser)).thenReturn(false)
 
-        viewModel = UserViewModel(userService)
+        viewModel = UserViewModel(userService, stringProvider)
         advanceUntilIdle()
 
         // When
@@ -195,7 +214,7 @@ class UserViewModelTest {
         whenever(userService.getUsersPage(1)).thenReturn(Result.success(Pair(testUsers, 5)))
         whenever(userService.updateUser(updatedUser)).thenReturn(true)
 
-        viewModel = UserViewModel(userService)
+        viewModel = UserViewModel(userService, stringProvider)
         advanceUntilIdle()
 
         // When
@@ -220,7 +239,7 @@ class UserViewModelTest {
         whenever(userService.getUsersPage(1)).thenReturn(Result.success(Pair(testUsers, 5)))
         whenever(userService.updateUser(updatedUser)).thenReturn(false)
 
-        viewModel = UserViewModel(userService)
+        viewModel = UserViewModel(userService, stringProvider)
         advanceUntilIdle()
 
         // When
@@ -242,7 +261,7 @@ class UserViewModelTest {
         whenever(userService.getUsersPage(1)).thenReturn(Result.success(Pair(testUsers, 5)))
         whenever(userService.deleteUser(userToDelete.id)).thenReturn(true)
 
-        viewModel = UserViewModel(userService)
+        viewModel = UserViewModel(userService, stringProvider)
         advanceUntilIdle()
 
         // When
@@ -269,7 +288,7 @@ class UserViewModelTest {
         whenever(userService.getUsersPage(1)).thenReturn(Result.success(Pair(testUsers, 5)))
         whenever(userService.deleteUser(userToDelete.id)).thenReturn(false)
 
-        viewModel = UserViewModel(userService)
+        viewModel = UserViewModel(userService, stringProvider)
         advanceUntilIdle()
 
         // When
@@ -293,7 +312,7 @@ class UserViewModelTest {
             .thenReturn(Result.success(Pair(initialUsers, 5)))
             .thenReturn(Result.success(Pair(refreshedUsers, 5)))
 
-        viewModel = UserViewModel(userService)
+        viewModel = UserViewModel(userService, stringProvider)
         advanceUntilIdle()
 
         // When
@@ -313,7 +332,7 @@ class UserViewModelTest {
         whenever(userService.getUsersPage(1)).thenReturn(Result.success(Pair(testUsers, 10)))
         whenever(userService.getUsersPage(3)).thenReturn(Result.success(Pair(page3Users, 10)))
 
-        viewModel = UserViewModel(userService)
+        viewModel = UserViewModel(userService, stringProvider)
         advanceUntilIdle()
 
         // When
@@ -331,7 +350,7 @@ class UserViewModelTest {
     fun `GoToPage should not load invalid page number`() = runTest {
         // Given
         whenever(userService.getUsersPage(1)).thenReturn(Result.success(Pair(testUsers, 5)))
-        viewModel = UserViewModel(userService)
+        viewModel = UserViewModel(userService, stringProvider)
         advanceUntilIdle()
 
         // When - try to go to page 100 (invalid)
@@ -348,7 +367,7 @@ class UserViewModelTest {
         whenever(userService.getUsersPage(1)).thenReturn(Result.success(Pair(testUsers, 5)))
         whenever(userService.getUsersPage(2)).thenReturn(Result.success(Pair(testUsers, 5)))
 
-        viewModel = UserViewModel(userService)
+        viewModel = UserViewModel(userService, stringProvider)
         advanceUntilIdle()
 
         // When
@@ -367,7 +386,7 @@ class UserViewModelTest {
         whenever(userService.getUsersPage(1)).thenReturn(Result.success(Pair(testUsers, 5)))
         whenever(userService.getUsersPage(2)).thenReturn(Result.success(Pair(testUsers, 5)))
 
-        viewModel = UserViewModel(userService)
+        viewModel = UserViewModel(userService, stringProvider)
         advanceUntilIdle()
 
         // Navigate to page 2 first
@@ -389,7 +408,7 @@ class UserViewModelTest {
         whenever(userService.getUsersPage(any())).thenReturn(Result.success(Pair(testUsers, 5)))
 
         // When
-        viewModel = UserViewModel(userService)
+        viewModel = UserViewModel(userService, stringProvider)
         advanceUntilIdle()
 
         // Then - after completion, loading should be false

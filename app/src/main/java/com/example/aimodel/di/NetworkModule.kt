@@ -60,6 +60,7 @@ object NetworkModule {
             }
 
             defaultRequest {
+                // reqres.in free tier requires this specific API key
                 header("x-api-key", "reqres-free-v1")
                 contentType(ContentType.Application.Json)
             }
@@ -72,7 +73,7 @@ object NetworkModule {
     @Singleton
     fun provideKtorfit(httpClient: HttpClient): Ktorfit {
         return Ktorfit.Builder()
-            .baseUrl("https://reqres.in/api/")
+            .baseUrl(BuildConfig.API_BASE_URL)
             .httpClient(httpClient)
             .build()
     }

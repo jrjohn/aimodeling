@@ -50,14 +50,124 @@ class OfflineFirstDataRepository @Inject constructor(
             Timber.d("Starting sync process")
             processOfflineChanges()
             Timber.d("Fetching users from network")
-            val (users, totalCount) = networkDataSource.getUsersWithTotal()
-            Timber.d("Received ${users.size} users from network, total count: $totalCount")
-            userDao.insertUsers(users)
+            val (networkUsers, totalCount) = networkDataSource.getUsersWithTotal()
+            Timber.d("Received ${networkUsers.size} users from network, total count: $totalCount")
+
+            // Get local users for conflict resolution
+            val localUsers = userDao.getUsers().first()
+            Timber.d("Found ${localUsers.size} local users for conflict resolution")
+
+            // Resolve conflicts and merge data
+            val resolvedUsers = resolveConflicts(localUsers, networkUsers)
+            Timber.d("Resolved conflicts, inserting ${resolvedUsers.size} users")
+
+            userDao.insertUsers(resolvedUsers)
             Timber.d("Sync completed successfully")
             return true
         } catch (e: Exception) {
             Timber.e(e, "Sync failed for DataRepository")
             return false
+        }
+    }
+
+    /**
+     * Resolves conflicts between local and network user data
+     * Strategy: Last-write-wins based on updatedAt timestamp
+     *
+     * @param localUsers Users from local database
+     * @param networkUsers Users from network
+     * @return Merged list of users with conflicts resolved
+     */
+    private suspend fun resolveConflicts(
+        localUsers: List<User>,
+        networkUsers: List<User>
+    ): List<User> {
+        val localMap = localUsers.associateBy { it.id }
+        val networkMap = networkUsers.associateBy { it.id }
+        val resolvedUsers = mutableListOf<User>()
+        var conflictsDetected = 0
+        var conflictsResolved = 0
+
+        // Process all network users
+        networkMap.forEach { (id, networkUser) ->
+            val localUser = localMap[id]
+
+            if (localUser == null) {
+                // User only exists on network, add it
+                Timber.d("ConflictResolution: User $id only on network, adding")
+                resolvedUsers.add(networkUser)
+            } else {
+                // User exists both locally and on network, resolve conflict
+                val resolved = resolveUserConflict(localUser, networkUser)
+                if (resolved != networkUser) {
+                    conflictsDetected++
+                    if (resolved == localUser) {
+                        Timber.d("ConflictResolution: User $id - local version newer, keeping local")
+                        // Local version is newer, push to network
+                        try {
+                            networkDataSource.updateUser(
+                                localUser.id,
+                                CreateUserRequest(localUser.name, "Developer")
+                            )
+                            conflictsResolved++
+                            Timber.d("ConflictResolution: Successfully pushed local user $id to network")
+                        } catch (e: Exception) {
+                            Timber.e(e, "ConflictResolution: Failed to push local user $id to network")
+                        }
+                    } else {
+                        Timber.d("ConflictResolution: User $id - network version newer, using network")
+                    }
+                }
+                resolvedUsers.add(resolved)
+            }
+        }
+
+        // Add any users that only exist locally (not on network)
+        localMap.forEach { (id, localUser) ->
+            if (!networkMap.containsKey(id)) {
+                Timber.d("ConflictResolution: User $id only exists locally, keeping")
+                resolvedUsers.add(localUser)
+            }
+        }
+
+        if (conflictsDetected > 0) {
+            Timber.d("ConflictResolution: Detected $conflictsDetected conflicts, resolved $conflictsResolved")
+        }
+
+        return resolvedUsers
+    }
+
+    /**
+     * Resolves conflict for a single user using last-write-wins strategy
+     * Compares timestamps and versions to determine which version to keep
+     *
+     * @param localUser User from local database
+     * @param networkUser User from network
+     * @return The user version to keep
+     */
+    private fun resolveUserConflict(localUser: User, networkUser: User): User {
+        // Compare timestamps first
+        return when {
+            localUser.updatedAt > networkUser.updatedAt -> {
+                // Local is newer
+                Timber.v("ConflictResolution: User ${localUser.id} - local timestamp ${localUser.updatedAt} > network ${networkUser.updatedAt}")
+                localUser
+            }
+            localUser.updatedAt < networkUser.updatedAt -> {
+                // Network is newer
+                Timber.v("ConflictResolution: User ${localUser.id} - network timestamp ${networkUser.updatedAt} > local ${localUser.updatedAt}")
+                networkUser
+            }
+            else -> {
+                // Same timestamp, compare versions
+                if (localUser.version > networkUser.version) {
+                    Timber.v("ConflictResolution: User ${localUser.id} - same timestamp, local version ${localUser.version} > network ${networkUser.version}")
+                    localUser
+                } else {
+                    Timber.v("ConflictResolution: User ${localUser.id} - same timestamp, network version ${networkUser.version} >= local ${localUser.version}")
+                    networkUser
+                }
+            }
         }
     }
 

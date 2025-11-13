@@ -11,7 +11,9 @@ data class User(
     val email: String = "",
     val firstName: String = "",
     val lastName: String = "",
-    val avatar: String = ""
+    val avatar: String = "",
+    val updatedAt: Long = System.currentTimeMillis(), // For conflict resolution
+    val version: Int = 1 // For optimistic locking
 ) {
     val name: String
         get() = "$firstName $lastName".trim().ifEmpty { email }

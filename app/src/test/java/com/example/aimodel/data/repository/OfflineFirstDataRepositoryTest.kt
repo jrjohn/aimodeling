@@ -124,7 +124,7 @@ class OfflineFirstDataRepositoryTest {
         // Given
         whenever(networkMonitor.isOnline).thenReturn(flowOf(true))
         whenever(networkDataSource.getUsersWithTotal()).thenReturn(Pair(testUsers, 42))
-
+        whenever(userDao.getUsers()).thenReturn(flowOf(emptyList())) // For conflict resolution
         // When
         val result = repository.getTotalUserCount()
 
@@ -172,6 +172,7 @@ class OfflineFirstDataRepositoryTest {
         whenever(networkMonitor.isOnline).thenReturn(flowOf(true))
         whenever(networkDataSource.createUser(any())).thenReturn(Unit)
         whenever(networkDataSource.getUsersWithTotal()).thenReturn(Pair(testUsers, 10))
+        whenever(userDao.getUsers()).thenReturn(flowOf(emptyList())) // For conflict resolution
         whenever(userChangeDao.getAll()).thenReturn(emptyList())
 
         // When
@@ -225,6 +226,7 @@ class OfflineFirstDataRepositoryTest {
         whenever(networkMonitor.isOnline).thenReturn(flowOf(true))
         whenever(networkDataSource.updateUser(any(), any())).thenReturn(Unit)
         whenever(networkDataSource.getUsersWithTotal()).thenReturn(Pair(testUsers, 10))
+        whenever(userDao.getUsers()).thenReturn(flowOf(emptyList())) // For conflict resolution
         whenever(userChangeDao.getAll()).thenReturn(emptyList())
 
         // When
@@ -278,6 +280,7 @@ class OfflineFirstDataRepositoryTest {
         whenever(networkMonitor.isOnline).thenReturn(flowOf(true))
         whenever(networkDataSource.deleteUser(userId)).thenReturn(Unit)
         whenever(networkDataSource.getUsersWithTotal()).thenReturn(Pair(testUsers, 10))
+        whenever(userDao.getUsers()).thenReturn(flowOf(emptyList())) // For conflict resolution
         whenever(userChangeDao.getAll()).thenReturn(emptyList())
 
         // When
@@ -302,7 +305,9 @@ class OfflineFirstDataRepositoryTest {
 
         // Then
         assertFalse(result)
-        verify(userDao).deleteUser(User(id = userId))
+        val userCaptor = argumentCaptor<User>()
+        verify(userDao).deleteUser(userCaptor.capture())
+        assertEquals(userId, userCaptor.firstValue.id)
         verify(userChangeDao).insert(any())
     }
 
@@ -330,7 +335,7 @@ class OfflineFirstDataRepositoryTest {
         whenever(networkMonitor.isOnline).thenReturn(flowOf(true))
         whenever(userChangeDao.getAll()).thenReturn(emptyList())
         whenever(networkDataSource.getUsersWithTotal()).thenReturn(Pair(testUsers, 10))
-
+        whenever(userDao.getUsers()).thenReturn(flowOf(emptyList())) // For conflict resolution
         // When
         val result = repository.sync()
 
@@ -368,6 +373,7 @@ class OfflineFirstDataRepositoryTest {
         whenever(userChangeDao.getAll()).thenReturn(listOf(pendingChange))
         whenever(networkDataSource.createUser(any())).thenReturn(Unit)
         whenever(networkDataSource.getUsersWithTotal()).thenReturn(Pair(testUsers, 10))
+        whenever(userDao.getUsers()).thenReturn(flowOf(emptyList())) // For conflict resolution        whenever(userDao.getUsers()).thenReturn(flowOf(emptyList())) // For conflict resolution
 
         // When
         val result = repository.sync()
@@ -392,6 +398,7 @@ class OfflineFirstDataRepositoryTest {
         whenever(userChangeDao.getAll()).thenReturn(listOf(pendingChange))
         whenever(networkDataSource.updateUser(any(), any())).thenReturn(Unit)
         whenever(networkDataSource.getUsersWithTotal()).thenReturn(Pair(testUsers, 10))
+        whenever(userDao.getUsers()).thenReturn(flowOf(emptyList())) // For conflict resolution        whenever(userDao.getUsers()).thenReturn(flowOf(emptyList())) // For conflict resolution
 
         // When
         val result = repository.sync()
@@ -414,7 +421,7 @@ class OfflineFirstDataRepositoryTest {
         whenever(userChangeDao.getAll()).thenReturn(listOf(pendingChange))
         whenever(networkDataSource.deleteUser(any())).thenReturn(Unit)
         whenever(networkDataSource.getUsersWithTotal()).thenReturn(Pair(testUsers, 10))
-
+        whenever(userDao.getUsers()).thenReturn(flowOf(emptyList())) // For conflict resolution
         // When
         val result = repository.sync()
 
@@ -436,7 +443,7 @@ class OfflineFirstDataRepositoryTest {
             .whenever(networkDataSource).deleteUser(1)
         whenever(networkDataSource.deleteUser(2)).thenReturn(Unit)
         whenever(networkDataSource.getUsersWithTotal()).thenReturn(Pair(testUsers, 10))
-
+        whenever(userDao.getUsers()).thenReturn(flowOf(emptyList())) // For conflict resolution
         // When
         val result = repository.sync()
 
@@ -532,9 +539,13 @@ class OfflineFirstDataRepositoryTest {
 
         // Then
         val changeCaptor = argumentCaptor<UserChange>()
+        val userCaptor = argumentCaptor<User>()
 
-        verify(userDao).deleteUser(User(id = userId))
+        verify(userDao).deleteUser(userCaptor.capture())
         verify(userChangeDao).insert(changeCaptor.capture())
+
+        // Verify correct user was deleted
+        assertEquals(userId, userCaptor.firstValue.id)
 
         // Verify change was created
         val change = changeCaptor.firstValue

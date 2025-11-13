@@ -71,6 +71,7 @@ fun UserScreen(
     var userToDelete by remember { mutableStateOf<User?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
     val listState = rememberLazyListState()
+    var enableInfiniteScroll by remember { mutableStateOf(false) }
 
     // Handle effects from ViewModel
     LaunchedEffect(Unit) {
@@ -80,6 +81,12 @@ fun UserScreen(
                 is UserEffect.ShowSuccess -> snackbarHostState.showSnackbar(effect.message)
             }
         }
+    }
+
+    // Delay infinite scroll to prevent immediate triggering on first load
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(1000) // Wait 1 second before enabling infinite scroll
+        enableInfiniteScroll = true
     }
 
     Scaffold(
@@ -110,7 +117,7 @@ fun UserScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            if (uiState.isLoading && uiState.users.isEmpty()) {
+            if (uiState.isLoading && uiState.allUsers.isEmpty()) {
                 CircularProgressIndicator(
                     modifier = Modifier.align(Alignment.Center)
                 )
@@ -137,7 +144,7 @@ fun UserScreen(
                             }
 
                             items(
-                                items = uiState.users,
+                                items = uiState.allUsers,
                                 key = { it.id }
                             ) { user ->
                                 UserCard(
@@ -174,7 +181,7 @@ fun UserScreen(
                 }
 
                 // Infinite scroll logic
-                LaunchedEffect(listState, uiState.isLoadingMore, uiState.currentPage, uiState.totalPages) {
+                LaunchedEffect(listState, uiState.isLoadingMore, uiState.currentPage, uiState.totalPages, enableInfiniteScroll) {
                     snapshotFlow {
                         val layoutInfo = listState.layoutInfo
                         val lastVisibleItemIndex = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
@@ -182,7 +189,7 @@ fun UserScreen(
                         Pair(lastVisibleItemIndex, totalItemsCount)
                     }.collect { (lastVisibleItemIndex, totalItemsCount) ->
                         val shouldLoadMore = lastVisibleItemIndex >= totalItemsCount - 3 && totalItemsCount > 0
-                        if (shouldLoadMore && !uiState.isLoadingMore && uiState.currentPage < uiState.totalPages) {
+                        if (enableInfiniteScroll && shouldLoadMore && !uiState.isLoadingMore && uiState.currentPage < uiState.totalPages) {
                             Timber.d("Triggering loadNextPage - lastVisible: $lastVisibleItemIndex, total: $totalItemsCount, page: ${uiState.currentPage}/${uiState.totalPages}")
                             viewModel.onEvent(UserEvent.LoadNextPage)
                         }

@@ -61,11 +61,12 @@ class UserScreenTest {
     @Test
     fun `state with users should contain user list`() {
         // Given
-        val state = UserUiState(users = testUsers)
+        val state = UserUiState(userPages = mapOf(1 to testUsers), currentPage = 1)
 
         // Then
         assertEquals(testUsers, state.users)
         assertEquals(2, state.users.size)
+        assertEquals(testUsers, state.allUsers)
     }
 
     @Test
@@ -81,7 +82,7 @@ class UserScreenTest {
     fun `loading more state should be true when loading more`() {
         // Given
         val state = UserUiState(
-            users = testUsers,
+            userPages = mapOf(1 to testUsers),
             isLoadingMore = true,
             currentPage = 1,
             totalPages = 5
@@ -96,7 +97,7 @@ class UserScreenTest {
     fun `state should track current page and total pages`() {
         // Given
         val state = UserUiState(
-            users = testUsers,
+            userPages = mapOf(3 to testUsers),
             currentPage = 3,
             totalPages = 10
         )
@@ -240,7 +241,7 @@ class UserScreenTest {
     @Test
     fun `empty user list should show empty state`() {
         // Given
-        val state = UserUiState(users = emptyList(), isLoading = false)
+        val state = UserUiState(userPages = emptyMap(), isLoading = false)
 
         // Then
         assertTrue(state.users.isEmpty())
@@ -250,7 +251,7 @@ class UserScreenTest {
     @Test
     fun `user list with data should show users`() {
         // Given
-        val state = UserUiState(users = testUsers, isLoading = false)
+        val state = UserUiState(userPages = mapOf(1 to testUsers), currentPage = 1, isLoading = false)
 
         // Then
         assertEquals(2, state.users.size)
@@ -260,7 +261,7 @@ class UserScreenTest {
     @Test
     fun `loading state should be shown correctly`() {
         // Given
-        val loadingState = UserUiState(users = emptyList(), isLoading = true)
+        val loadingState = UserUiState(userPages = emptyMap(), isLoading = true)
 
         // Then
         assertTrue(loadingState.isLoading)
@@ -271,7 +272,8 @@ class UserScreenTest {
     fun `loading more state should be shown with existing users`() {
         // Given
         val loadingMoreState = UserUiState(
-            users = testUsers,
+            userPages = mapOf(1 to testUsers),
+            currentPage = 1,
             isLoadingMore = true
         )
 
@@ -286,7 +288,7 @@ class UserScreenTest {
     fun `pagination should have correct page info`() {
         // Given
         val state = UserUiState(
-            users = testUsers,
+            userPages = mapOf(2 to testUsers),
             currentPage = 2,
             totalPages = 5
         )
@@ -301,7 +303,7 @@ class UserScreenTest {
     fun `last page should be correctly identified`() {
         // Given
         val lastPageState = UserUiState(
-            users = testUsers,
+            userPages = mapOf(5 to testUsers),
             currentPage = 5,
             totalPages = 5
         )
@@ -315,7 +317,7 @@ class UserScreenTest {
     fun `first page should be correctly identified`() {
         // Given
         val firstPageState = UserUiState(
-            users = testUsers,
+            userPages = mapOf(1 to testUsers),
             currentPage = 1,
             totalPages = 5
         )
@@ -385,7 +387,7 @@ class UserScreenTest {
     fun `state update should preserve other fields`() {
         // Given
         val originalState = UserUiState(
-            users = testUsers,
+            userPages = mapOf(2 to testUsers),
             isLoading = false,
             currentPage = 2,
             totalPages = 5
@@ -395,7 +397,7 @@ class UserScreenTest {
         val updatedState = originalState.copy(isLoading = true)
 
         // Then
-        assertEquals(originalState.users, updatedState.users)
+        assertEquals(originalState.userPages, updatedState.userPages)
         assertTrue(updatedState.isLoading)
         assertEquals(originalState.currentPage, updatedState.currentPage)
         assertEquals(originalState.totalPages, updatedState.totalPages)
@@ -405,7 +407,8 @@ class UserScreenTest {
     fun `state with loading more should not affect loading flag`() {
         // Given
         val state = UserUiState(
-            users = testUsers,
+            userPages = mapOf(1 to testUsers),
+            currentPage = 1,
             isLoading = false,
             isLoadingMore = true
         )

@@ -1,3 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">aimodel</string>
+    <!-- App Name -->
+    <string name="app_name">AI Model</string>
+
+    <!-- Common Actions -->
+    <string name="action_retry">Retry</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_save">Save</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_refresh">Refresh</string>
+    <string name="action_sync">Sync</string>
+    <string name="action_sync_now">Sync Now</string>
+
+    <!-- User Management -->
+    <string name="user_created_success">User created successfully</string>
+    <string name="user_updated_success">User updated successfully</string>
+    <string name="user_deleted_success">User deleted successfully</string>
+    <string name="user_create_failed">Failed to create user</string>
+    <string name="user_update_failed">Failed to update user</string>
+    <string name="user_delete_failed">Failed to delete user</string>
+
+    <!-- Loading States -->
+    <string name="loading_users">Loading users…</string>
+    <string name="loading_more">Loading more…</string>
+    <string name="syncing">Syncing…</string>
+
+    <!-- Error Messages - Network -->
+    <string name="error_no_connection">No internet connection</string>
+    <string name="error_no_connection_sync">No internet connection. Changes will be synced when online.</string>
+    <string name="error_network">Network error: %1$s</string>
+    <string name="error_connection_timeout">Connection timed out</string>
+    <string name="error_unknown_host">No internet connection</string>
+    <string name="error_please_retry">Please try again.</string>
+
+    <!-- Error Messages - Server -->
+    <string name="error_server_issues">Server is experiencing issues. Please try again later.</string>
+    <string name="error_client">Client error: %1$d</string>
+    <string name="error_server">Server error: %1$d</string>
+    <string name="error_authentication_required">Authentication required</string>
+    <string name="error_sign_in_again">Please sign in again.</string>
+
+    <!-- Error Messages - Validation -->
+    <string name="error_email_required">Email address is required</string>
+    <string name="error_email_invalid">Invalid email address format</string>
+    <string name="error_email_too_long">Email address is too long</string>
+    <string name="error_name_required">First name or last name is required</string>
+    <string name="error_name_required_create">Name is required</string>
+    <string name="error_first_name_too_long">First name is too long (max 100 characters)</string>
+    <string name="error_last_name_too_long">Last name is too long (max 100 characters)</string>
+    <string name="error_avatar_invalid">Invalid avatar URL format</string>
+    <string name="error_temp_email_not_allowed">Temporary email addresses are not allowed</string>
+
+    <!-- Error Messages - Conflicts -->
+    <string name="error_conflict">Data conflict detected</string>
+    <string name="error_conflict_refresh">Please refresh and try again.</string>
+
+    <!-- Error Messages - Generic -->
+    <string name="error_unknown">Something went wrong. Please try again.</string>
+    <string name="error_failed_load_users">Failed to load users</string>
+    <string name="error_failed_load_more_users">Failed to load more users</string>
+    <string name="error_failed_load_page">Failed to load page %1$d</string>
+
+    <!-- Sync Status Messages -->
+    <string name="sync_status_syncing">Syncing…</string>
+    <string name="sync_status_failed">Sync failed: %1$s</string>
+    <string name="sync_status_pending_changes">%1$d change waiting to sync</string>
+    <string name="sync_status_pending_changes_plural">%1$d changes waiting to sync</string>
+    <string name="sync_status_last_synced">Last synced %1$s</string>
+    <string name="sync_status_not_synced">Not synced yet</string>
+
+    <!-- Time Relative -->
+    <string name="time_just_now">just now</string>
+    <string name="time_minutes_ago">%1$d minute ago</string>
+    <string name="time_minutes_ago_plural">%1$d minutes ago</string>
+    <string name="time_hours_ago">%1$d hour ago</string>
+    <string name="time_hours_ago_plural">%1$d hours ago</string>
+    <string name="time_days_ago">%1$d day ago</string>
+    <string name="time_days_ago_plural">%1$d days ago</string>
+    <string name="time_over_week_ago">over a week ago</string>
+
+    <!-- Pagination -->
+    <string name="pagination_page_info">Page %1$d of %2$d</string>
+    <string name="pagination_showing_users">Showing %1$d users</string>
+
+    <!-- Empty States -->
+    <string name="empty_no_users">No users found</string>
+    <string name="empty_no_results">No results found</string>
+
+    <!-- Screen Titles -->
+    <string name="screen_title_home">Home</string>
+    <string name="screen_title_users">Users</string>
+
+    <!-- Dialog Titles -->
+    <string name="dialog_title_create_user">Create User</string>
+    <string name="dialog_title_edit_user">Edit User</string>
+    <string name="dialog_title_delete_user">Delete User</string>
+    <string name="dialog_message_delete_confirm">Are you sure you want to delete this user?</string>
+
+    <!-- Form Fields -->
+    <string name="field_first_name">First Name</string>
+    <string name="field_last_name">Last Name</string>
+    <string name="field_email">Email</string>
+    <string name="field_avatar">Avatar URL</string>
+
+    <!-- Accessibility -->
+    <string name="content_description_user_avatar">User avatar</string>
+    <string name="content_description_refresh">Refresh</string>
+    <string name="content_description_sync">Sync</string>
+    <string name="content_description_loading">Loading</string>
 </resources>
