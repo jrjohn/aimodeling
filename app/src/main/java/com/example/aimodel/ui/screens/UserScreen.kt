@@ -72,10 +72,13 @@ fun UserScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val listState = rememberLazyListState()
 
-    // Show error message
-    LaunchedEffect(uiState.error) {
-        uiState.error?.let {
-            snackbarHostState.showSnackbar(it)
+    // Handle effects from ViewModel
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is UserEffect.ShowError -> snackbarHostState.showSnackbar(effect.message)
+                is UserEffect.ShowSuccess -> snackbarHostState.showSnackbar(effect.message)
+            }
         }
     }
 
@@ -90,7 +93,7 @@ fun UserScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { viewModel.refresh() }) {
+                    IconButton(onClick = { viewModel.onEvent(UserEvent.Refresh) }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Refresh")
                     }
                 }
@@ -115,7 +118,7 @@ fun UserScreen(
                 Box(modifier = Modifier.fillMaxSize()) {
                     PullToRefreshBox(
                         isRefreshing = uiState.isLoading && uiState.users.isNotEmpty(),
-                        onRefresh = { viewModel.refresh() },
+                        onRefresh = { viewModel.onEvent(UserEvent.Refresh) },
                         modifier = Modifier.fillMaxSize()
                     ) {
                         LazyColumn(
@@ -181,7 +184,7 @@ fun UserScreen(
                         val shouldLoadMore = lastVisibleItemIndex >= totalItemsCount - 3 && totalItemsCount > 0
                         if (shouldLoadMore && !uiState.isLoadingMore && uiState.currentPage < uiState.totalPages) {
                             Timber.d("Triggering loadNextPage - lastVisible: $lastVisibleItemIndex, total: $totalItemsCount, page: ${uiState.currentPage}/${uiState.totalPages}")
-                            viewModel.loadNextPage()
+                            viewModel.onEvent(UserEvent.LoadNextPage)
                         }
                     }
                 }
@@ -194,7 +197,11 @@ fun UserScreen(
         UserDialog(
             onDismiss = { showAddDialog = false },
             onConfirm = { firstName, lastName, email, avatar ->
-                viewModel.createUser(User(id = 0, firstName = firstName, lastName = lastName, email = email, avatar = avatar))
+                viewModel.onEvent(
+                    UserEvent.CreateUser(
+                        User(id = 0, firstName = firstName, lastName = lastName, email = email, avatar = avatar)
+                    )
+                )
                 showAddDialog = false
             }
         )
@@ -206,7 +213,11 @@ fun UserScreen(
             user = user,
             onDismiss = { userToUpdate = null },
             onConfirm = { firstName, lastName, email, avatar ->
-                viewModel.updateUser(user.copy(firstName = firstName, lastName = lastName, email = email, avatar = avatar))
+                viewModel.onEvent(
+                    UserEvent.UpdateUser(
+                        user.copy(firstName = firstName, lastName = lastName, email = email, avatar = avatar)
+                    )
+                )
                 userToUpdate = null
             }
         )
@@ -220,7 +231,7 @@ fun UserScreen(
             confirmText = "Delete",
             dismissText = "Cancel",
             onConfirm = {
-                viewModel.deleteUser(user)
+                viewModel.onEvent(UserEvent.DeleteUser(user))
                 userToDelete = null
             },
             onDismiss = { userToDelete = null }
