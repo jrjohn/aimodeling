@@ -1,13 +1,35 @@
 package com.example.aimodel.data.remote
 
-import com.example.aimodel.data.model.User
 import de.jensklingenberg.ktorfit.http.Body
 import de.jensklingenberg.ktorfit.http.DELETE
 import de.jensklingenberg.ktorfit.http.GET
 import de.jensklingenberg.ktorfit.http.POST
 import de.jensklingenberg.ktorfit.http.PUT
 import de.jensklingenberg.ktorfit.http.Path
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+
+@Serializable
+data class UserDto(
+    val id: Int,
+    val email: String,
+    @SerialName("first_name")
+    val firstName: String,
+    @SerialName("last_name")
+    val lastName: String,
+    val avatar: String
+)
+
+@Serializable
+data class UsersResponse(
+    val page: Int,
+    @SerialName("per_page")
+    val perPage: Int,
+    val total: Int,
+    @SerialName("total_pages")
+    val totalPages: Int,
+    val data: List<UserDto>
+)
 
 @Serializable
 data class CreateUserRequest(
@@ -26,7 +48,7 @@ data class CreateUserResponse(
 interface ApiService {
 
     @GET("users")
-    suspend fun getUsers(): List<User>
+    suspend fun getUsers(): UsersResponse
 
     @POST("users")
     suspend fun createUser(@Body request: CreateUserRequest): CreateUserResponse

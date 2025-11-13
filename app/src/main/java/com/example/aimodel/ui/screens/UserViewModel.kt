@@ -3,7 +3,7 @@ package com.example.aimodel.ui.screens
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.aimodel.data.model.User
-import com.example.aimodel.data.repository.DataRepository
+import com.example.aimodel.domain.service.UserService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -19,10 +19,10 @@ data class UserUiState(
 
 @HiltViewModel
 class UserViewModel @Inject constructor(
-    private val dataRepository: DataRepository
+    private val userService: UserService
 ) : ViewModel() {
 
-    val uiState: StateFlow<UserUiState> = dataRepository
+    val uiState: StateFlow<UserUiState> = userService
         .getUsers()
         .map { UserUiState(users = it) }
         .stateIn(
@@ -33,19 +33,19 @@ class UserViewModel @Inject constructor(
 
     fun createUser(name: String, job: String) {
         viewModelScope.launch {
-            dataRepository.createUser(name, job)
+            userService.createUser(name, job)
         }
     }
 
     fun updateUser(user: User, name: String, job: String) {
         viewModelScope.launch {
-            dataRepository.updateUser(user.id, name, job)
+            userService.updateUser(user.id, name, job)
         }
     }
 
     fun deleteUser(user: User) {
         viewModelScope.launch {
-            dataRepository.deleteUser(user.id)
+            userService.deleteUser(user.id)
         }
     }
 }

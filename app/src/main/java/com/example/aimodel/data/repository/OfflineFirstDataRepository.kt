@@ -27,12 +27,19 @@ class OfflineFirstDataRepository @Inject constructor(
     }
 
     override suspend fun sync(): Boolean {
-        if (!networkMonitor.isOnline.first()) return false
+        if (!networkMonitor.isOnline.first()) {
+            Timber.d("Sync skipped: Device is offline")
+            return false
+        }
 
         try {
+            Timber.d("Starting sync process")
             processOfflineChanges()
+            Timber.d("Fetching users from network")
             val users = networkDataSource.getUsers()
+            Timber.d("Received ${users.size} users from network")
             userDao.insertUsers(users)
+            Timber.d("Sync completed successfully")
             return true
         } catch (e: Exception) {
             Timber.e(e, "Sync failed for DataRepository")

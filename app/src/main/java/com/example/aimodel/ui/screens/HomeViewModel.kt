@@ -3,8 +3,7 @@ package com.example.aimodel.ui.screens
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.aimodel.data.model.User
-import com.example.aimodel.data.repository.DataRepository
-import com.example.aimodel.sync.Synchronizer
+import com.example.aimodel.domain.service.UserService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,8 +24,7 @@ data class HomeUIState(
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val dataRepository: DataRepository,
-    private val synchronizer: Synchronizer
+    private val userService: UserService
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUIState())
@@ -41,7 +39,7 @@ class HomeViewModel @Inject constructor(
     }
 
     private fun loadUsers() {
-        dataRepository.getUsers()
+        userService.getUsers()
             .onEach { users ->
                 _uiState.value = _uiState.value.copy(users = users)
             }
@@ -54,7 +52,7 @@ class HomeViewModel @Inject constructor(
     private fun syncData() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
-            val syncSuccessful = synchronizer.sync()
+            val syncSuccessful = userService.syncUsers()
             if (!syncSuccessful) {
                 _event.value = HomeUIEvent.ShowSnackbar("Sync failed")
             }

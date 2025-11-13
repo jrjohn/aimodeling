@@ -1,0 +1,115 @@
+
+User: Give me the android software architecture prompt about mvvm, local first, Syncworker
+
+Assistant: Design and describe a modern Android application architecture that follows the **Model-View-ViewModel (MVVM)** pattern and implements a **local-first** data strategy.
+
+Your architecture should ensure a seamless user experience even when the device is offline. Detail the roles and interactions of the following components:
+
+1.  **MVVM Components:**
+    *   **View (UI Layer):** Observes data from the ViewModel and captures user input.
+    *   **ViewModel:** Exposes streams of UI state, holds no references to the View, and handles UI logic.
+    *   **Model (Data Layer):** Manages all application data and business logic.
+
+2.  **Local-First Repository:**
+    *   Explain how the Repository pattern serves as the single source of truth for the application data, primarily sourcing it from a local database (like Room).
+    *   Describe how the Repository abstracts the data sources, deciding whether to fetch data from the local cache or a remote network source.
+
+3.  **Synchronization with `SyncWorker`:**
+    *   Detail how you would use **WorkManager** and a custom `CoroutineWorker` (let's call it `SyncWorker`) to periodically synchronize the local database with a remote backend.
+    *   Explain the responsibilities of the `SyncWorker`, including fetching the latest data from the server, updating the local database, and pushing any pending offline changes from the user.
+    *   Describe the conditions and constraints under which the `SyncWorker` would run (e.g., when the network is available).
+
+User: modify UserDAO for testing
+
+Assistant: To make `UserDao` testable, I'll create a "fake" implementation. This fake will use an in-memory list of users instead of a real database, which is a common practice for testing data layers in isolation.
+
+I will create a new file at `app/src/test/java/com/example/aimodel/data/local/FakeUserDao.kt` with the testing implementation. You can then use this fake in your unit tests. 
+[TOOL_CODE]
+write_file(absolutePath = '/Users/jrjohn/Documents/projects/aimodeling/app/src/test/java/com/example/aimodel/data/local/FakeUserDao.kt', text = '''package com.example.aimodel.data.local
+
+import com.example.aimodel.data.model.User
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
+
+class FakeUserDao : UserDao {
+
+    private val usersFlow = MutableStateFlow<LinkedHashMap<Int, User>>(linkedMapOf())
+
+    override fun getUsers(): Flow<List<User>> {
+        return usersFlow.asStateFlow().map { it.values.toList() }
+    }
+
+    override suspend fun insertUsers(users: List<User>) {
+        val newUsers = usersFlow.value.toMutableMap()
+        users.forEach { user ->
+            newUsers[user.id] = user
+        }
+        usersFlow.value = LinkedHashMap(newUsers)
+    }
+
+    override suspend fun upsertUser(user: User) {
+        val newUsers = usersFlow.value.toMutableMap()
+        newUsers[user.id] = user
+        usersFlow.value = LinkedHashMap(newUsers)
+    }
+
+    override suspend fun deleteUser(user: User) {
+        val newUsers = usersFlow.value.toMutableMap()
+        newUsers.remove(user.id)
+        usersFlow.value = LinkedHashMap(newUsers)
+    }
+
+    // Helper function for tests to set initial state
+    fun setUsers(users: List<User>) {
+        usersFlow.value = LinkedHashMap(users.associateBy { it.id })
+    }
+}
+''')
+[TOOL_RESULT]
+file was written
+I've created the `FakeUserDao.kt` file for you. Here's a brief example of how you can use it in your unit tests:
+
+```kotlin
+import kotlinx.coroutines.test.runTest
+import org.junit.Before
+import org.junit.Test
+
+// Example test for a class that uses UserDao
+class DataRepositoryTest {
+
+    private lateinit var userDao: FakeUserDao
+    private lateinit var repository: DataRepository
+
+    @Before
+    fun setUp() {
+        userDao = FakeUserDao()
+        // You would also provide fakes for the other dependencies
+        repository = OfflineFirstDataRepository(
+            userDao = userDao,
+            userChangeDao = FakeUserChangeDao(), // Assuming you create this
+            networkDataSource = FakeUserNetworkDataSource(), // Assuming you create this
+            networkMonitor = FakeNetworkMonitor() // Assuming you create this
+        )
+    }
+
+    @Test
+    fun `getUsers returns users from dao`() = runTest {
+        // Arrange
+        val testUsers = listOf(User(id = 1, name = "Jane Doe"))
+        userDao.setUsers(testUsers)
+
+        // Act
+        val users = repository.getUsers().first()
+
+        // Assert
+        assert(users.size == 1)
+        assert(users[0].name == "Jane Doe")
+    }
+}
+```
+
+Let me know if you need help creating fakes for the other dependencies.
+
+User: Save all seesion to prompt
