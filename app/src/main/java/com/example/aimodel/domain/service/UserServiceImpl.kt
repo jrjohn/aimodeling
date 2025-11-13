@@ -1,6 +1,8 @@
 package com.example.aimodel.domain.service
 
 import com.example.aimodel.data.model.User
+import com.example.aimodel.data.repository.CacheEventBus
+import com.example.aimodel.data.repository.CacheInvalidationEvent
 import com.example.aimodel.data.repository.DataRepository
 import com.example.aimodel.sync.Synchronizer
 import kotlinx.coroutines.flow.Flow
@@ -8,7 +10,8 @@ import javax.inject.Inject
 
 class UserServiceImpl @Inject constructor(
     private val dataRepository: DataRepository,
-    private val synchronizer: Synchronizer
+    private val synchronizer: Synchronizer,
+    private val cacheEventBus: CacheEventBus
 ) : UserService {
 
     override fun getUsers(): Flow<List<User>> {
@@ -37,5 +40,9 @@ class UserServiceImpl @Inject constructor(
 
     override suspend fun syncUsers(): Boolean {
         return synchronizer.sync()
+    }
+
+    override fun invalidateCache() {
+        cacheEventBus.tryEmit(CacheInvalidationEvent.InvalidateAll)
     }
 }

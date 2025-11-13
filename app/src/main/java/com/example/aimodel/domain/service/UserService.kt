@@ -11,4 +11,5 @@ interface UserService {
     suspend fun updateUser(user: User): Boolean
     suspend fun deleteUser(id: Int): Boolean
     suspend fun syncUsers(): Boolean
+    fun invalidateCache()
 }

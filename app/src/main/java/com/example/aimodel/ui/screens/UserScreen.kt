@@ -136,7 +136,7 @@ fun UserScreen(
                             // Summary Header
                             item {
                                 SummaryCard(
-                                    totalLoaded = uiState.users.size,
+                                    totalLoaded = uiState.allUsers.size,
                                     currentPage = uiState.currentPage,
                                     totalPages = uiState.totalPages
                                 )

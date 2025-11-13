@@ -229,6 +229,8 @@ class UserViewModel @Inject constructor(
     }
 
     private fun refresh() {
+        // Invalidate cache before reloading to ensure fresh data
+        userService.invalidateCache()
         loadUsers()
     }
 

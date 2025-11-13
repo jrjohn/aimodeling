@@ -15,9 +15,11 @@ import kotlinx.coroutines.flow.map
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import javax.inject.Provider
 
 class SyncManager @Inject constructor(
-    @param:ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context,
+    private val syncablesProvider: Provider<Set<@JvmSuppressWildcards Syncable>>
 ) : Synchronizer {
 
     private val workManager = WorkManager.getInstance(context)
@@ -29,18 +31,32 @@ class SyncManager @Inject constructor(
     }
 
     override suspend fun sync(): Boolean {
-        Timber.d("SyncManager: Triggering one-time sync")
-        val request = OneTimeWorkRequestBuilder<SyncWorker>()
-            .setConstraints(createSyncConstraints())
-            .addTag(SYNC_WORK_NAME)
-            .build()
+        Timber.d("SyncManager: Starting direct sync (bypassing WorkManager for manual sync)")
 
-        workManager.enqueueUniqueWork(
-            SYNC_WORK_NAME,
-            ExistingWorkPolicy.KEEP,
-            request
-        )
-        return true
+        // For manual sync requests, directly call all syncable components
+        // This ensures synchronous execution and avoids race conditions
+        val syncables = syncablesProvider.get()
+        Timber.d("SyncManager: Syncing ${syncables.size} components")
+
+        var allSuccessful = true
+        syncables.forEach { syncable ->
+            val success = try {
+                syncable.sync()
+            } catch (e: Exception) {
+                Timber.e(e, "SyncManager: Sync failed for ${syncable::class.simpleName}")
+                false
+            }
+
+            if (!success) {
+                allSuccessful = false
+                Timber.w("SyncManager: Sync failed for ${syncable::class.simpleName}")
+            } else {
+                Timber.d("SyncManager: Sync succeeded for ${syncable::class.simpleName}")
+            }
+        }
+
+        Timber.d("SyncManager: Direct sync completed, overall success: $allSuccessful")
+        return allSuccessful
     }
 
     /**

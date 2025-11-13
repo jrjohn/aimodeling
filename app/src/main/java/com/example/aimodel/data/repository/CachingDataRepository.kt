@@ -2,21 +2,41 @@ package com.example.aimodel.data.repository
 
 import android.util.LruCache
 import com.example.aimodel.data.model.User
+import com.example.aimodel.sync.Syncable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
 /**
  * Decorator that adds caching capabilities to a DataRepository
  * Uses LRU cache to store frequently accessed data
+ * Listens to cache invalidation events to maintain cache coherency
  */
 class CachingDataRepository @Inject constructor(
-    private val delegate: DataRepository
-) : DataRepository {
+    private val delegate: DataRepository,
+    private val cacheEventBus: CacheEventBus
+) : DataRepository, Syncable {
+
+    // Coroutine scope for event collection
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    init {
+        // Start listening for cache invalidation events
+        scope.launch {
+            cacheEventBus.events.collect { event ->
+                handleCacheInvalidationEvent(event)
+            }
+        }
+    }
 
     companion object {
         private const val CACHE_SIZE_PAGES = 20 // Cache up to 20 pages
-        private const val CACHE_SIZE_USERS = 100 // Cache up to 100 individual users
         private const val CACHE_TTL_MS = 5 * 60 * 1000L // 5 minutes
     }
 
@@ -61,20 +81,9 @@ class CachingDataRepository @Inject constructor(
     private var totalCountCache: CacheEntry<Int>? = null
 
     /**
-     * Cache for individual users by ID (for quick lookups)
+     * Cache for the full user list (from Flow)
      */
-    private val userCache = object : LruCache<Int, CacheEntry<User>>(CACHE_SIZE_USERS) {
-        override fun entryRemoved(
-            evicted: Boolean,
-            key: Int,
-            oldValue: CacheEntry<User>,
-            newValue: CacheEntry<User>?
-        ) {
-            if (evicted) {
-                Timber.d("CachingDataRepository: Evicted user $key from cache")
-            }
-        }
-    }
+    private var fullUserListCache: CacheEntry<List<User>>? = null
 
     override suspend fun getUsersPage(page: Int): Result<Pair<List<User>, Int>> {
         // Check cache first
@@ -94,14 +103,17 @@ class CachingDataRepository @Inject constructor(
         return delegate.getUsersPage(page).onSuccess { (users, totalPages) ->
             // Store in cache
             pageCache.put(page, CacheEntry(Pair(users, totalPages)))
-
-            // Also cache individual users for quick lookup
-            users.forEach { user ->
-                userCache.put(user.id, CacheEntry(user))
-            }
-
             Timber.d("CachingDataRepository: Cached page $page with ${users.size} users")
         }
+    }
+
+    /**
+     * Manually invalidate all caches
+     * Useful for explicit refresh actions
+     */
+    fun invalidate() {
+        Timber.d("CachingDataRepository: Manual cache invalidation requested")
+        invalidateAllCaches()
     }
 
     override suspend fun getTotalUserCount(): Int {
@@ -125,8 +137,22 @@ class CachingDataRepository @Inject constructor(
     }
 
     override fun getUsers(): Flow<List<User>> {
-        // Don't cache flows, they're already reactive
+        // Cache the Flow data for consistency with paginated access
         return delegate.getUsers()
+            .onStart {
+                // Check cache on start
+                fullUserListCache?.let { entry ->
+                    if (!entry.isExpired()) {
+                        Timber.d("CachingDataRepository: Using cached user list for Flow")
+                    }
+                }
+            }
+            .map { users ->
+                // Update cache with fresh data from Flow
+                fullUserListCache = CacheEntry(users)
+                Timber.d("CachingDataRepository: Cached ${users.size} users from Flow")
+                users
+            }
     }
 
     override suspend fun createUser(user: User): Boolean {
@@ -142,11 +168,10 @@ class CachingDataRepository @Inject constructor(
     override suspend fun updateUser(user: User): Boolean {
         val result = delegate.updateUser(user)
         if (result) {
-            // Update user cache
-            userCache.put(user.id, CacheEntry(user))
-            // Invalidate page caches as user data changed
+            // Invalidate page and user list caches as user data changed
             invalidatePageCaches()
-            Timber.d("CachingDataRepository: Invalidated page caches after user update")
+            fullUserListCache = null
+            Timber.d("CachingDataRepository: Invalidated caches after user update")
         }
         return result
     }
@@ -154,8 +179,6 @@ class CachingDataRepository @Inject constructor(
     override suspend fun deleteUser(id: Int): Boolean {
         val result = delegate.deleteUser(id)
         if (result) {
-            // Remove from cache
-            userCache.remove(id)
             // Invalidate all caches as list changed
             invalidateAllCaches()
             Timber.d("CachingDataRepository: Invalidated caches after user deletion")
@@ -176,22 +199,36 @@ class CachingDataRepository @Inject constructor(
      */
     private fun invalidateAllCaches() {
         pageCache.evictAll()
-        userCache.evictAll()
+        fullUserListCache = null
         totalCountCache = null
     }
 
     /**
-     * Gets a user from cache if available
+     * Handles cache invalidation events from CacheEventBus
      */
-    fun getCachedUser(userId: Int): User? {
-        return userCache[userId]?.let { entry ->
-            if (!entry.isExpired()) {
-                Timber.d("CachingDataRepository: Cache HIT for user $userId")
-                entry.data
-            } else {
-                Timber.d("CachingDataRepository: Cache EXPIRED for user $userId")
-                userCache.remove(userId)
-                null
+    private fun handleCacheInvalidationEvent(event: CacheInvalidationEvent) {
+        when (event) {
+            is CacheInvalidationEvent.SyncCompleted -> {
+                Timber.d("CachingDataRepository: Sync completed, invalidating all caches")
+                invalidateAllCaches()
+            }
+            is CacheInvalidationEvent.UserCreated -> {
+                Timber.d("CachingDataRepository: User ${event.userId} created, invalidating page and count caches")
+                invalidatePageCaches()
+                fullUserListCache = null
+            }
+            is CacheInvalidationEvent.UserUpdated -> {
+                Timber.d("CachingDataRepository: User ${event.userId} updated, invalidating page caches")
+                invalidatePageCaches()
+                fullUserListCache = null
+            }
+            is CacheInvalidationEvent.UserDeleted -> {
+                Timber.d("CachingDataRepository: User ${event.userId} deleted, invalidating all caches")
+                invalidateAllCaches()
+            }
+            is CacheInvalidationEvent.InvalidateAll -> {
+                Timber.d("CachingDataRepository: Manual invalidation requested")
+                invalidateAllCaches()
             }
         }
     }
@@ -203,8 +240,7 @@ class CachingDataRepository @Inject constructor(
         return CacheStats(
             pageCacheSize = pageCache.size(),
             pageCacheMaxSize = pageCache.maxSize(),
-            userCacheSize = userCache.size(),
-            userCacheMaxSize = userCache.maxSize(),
+            hasUserListCache = fullUserListCache != null && !fullUserListCache!!.isExpired(),
             hasCountCache = totalCountCache != null && !totalCountCache!!.isExpired()
         )
     }
@@ -212,8 +248,35 @@ class CachingDataRepository @Inject constructor(
     data class CacheStats(
         val pageCacheSize: Int,
         val pageCacheMaxSize: Int,
-        val userCacheSize: Int,
-        val userCacheMaxSize: Int,
+        val hasUserListCache: Boolean,
         val hasCountCache: Boolean
     )
+
+    /**
+     * Implements Syncable interface to participate in sync operations
+     * Delegates to the underlying repository and invalidates caches after sync
+     */
+    override suspend fun sync(): Boolean {
+        Timber.d("CachingDataRepository: Starting sync")
+
+        // If delegate implements Syncable, call its sync method
+        val success = if (delegate is Syncable) {
+            delegate.sync()
+        } else {
+            Timber.w("CachingDataRepository: Delegate does not implement Syncable")
+            false
+        }
+
+        // Invalidate all caches after sync completes (regardless of success)
+        // This ensures cache coherency even if sync partially succeeded
+        if (success) {
+            Timber.d("CachingDataRepository: Sync succeeded, invalidating all caches")
+            invalidateAllCaches()
+        } else {
+            Timber.w("CachingDataRepository: Sync failed, but invalidating caches anyway for safety")
+            invalidateAllCaches()
+        }
+
+        return success
+    }
 }

@@ -1,5 +1,6 @@
 package com.example.aimodel.di
 
+import com.example.aimodel.data.repository.CacheEventBus
 import com.example.aimodel.data.repository.CachingDataRepository
 import com.example.aimodel.data.repository.DataRepository
 import com.example.aimodel.data.repository.OfflineFirstDataRepository
@@ -43,8 +44,9 @@ abstract class RepositoryModule {
         @Singleton
         @Cached
         fun provideCachedDataRepository(
-            @OfflineFirst offlineFirstDataRepository: DataRepository
-        ): DataRepository = CachingDataRepository(offlineFirstDataRepository)
+            @OfflineFirst offlineFirstDataRepository: DataRepository,
+            cacheEventBus: CacheEventBus
+        ): DataRepository = CachingDataRepository(offlineFirstDataRepository, cacheEventBus)
     }
 
     /**
@@ -57,12 +59,13 @@ abstract class RepositoryModule {
     ): DataRepository
 
     /**
-     * Binds OfflineFirstDataRepository into the set of Syncable components
-     * Note: The underlying OfflineFirstDataRepository handles sync, not the caching wrapper
+     * Binds CachingDataRepository (the top-level wrapper) into the set of Syncable components
+     * This ensures cache invalidation happens synchronously during sync operations
+     * CachingDataRepository delegates to OfflineFirstDataRepository and invalidates caches after
      */
     @Binds
     @IntoSet
-    abstract fun bindDataRepositoryAsSyncable(
-        offlineFirstDataRepository: OfflineFirstDataRepository
+    abstract fun bindCachingDataRepositoryAsSyncable(
+        cachingDataRepository: CachingDataRepository
     ): Syncable
 }

@@ -19,7 +19,8 @@ class OfflineFirstDataRepository @Inject constructor(
     private val userDao: UserDao,
     private val userChangeDao: UserChangeDao,
     private val networkDataSource: UserNetworkDataSource,
-    private val networkMonitor: NetworkMonitor
+    private val networkMonitor: NetworkMonitor,
+    private val cacheEventBus: CacheEventBus
 ) : DataRepository, Syncable {
 
     override fun getUsers(): Flow<List<User>> {
@@ -29,8 +30,33 @@ class OfflineFirstDataRepository @Inject constructor(
     override suspend fun getUsersPage(page: Int): Result<Pair<List<User>, Int>> {
         return try {
             if (!networkMonitor.isOnline.first()) {
-                Result.failure(Exception("Network unavailable"))
+                // When offline, read from local database
+                Timber.d("Offline mode: Reading page $page from local database")
+                val allLocalUsers = userDao.getUsers().first()
+
+                // Calculate pagination from local data
+                val pageSize = 6 // Match API page size
+                val totalPages = (allLocalUsers.size + pageSize - 1) / pageSize // Ceiling division
+
+                if (page < 1 || (allLocalUsers.isNotEmpty() && page > totalPages)) {
+                    Timber.w("Invalid page $page requested (total pages: $totalPages)")
+                    return Result.failure(Exception("Invalid page number"))
+                }
+
+                // Get users for requested page
+                val startIndex = (page - 1) * pageSize
+                val endIndex = minOf(startIndex + pageSize, allLocalUsers.size)
+                val pageUsers = if (startIndex < allLocalUsers.size) {
+                    allLocalUsers.subList(startIndex, endIndex)
+                } else {
+                    emptyList()
+                }
+
+                Timber.d("Offline mode: Returning ${pageUsers.size} users for page $page/$totalPages")
+                Result.success(Pair(pageUsers, maxOf(totalPages, 1)))
             } else {
+                // When online, fetch from network
+                Timber.d("Online mode: Fetching page $page from network")
                 val (users, totalPages) = networkDataSource.getUsersPage(page)
                 Result.success(Pair(users, totalPages))
             }
@@ -49,20 +75,37 @@ class OfflineFirstDataRepository @Inject constructor(
         try {
             Timber.d("Starting sync process")
             processOfflineChanges()
-            Timber.d("Fetching users from network")
-            val (networkUsers, totalCount) = networkDataSource.getUsersWithTotal()
-            Timber.d("Received ${networkUsers.size} users from network, total count: $totalCount")
+
+            // Fetch all pages of users from the network
+            Timber.d("Fetching all users from network")
+            val allNetworkUsers = mutableListOf<User>()
+            var currentPage = 1
+            var totalPages = 1
+
+            do {
+                val (pageUsers, pages) = networkDataSource.getUsersPage(currentPage)
+                totalPages = pages
+                allNetworkUsers.addAll(pageUsers)
+                Timber.d("Fetched page $currentPage/$totalPages with ${pageUsers.size} users")
+                currentPage++
+            } while (currentPage <= totalPages)
+
+            Timber.d("Received ${allNetworkUsers.size} total users from network across $totalPages pages")
 
             // Get local users for conflict resolution
             val localUsers = userDao.getUsers().first()
             Timber.d("Found ${localUsers.size} local users for conflict resolution")
 
             // Resolve conflicts and merge data
-            val resolvedUsers = resolveConflicts(localUsers, networkUsers)
+            val resolvedUsers = resolveConflicts(localUsers, allNetworkUsers)
             Timber.d("Resolved conflicts, inserting ${resolvedUsers.size} users")
 
             userDao.insertUsers(resolvedUsers)
             Timber.d("Sync completed successfully")
+
+            // Emit cache invalidation event after successful sync
+            cacheEventBus.emit(CacheInvalidationEvent.SyncCompleted)
+
             return true
         } catch (e: Exception) {
             Timber.e(e, "Sync failed for DataRepository")
@@ -190,6 +233,8 @@ class OfflineFirstDataRepository @Inject constructor(
             return try {
                 networkDataSource.createUser(CreateUserRequest(user.name, "Developer"))
                 sync()
+                // Emit cache invalidation event (sync already emits SyncCompleted, but emit UserCreated for clarity)
+                cacheEventBus.emit(CacheInvalidationEvent.InvalidateAll)
                 true
             } catch (e: Exception) {
                 Timber.e(e, "Failed to create user online, will queue for offline")
@@ -198,6 +243,8 @@ class OfflineFirstDataRepository @Inject constructor(
             }
         } else {
             queueCreateUser(user)
+            // Emit event even for offline creation
+            cacheEventBus.emit(CacheInvalidationEvent.InvalidateAll)
             return true
         }
     }
@@ -207,6 +254,8 @@ class OfflineFirstDataRepository @Inject constructor(
             return try {
                 networkDataSource.updateUser(user.id, CreateUserRequest(user.name, "Developer"))
                 sync()
+                // Emit cache invalidation event
+                cacheEventBus.emit(CacheInvalidationEvent.UserUpdated(user.id))
                 true
             } catch (e: Exception) {
                 Timber.e(e, "Failed to update user online, will queue for offline")
@@ -215,6 +264,8 @@ class OfflineFirstDataRepository @Inject constructor(
             }
         } else {
             queueUpdateUser(user)
+            // Emit event even for offline update
+            cacheEventBus.emit(CacheInvalidationEvent.UserUpdated(user.id))
             return true
         }
     }
@@ -224,6 +275,8 @@ class OfflineFirstDataRepository @Inject constructor(
             return try {
                 networkDataSource.deleteUser(id)
                 sync()
+                // Emit cache invalidation event
+                cacheEventBus.emit(CacheInvalidationEvent.UserDeleted(id))
                 true
             } catch (e: Exception) {
                 Timber.e(e, "Failed to delete user online, will queue for offline")
@@ -232,6 +285,8 @@ class OfflineFirstDataRepository @Inject constructor(
             }
         } else {
             queueDeleteUser(id)
+            // Emit event even for offline deletion
+            cacheEventBus.emit(CacheInvalidationEvent.UserDeleted(id))
             return true
         }
     }
