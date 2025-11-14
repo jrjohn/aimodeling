@@ -15,6 +15,9 @@ class ArchitectureVerificationPlugin : Plugin<Project> {
         // Register report generation task
         val reportTask = project.tasks.register("generateArchitectureReport", ArchitectureReportTask::class.java)
 
+        // Register error code documentation task
+        val errorCodeDocTask = project.tasks.register("generateErrorCodeDocs", ErrorCodeDocumentationTask::class.java)
+
         // Hook into afterEvaluate to ensure tasks are available
         project.afterEvaluate {
             // Make verification depend on tests (runs after tests complete)
@@ -38,6 +41,7 @@ class ArchitectureVerificationPlugin : Plugin<Project> {
             // Make report generation run after every build task
             project.tasks.matching { it.name.contains("assemble") || it.name == "build" }.forEach { buildTask ->
                 buildTask.finalizedBy(reportTask)
+                buildTask.finalizedBy(errorCodeDocTask)
             }
         }
 
