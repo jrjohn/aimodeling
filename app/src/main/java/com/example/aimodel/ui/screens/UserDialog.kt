@@ -9,9 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -22,17 +20,19 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.aimodel.data.model.User
+import com.example.aimodel.domain.model.EmailAddress
+import com.example.aimodel.domain.validation.UserValidator
 
 // Predefined avatar options
 private val AVATAR_OPTIONS = listOf(
@@ -52,13 +52,67 @@ fun UserDialog(
     onDismiss: () -> Unit,
     onConfirm: (String, String, String, String) -> Unit
 ) {
+    // Input state
     var firstName by remember { mutableStateOf(user?.firstName ?: "") }
     var lastName by remember { mutableStateOf(user?.lastName ?: "") }
     var email by remember { mutableStateOf(user?.email ?: "") }
     var avatar by remember { mutableStateOf(user?.avatar ?: AVATAR_OPTIONS[0]) }
 
-    val isFormValid = firstName.isNotBlank() && lastName.isNotBlank() &&
-                      email.isNotBlank() && avatar.isNotBlank()
+    // Touched state - track if user has interacted with each field
+    var firstNameTouched by remember { mutableStateOf(false) }
+    var lastNameTouched by remember { mutableStateOf(false) }
+    var emailTouched by remember { mutableStateOf(false) }
+
+    // Validation errors - computed as user types using derivedStateOf
+    val firstNameError by remember {
+        derivedStateOf {
+            when {
+                !firstNameTouched -> null
+                firstName.isBlank() -> "First name is required"
+                !UserValidator.isValidName(firstName) -> "First name is too long (max 100 characters)"
+                else -> null
+            }
+        }
+    }
+
+    val lastNameError by remember {
+        derivedStateOf {
+            when {
+                !lastNameTouched -> null
+                lastName.isBlank() -> "Last name is required"
+                !UserValidator.isValidName(lastName) -> "Last name is too long (max 100 characters)"
+                else -> null
+            }
+        }
+    }
+
+    val emailError by remember {
+        derivedStateOf {
+            when {
+                !emailTouched -> null
+                email.isBlank() -> "Email is required"
+                else -> {
+                    EmailAddress.create(email).fold(
+                        onSuccess = { null },
+                        onFailure = { it.message }
+                    )
+                }
+            }
+        }
+    }
+
+    // Form is valid if all fields have no errors and at least one name is provided
+    val isFormValid by remember {
+        derivedStateOf {
+            firstName.isNotBlank() &&
+            lastName.isNotBlank() &&
+            email.isNotBlank() &&
+            avatar.isNotBlank() &&
+            firstNameError == null &&
+            lastNameError == null &&
+            emailError == null
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -85,34 +139,52 @@ fun UserDialog(
 
                 OutlinedTextField(
                     value = firstName,
-                    onValueChange = { firstName = it },
+                    onValueChange = {
+                        firstName = it
+                        firstNameTouched = true
+                    },
                     label = { Text("First Name *") },
                     placeholder = { Text("Enter first name") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    isError = firstName.isBlank()
+                    isError = firstNameError != null,
+                    supportingText = firstNameError?.let {
+                        { Text(it) }
+                    }
                 )
                 Spacer(modifier = Modifier.height(12.dp))
 
                 OutlinedTextField(
                     value = lastName,
-                    onValueChange = { lastName = it },
+                    onValueChange = {
+                        lastName = it
+                        lastNameTouched = true
+                    },
                     label = { Text("Last Name *") },
                     placeholder = { Text("Enter last name") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    isError = lastName.isBlank()
+                    isError = lastNameError != null,
+                    supportingText = lastNameError?.let {
+                        { Text(it) }
+                    }
                 )
                 Spacer(modifier = Modifier.height(12.dp))
 
                 OutlinedTextField(
                     value = email,
-                    onValueChange = { email = it },
+                    onValueChange = {
+                        email = it
+                        emailTouched = true
+                    },
                     label = { Text("Email *") },
                     placeholder = { Text("user@example.com") },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
-                    isError = email.isBlank()
+                    isError = emailError != null,
+                    supportingText = emailError?.let {
+                        { Text(it) }
+                    }
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -142,15 +214,6 @@ fun UserDialog(
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                     }
-                }
-
-                if (!isFormValid) {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "* All fields are required",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.error
-                    )
                 }
             }
         },
