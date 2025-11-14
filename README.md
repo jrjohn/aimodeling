@@ -11,6 +11,7 @@
 
 ## 📋 Table of Contents
 
+- [Highlights](#-highlights)
 - [Features](#-features)
 - [Architecture](#-architecture)
   - [High-Level Architecture](#high-level-architecture)
@@ -29,6 +30,18 @@
 
 ---
 
+## 🎯 Highlights
+
+### 🚀 Latest Features
+
+- **📊 Interactive HTML Architecture Reports** - Beautiful, auto-generated reports on every build with comprehensive metrics, compliance checks, and recommendations
+- **🔍 Automated Architecture Verification** - Built-in verification plugin that checks ViewModel patterns, layer dependencies, and architectural rules
+- **📝 Zero-Touch Documentation** - API docs and architecture reports automatically generated and copied to `docs/` on every build
+- **✅ Abstract Base Class Detection** - Smart verification that excludes abstract ViewModels from pattern compliance checks
+- **🎨 Modern Purple Gradient Theme** - Professional HTML reports with responsive design and interactive elements
+
+---
+
 ## ✨ Features
 
 ### Core Functionality
@@ -41,6 +54,7 @@
 
 ### Advanced Features
 - 📊 **AOP Analytics** - Comprehensive user behavior tracking
+- 🔍 **Architecture Verification** - Automated verification plugin with HTML reports
 - 🔄 **Background Sync** - WorkManager-powered automatic sync
 - 📱 **Modern UI** - Beautiful Jetpack Compose interface with Arcana theme
 - ✅ **Input Validation** - Real-time form validation with user-friendly error messages
@@ -49,6 +63,7 @@
 - 🌐 **RESTful API** - Ktorfit + Ktor Client
 - 🧪 **Well-Tested** - 100% test coverage for business logic (256/256 tests passing)
 - 🏗️ **Input/Output Pattern** - Clean ViewModel architecture with structured events and state
+- 📝 **Auto-Generated Docs** - API documentation and architecture reports on every build
 
 ---
 
@@ -438,22 +453,49 @@ open docs/api/index.html
 ./gradlew copyAllDocsToProject
 ```
 
-#### Architecture Verification
-```bash
-# Run architecture compliance checks:
-./gradlew verifyArchitecture
+#### Architecture Verification Report
 
-# Generate detailed architecture report:
+**Automatically generated HTML report** on every build with comprehensive architecture analysis:
+
+```bash
+# Auto-generated on every build (assembleDebug, assembleRelease, build)
+# Or manually generate:
 ./gradlew generateArchitectureReport
 
-# Output: ARCHITECTURE_VERIFICATION_REPORT.md
+# Locations:
+#   Build output: app/ARCHITECTURE_VERIFICATION_REPORT.html
+#   Project docs: docs/ARCHITECTURE_VERIFICATION.html (auto-copied)
+
+# View report:
+open docs/ARCHITECTURE_VERIFICATION.html
+```
+
+**Report includes:**
+- 📊 **Executive Summary** - Metrics cards with file counts, LOC statistics
+- ✅ **ViewModel Pattern Compliance** - Input/Output pattern verification
+- 🏗️ **Architecture Layers** - UI/Domain/Data layer analysis
+- ⚠️ **Build Warnings** - Compilation warnings and issues
+- 📝 **TODOs** - All TODO comments in codebase
+- 💡 **Recommendations** - Actionable improvement suggestions
+
+**Architecture Compliance Check:**
+```bash
+# Verify architecture rules (runs automatically with 'check' and 'build'):
+./gradlew verifyArchitecture
+
+# The verification checks:
+# - ViewModels follow Input/Output pattern
+# - Domain layer has zero Android dependencies
+# - Proper dependency injection (@HiltViewModel)
+# - Repository implementations in correct packages
+# - Service layer architecture compliance
 ```
 
 ### Manual Documentation
 
 - 📖 [Architecture Guide](docs/ARCHITECTURE.md) - Comprehensive architecture documentation
 - 🏗️ [ViewModel Pattern](docs/VIEWMODEL_PATTERN.md) - Input/Output pattern implementation guide
-- 🔍 [Architecture Verification](docs/ARCHITECTURE_VERIFICATION.md) - Automated verification system
+- 📊 [Architecture Verification Report](docs/ARCHITECTURE_VERIFICATION.html) - Interactive HTML report (auto-generated)
 - ✅ [Input Validation Implementation](USER_DIALOG_VALIDATION_IMPLEMENTATION.md) - UserDialog validation details
 - 🎨 [Mermaid Diagrams](docs/architecture/) - Source diagrams
 - 🔧 [API Docs](docs/api/index.html) - Auto-generated from code comments (after build)
@@ -498,8 +540,17 @@ arcana-android/
 │           ├── domain/service/             # Service tests
 │           └── ui/screens/                 # ViewModel tests
 │
-├── docs/                                    # Documentation
-│   ├── architecture/                       # Mermaid diagrams
+├── buildSrc/                                # Custom Gradle plugins
+│   └── src/main/kotlin/com/example/arcana/verification/
+│       ├── ArchitectureVerificationPlugin.kt  # Gradle plugin
+│       ├── ArchitectureVerificationTask.kt    # Verification task
+│       └── ArchitectureReportTask.kt          # HTML report generator
+│
+├── docs/                                    # Documentation (auto-generated)
+│   ├── api/                                # Dokka API documentation
+│   ├── architecture/                       # Mermaid diagram sources
+│   ├── diagrams/                           # Generated PNG diagrams
+│   ├── ARCHITECTURE_VERIFICATION.html      # Architecture report (auto)
 │   └── ARCHITECTURE.md                     # Architecture guide
 │
 ├── build.gradle.kts                        # Root build configuration
@@ -510,6 +561,7 @@ arcana-android/
 
 | Directory | Purpose |
 |-----------|---------|
+| `buildSrc/` | Custom Gradle plugins for architecture verification |
 | `core/analytics/` | AOP-based analytics system with annotations |
 | `data/repository/` | Offline-first repository with caching |
 | `data/local/` | Room database and DAOs |
@@ -519,6 +571,7 @@ arcana-android/
 | `domain/validation/` | Input validators (UserValidator) |
 | `ui/screens/` | Compose screens + ViewModels with input validation |
 | `di/` | Hilt dependency injection modules |
+| `docs/` | Auto-generated documentation (API, reports, diagrams) |
 
 ---
 
@@ -539,10 +592,15 @@ arcana-android/
 
 ### Build Outputs
 
+Every build automatically generates and copies documentation to the project docs directory:
+
 | Task | Build Output | Project Docs (Auto-Copied) |
 |------|--------------|----------------------------|
 | `assembleDebug` | `app/build/outputs/apk/debug/app-debug.apk` | N/A |
-| `generateApiDocs` | `app/build/docs/api/index.html` | `docs/api/index.html` |
+| **Auto-generated on every build:** | | |
+| Architecture Report | `app/ARCHITECTURE_VERIFICATION_REPORT.html` | `docs/ARCHITECTURE_VERIFICATION.html` ✅ |
+| API Documentation | `app/build/docs/api/index.html` | `docs/api/index.html` ✅ |
+| **Manual generation:** | | |
 | `generateMermaidDiagrams` | `app/build/docs/diagrams/*.png` | `docs/diagrams/*.png` |
 
 ### Gradle Tasks
@@ -552,8 +610,8 @@ arcana-android/
 ./gradlew tasks
 
 # Architecture Verification tasks
-./gradlew verifyArchitecture       # Verify architecture compliance (runs with check)
-./gradlew generateArchitectureReport # Generate detailed architecture report
+./gradlew verifyArchitecture          # Verify architecture compliance (auto-runs with 'check' and 'build')
+./gradlew generateArchitectureReport  # Generate HTML report (auto-runs with 'assemble*' tasks)
 
 # Documentation tasks
 ./gradlew generateApiDocs          # Generate API documentation (auto-copied to docs/)
