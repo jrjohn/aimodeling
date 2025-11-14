@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
     alias(libs.plugins.ktorfit)
+    alias(libs.plugins.dokka)
 }
 
 android {
@@ -172,4 +173,69 @@ tasks.withType<Test> {
 // Make build task depend on test
 tasks.named("build") {
     dependsOn("test")
+}
+
+// ============================================
+// API Documentation Configuration (Dokka V2)
+// ============================================
+
+// Configure Dokka
+dokka {
+    moduleName.set("AI Model Android App")
+
+    dokkaPublications.html {
+        outputDirectory.set(layout.buildDirectory.dir("docs/api"))
+
+        // Suppress obvious functions
+        suppressObviousFunctions.set(false)
+    }
+
+    dokkaSourceSets.configureEach {
+        // Include all source sets
+        suppressGeneratedFiles.set(false)
+
+        // Skip test sources
+        suppressedFiles.from(
+            fileTree(projectDir.resolve("src/test")),
+            fileTree(projectDir.resolve("src/androidTest"))
+        )
+
+        // Custom documentation sections (optional - uncomment if you have a Module.md file)
+        // includes.from("Module.md")
+    }
+}
+
+// Generate docs task
+tasks.register("generateApiDocs") {
+    group = "documentation"
+    description = "Generates API documentation in HTML format"
+
+    dependsOn("dokkaGeneratePublicationHtml")
+
+    doLast {
+        val docsDir = layout.buildDirectory.dir("docs/api").get().asFile
+        println("")
+        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        println("📚 API Documentation Generated Successfully!")
+        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        println("  Location: ${docsDir.absolutePath}")
+        println("  Format:   HTML")
+        println("")
+        println("  To view the documentation:")
+        println("  open ${docsDir.resolve("index.html").absolutePath}")
+        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        println("")
+    }
+}
+
+// Make assemble and assembleDebug/assembleRelease tasks generate documentation
+tasks.matching { it.name.matches(Regex("assemble(Debug|Release)?")) }.configureEach {
+    finalizedBy("generateApiDocs")
+}
+
+// Also create a convenient task to build with docs
+tasks.register("assembleWithDocs") {
+    group = "build"
+    description = "Assembles the app and generates API documentation"
+    dependsOn("assemble", "generateApiDocs")
 }
