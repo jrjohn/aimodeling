@@ -1,0 +1,74 @@
+graph LR
+    subgraph "Cache System Architecture"
+        subgraph "CachingDataRepository"
+            PageCache[LRU Page Cache<br/>Size: 20 pages<br/>TTL: 5 min]
+            UserListCache[Full User List Cache<br/>TTL: 5 min]
+            CountCache[Total Count Cache<br/>TTL: 5 min]
+            CacheLogic{Cache<br/>Logic}
+        end
+
+        subgraph "Cache Invalidation Events"
+            EventBus[CacheEventBus<br/>SharedFlow]
+            SyncCompleted[SyncCompleted]
+            UserCreated[UserCreated]
+            UserUpdated[UserUpdated]
+            UserDeleted[UserDeleted]
+            InvalidateAll[InvalidateAll]
+        end
+
+        subgraph "Event Sources"
+            OfflineRepo[OfflineFirstDataRepository]
+            UserServiceImpl[UserServiceImpl]
+        end
+
+        subgraph "Data Source"
+            DelegateRepo[OfflineFirstDataRepository<br/>Data Source]
+        end
+    end
+
+    %% Cache Operations
+    Request[Incoming Request] --> CacheLogic
+    CacheLogic -->|Check TTL| PageCache
+    CacheLogic -->|Check TTL| UserListCache
+    CacheLogic -->|Check TTL| CountCache
+
+    PageCache -->|Hit + Valid| Return[Return Cached Data]
+    PageCache -->|Miss/Expired| DelegateRepo
+
+    DelegateRepo -->|Fetch Fresh Data| CacheLogic
+    CacheLogic -->|Store| PageCache
+    CacheLogic -->|Store| UserListCache
+    CacheLogic -->|Store| CountCache
+    CacheLogic --> Return
+
+    %% Event Emission
+    OfflineRepo -->|After Sync| EventBus
+    OfflineRepo -->|After CRUD| EventBus
+    UserServiceImpl -->|Manual Invalidation| EventBus
+
+    %% Event Types
+    EventBus --> SyncCompleted
+    EventBus --> UserCreated
+    EventBus --> UserUpdated
+    EventBus --> UserDeleted
+    EventBus --> InvalidateAll
+
+    %% Event Handling
+    SyncCompleted -->|Invalidate All| CacheLogic
+    UserCreated -->|Invalidate Pages| PageCache
+    UserCreated -->|Invalidate List| UserListCache
+    UserUpdated -->|Invalidate Pages| PageCache
+    UserUpdated -->|Invalidate List| UserListCache
+    UserDeleted -->|Invalidate All| CacheLogic
+    InvalidateAll -->|Invalidate All| CacheLogic
+
+    %% Styling
+    classDef cacheClass fill:#b3e5fc,stroke:#01579b,stroke-width:2px
+    classDef eventClass fill:#c5e1a5,stroke:#33691e,stroke-width:2px
+    classDef sourceClass fill:#ffccbc,stroke:#bf360c,stroke-width:2px
+    classDef delegateClass fill:#f8bbd0,stroke:#880e4f,stroke-width:2px
+
+    class PageCache,UserListCache,CountCache,CacheLogic cacheClass
+    class EventBus,SyncCompleted,UserCreated,UserUpdated,UserDeleted,InvalidateAll eventClass
+    class OfflineRepo,UserServiceImpl sourceClass
+    class DelegateRepo delegateClass

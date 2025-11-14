@@ -1,0 +1,128 @@
+graph TB
+    subgraph "Application Scope"
+        App["Application (HiltAndroidApp)"]
+    end
+
+    subgraph "Hilt Modules"
+        DatabaseModule["DatabaseModule (InstallIn)"]
+        NetworkModule["NetworkModule (InstallIn)"]
+        RepositoryModule["RepositoryModule (InstallIn)"]
+        SyncModule["SyncModule (InstallIn)"]
+    end
+
+    subgraph "Provided Dependencies"
+        subgraph "Database Layer"
+            AppDB[(AppDatabase)]
+            UserDao[UserDao]
+            UserChangeDao[UserChangeDao]
+        end
+
+        subgraph "Network Layer"
+            HttpClient[Ktor HttpClient]
+            ApiService[ApiService Ktorfit]
+            NetworkDS[UserNetworkDataSource]
+            NetMonitor[NetworkMonitor]
+        end
+
+        subgraph "Repository Layer"
+            OfflineRepo["OfflineFirstDataRepository (OfflineFirst)"]
+            CachingRepo["CachingDataRepository (Cached)"]
+            DefaultRepo["DataRepository (Default)"]
+            EventBus["CacheEventBus (Singleton)"]
+        end
+
+        subgraph "Service Layer"
+            UserServiceImpl[UserServiceImpl]
+            UserService[UserService Interface]
+        end
+
+        subgraph "Sync Layer"
+            SyncManager[SyncManager]
+            Syncables[Set Syncable Multi-binding]
+        end
+
+        subgraph "Core"
+            StrProvider[StringProvider]
+        end
+    end
+
+    subgraph "ViewModels (Activity Scope)"
+        HomeVM["HiltViewModel HomeViewModel"]
+        UserVM["HiltViewModel UserViewModel"]
+    end
+
+    subgraph "Workers"
+        SyncWorker["HiltWorker SyncWorker"]
+    end
+
+    %% Module Provisions
+    DatabaseModule -->|"Provides"| AppDB
+    DatabaseModule -->|"Provides"| UserDao
+    DatabaseModule -->|"Provides"| UserChangeDao
+
+    NetworkModule -->|"Provides"| HttpClient
+    NetworkModule -->|"Provides"| ApiService
+    NetworkModule -->|"Provides"| NetworkDS
+    NetworkModule -->|"Provides"| NetMonitor
+
+    RepositoryModule -->|"Provides OfflineFirst"| OfflineRepo
+    RepositoryModule -->|"Provides Cached"| CachingRepo
+    RepositoryModule -->|"Binds"| DefaultRepo
+    RepositoryModule -->|"Provides Singleton"| EventBus
+    RepositoryModule -->|"Binds IntoSet"| Syncables
+
+    SyncModule -->|"Provides"| SyncManager
+
+    %% Dependencies
+    OfflineRepo --> UserDao
+    OfflineRepo --> UserChangeDao
+    OfflineRepo --> NetworkDS
+    OfflineRepo --> NetMonitor
+    OfflineRepo --> EventBus
+
+    CachingRepo --> OfflineRepo
+    CachingRepo --> EventBus
+
+    DefaultRepo -.bound to.- CachingRepo
+
+    UserServiceImpl --> DefaultRepo
+    UserServiceImpl --> SyncManager
+    UserServiceImpl --> EventBus
+    UserService -.bound to.- UserServiceImpl
+
+    SyncManager --> Syncables
+    Syncables --> CachingRepo
+
+    %% Injection into consumers
+    HomeVM -.injected with.- UserService
+    UserVM -.injected with.- UserService
+    SyncWorker -.injected with.- Syncables
+
+    NetworkDS --> ApiService
+    NetworkDS --> HttpClient
+
+    HomeVM --> StrProvider
+    UserVM --> StrProvider
+
+    %% App initialization
+    App -.initializes.- DatabaseModule
+    App -.initializes.- NetworkModule
+    App -.initializes.- RepositoryModule
+    App -.initializes.- SyncModule
+
+    %% Styling
+    classDef moduleClass fill:#e1bee7,stroke:#4a148c,stroke-width:2px
+    classDef dbClass fill:#b2dfdb,stroke:#00695c,stroke-width:2px
+    classDef netClass fill:#bbdefb,stroke:#0d47a1,stroke-width:2px
+    classDef repoClass fill:#c5e1a5,stroke:#33691e,stroke-width:2px
+    classDef vmClass fill:#ffccbc,stroke:#bf360c,stroke-width:2px
+    classDef workerClass fill:#fff9c4,stroke:#f57f17,stroke-width:2px
+    classDef appClass fill:#f8bbd0,stroke:#880e4f,stroke-width:3px
+
+    class DatabaseModule,NetworkModule,RepositoryModule,SyncModule moduleClass
+    class AppDB,UserDao,UserChangeDao dbClass
+    class HttpClient,ApiService,NetworkDS,NetMonitor netClass
+    class OfflineRepo,CachingRepo,DefaultRepo,EventBus,UserServiceImpl,UserService,SyncManager,Syncables repoClass
+    class HomeVM,UserVM vmClass
+    class SyncWorker workerClass
+    class App appClass

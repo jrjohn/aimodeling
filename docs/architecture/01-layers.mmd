@@ -1,0 +1,104 @@
+graph TB
+    subgraph "UI Layer (Jetpack Compose)"
+        HomeScreen[HomeScreen.kt]
+        UserScreen[UserScreen.kt]
+        Theme[Theme & Styling]
+    end
+
+    subgraph "ViewModel Layer"
+        HomeVM[HomeViewModel]
+        UserVM[UserViewModel]
+        UIState[UI State Flow]
+    end
+
+    subgraph "Domain Layer"
+        UserService[UserService]
+        ServiceImpl[UserServiceImpl]
+    end
+
+    subgraph "Data Layer"
+        subgraph "Repository Pattern"
+            CachingRepo[CachingDataRepository<br/>LRU Cache + TTL]
+            OfflineRepo[OfflineFirstDataRepository<br/>Conflict Resolution]
+            DataRepo[DataRepository Interface]
+        end
+
+        subgraph "Data Sources"
+            Network[Network Data Source<br/>Ktor + Ktorfit]
+            Database[Room Database<br/>UserDao]
+            Cache[Cache Event Bus<br/>SharedFlow]
+        end
+
+        subgraph "Models"
+            User[User Model]
+            DTO[Network DTOs]
+            Entity[DB Entities]
+        end
+    end
+
+    subgraph "Sync Layer"
+        SyncManager[SyncManager<br/>WorkManager]
+        SyncWorker[SyncWorker]
+        Syncable[Syncable Interface]
+    end
+
+    subgraph "Core Layer"
+        DI[Hilt DI Modules]
+        NetworkMonitor[Network Monitor]
+        StringProvider[String Provider]
+    end
+
+    %% UI to ViewModel
+    HomeScreen -->|observes| HomeVM
+    UserScreen -->|observes| UserVM
+    HomeVM -->|manages| UIState
+    UserVM -->|manages| UIState
+
+    %% ViewModel to Domain
+    HomeVM -->|calls| UserService
+    UserVM -->|calls| UserService
+    ServiceImpl -.implements.- UserService
+
+    %% Domain to Data
+    ServiceImpl -->|uses| DataRepo
+    ServiceImpl -->|triggers| SyncManager
+
+    %% Repository Chain
+    CachingRepo -.implements.- DataRepo
+    CachingRepo -->|decorates| OfflineRepo
+    OfflineRepo -.implements.- DataRepo
+    CachingRepo -->|listens| Cache
+    OfflineRepo -->|emits| Cache
+
+    %% Data Sources
+    OfflineRepo -->|reads/writes| Database
+    OfflineRepo -->|fetches| Network
+    OfflineRepo -->|checks| NetworkMonitor
+
+    %% Sync Layer
+    SyncManager -->|schedules| SyncWorker
+    SyncWorker -->|calls| Syncable
+    CachingRepo -.implements.- Syncable
+
+    %% DI
+    DI -.provides.- HomeVM
+    DI -.provides.- UserVM
+    DI -.provides.- ServiceImpl
+    DI -.provides.- CachingRepo
+    DI -.provides.- OfflineRepo
+    DI -.provides.- SyncManager
+
+    %% Styling
+    classDef uiLayer fill:#e1f5ff,stroke:#01579b,stroke-width:2px
+    classDef vmLayer fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef domainLayer fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef dataLayer fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    classDef syncLayer fill:#fff8e1,stroke:#f57f17,stroke-width:2px
+    classDef coreLayer fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+
+    class HomeScreen,UserScreen,Theme uiLayer
+    class HomeVM,UserVM,UIState vmLayer
+    class UserService,ServiceImpl domainLayer
+    class CachingRepo,OfflineRepo,DataRepo,Network,Database,Cache,User,DTO,Entity dataLayer
+    class SyncManager,SyncWorker,Syncable syncLayer
+    class DI,NetworkMonitor,StringProvider coreLayer

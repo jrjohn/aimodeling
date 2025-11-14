@@ -1,0 +1,90 @@
+sequenceDiagram
+    participant User
+    participant UI as UserScreen
+    participant VM as UserViewModel
+    participant Service as UserService
+    participant Cache as CachingDataRepository
+    participant Offline as OfflineFirstDataRepository
+    participant DB as Room Database
+    participant API as Network API
+    participant EventBus as CacheEventBus
+
+    Note over User,EventBus: Online Mode - Initial Load
+
+    User->>UI: Opens app
+    UI->>VM: Observes uiState
+    VM->>Service: getUsersPage(1)
+    Service->>Cache: getUsersPage(1)
+
+    alt Cache Hit (within TTL)
+        Cache-->>Service: Return cached data
+        Service-->>VM: Success(users, totalPages)
+    else Cache Miss
+        Cache->>Offline: getUsersPage(1)
+        Offline->>API: GET /users?page=1
+        API-->>Offline: 6 users, 2 pages
+        Offline-->>Cache: Success(users, totalPages)
+        Cache->>Cache: Store in LRU cache
+        Cache-->>Service: Success(users, totalPages)
+        Service-->>VM: Success(users, totalPages)
+    end
+
+    VM->>VM: Update uiState
+    VM-->>UI: New state with users
+    UI-->>User: Display users
+
+    Note over User,EventBus: User Creates New User
+
+    User->>UI: Clicks "Add User"
+    UI->>VM: onEvent(CreateUser)
+    VM->>Service: createUser(user)
+    Service->>Cache: createUser(user)
+    Cache->>Offline: createUser(user)
+
+    alt Online
+        Offline->>API: POST /users
+        API-->>Offline: Success
+        Offline->>EventBus: emit(UserCreated)
+        EventBus-->>Cache: UserCreated event
+        Cache->>Cache: Invalidate page caches
+        Offline-->>Cache: true
+    else Offline
+        Offline->>DB: Queue change
+        Offline->>EventBus: emit(UserCreated)
+        EventBus-->>Cache: UserCreated event
+        Cache->>Cache: Invalidate page caches
+        Offline-->>Cache: true
+    end
+
+    Cache-->>Service: true
+    Service-->>VM: true
+    VM->>Service: getUsersPage(1) [reload]
+    Service->>Cache: getUsersPage(1)
+    Cache->>Offline: getUsersPage(1) [cache miss]
+    Offline->>API: GET /users?page=1
+    API-->>Offline: Updated data
+    Offline-->>Cache: Success
+    Cache-->>Service: Success
+    Service-->>VM: Success
+    VM-->>UI: Updated users
+    UI-->>User: Show success message
+
+    Note over User,EventBus: Background Sync
+
+    SyncWorker->>Service: syncUsers()
+    Service->>SyncManager: sync()
+    SyncManager->>Cache: sync()
+    Cache->>Offline: sync()
+
+    loop For each page
+        Offline->>API: GET /users?page=N
+        API-->>Offline: Users for page N
+    end
+
+    Offline->>DB: Insert all users
+    Offline->>EventBus: emit(SyncCompleted)
+    EventBus-->>Cache: SyncCompleted event
+    Cache->>Cache: Invalidate ALL caches
+    Cache-->>SyncManager: true
+
+    Note over Cache,EventBus: All caches cleared, fresh data on next request

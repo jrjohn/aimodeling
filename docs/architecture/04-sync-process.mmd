@@ -1,0 +1,86 @@
+flowchart TD
+    Start([Sync Triggered]) --> CheckOnline{Network<br/>Available?}
+
+    CheckOnline -->|No| SkipSync[Log: Sync skipped - offline]
+    SkipSync --> End([Return false])
+
+    CheckOnline -->|Yes| ProcessChanges[Process Offline Changes]
+
+    ProcessChanges --> GetQueued[Get queued changes<br/>from UserChangeDao]
+    GetQueued --> HasChanges{Has queued<br/>changes?}
+
+    HasChanges -->|Yes| LoopChanges[For each change]
+    LoopChanges --> CheckType{Change<br/>Type?}
+
+    CheckType -->|CREATE| SendCreate[POST /users]
+    CheckType -->|UPDATE| SendUpdate[PUT /users/:id]
+    CheckType -->|DELETE| SendDelete[DELETE /users/:id]
+
+    SendCreate --> ChangeSuccess{Success?}
+    SendUpdate --> ChangeSuccess
+    SendDelete --> ChangeSuccess
+
+    ChangeSuccess -->|Yes| RemoveQueued[Remove from queue]
+    ChangeSuccess -->|No| LogError[Log error, keep in queue]
+
+    RemoveQueued --> NextChange{More<br/>changes?}
+    LogError --> NextChange
+
+    NextChange -->|Yes| LoopChanges
+    NextChange -->|No| FetchData
+    HasChanges -->|No| FetchData
+
+    FetchData[Fetch All Pages from API]
+    FetchData --> InitVars[currentPage = 1<br/>allUsers = empty list]
+
+    InitVars --> FetchLoop[Fetch Page Loop]
+    FetchLoop --> APICall[GET /users?page=currentPage]
+    APICall --> StoreUsers[allUsers += pageUsers]
+    StoreUsers --> IncrPage[currentPage++]
+
+    IncrPage --> MorePages{currentPage <=<br/>totalPages?}
+    MorePages -->|Yes| FetchLoop
+    MorePages -->|No| GetLocal[Get Local Users from DB]
+
+    GetLocal --> ResolveConflicts[Resolve Conflicts]
+
+    ResolveConflicts --> CompareLoop[For each network user]
+    CompareLoop --> FindLocal{Find matching<br/>local user?}
+
+    FindLocal -->|No| UseNetwork[Use network version]
+    FindLocal -->|Yes| CompareTimestamps{Compare<br/>updatedAt}
+
+    CompareTimestamps -->|Network newer| UseNetwork
+    CompareTimestamps -->|Local newer| UseLocal[Use local version]
+    CompareTimestamps -->|Same time| CompareVersion{Compare<br/>version?}
+
+    CompareVersion -->|Local higher| UseLocal
+    CompareVersion -->|Network higher/equal| UseNetwork
+
+    UseNetwork --> NextUser{More<br/>users?}
+    UseLocal --> NextUser
+
+    NextUser -->|Yes| CompareLoop
+    NextUser -->|No| InsertDB[Insert resolved users<br/>into Room DB]
+
+    InsertDB --> EmitEvent[Emit CacheInvalidationEvent.<br/>SyncCompleted]
+    EmitEvent --> InvalidateCaches[CachingDataRepository<br/>invalidates all caches]
+
+    InvalidateCaches --> Success([Return true])
+
+    %% Error Handling
+    APICall -.->|Exception| CatchError[Catch Exception]
+    InsertDB -.->|Exception| CatchError
+    CatchError --> LogFail[Log: Sync failed]
+    LogFail --> End
+
+    %% Styling
+    classDef successClass fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px
+    classDef errorClass fill:#ffcdd2,stroke:#c62828,stroke-width:2px
+    classDef processClass fill:#bbdefb,stroke:#1565c0,stroke-width:2px
+    classDef decisionClass fill:#fff9c4,stroke:#f57f17,stroke-width:2px
+
+    class Success,RemoveQueued,InsertDB,EmitEvent,InvalidateCaches successClass
+    class SkipSync,End,LogError,CatchError,LogFail errorClass
+    class ProcessChanges,FetchData,GetLocal,ResolveConflicts,APICall processClass
+    class CheckOnline,HasChanges,CheckType,ChangeSuccess,NextChange,MorePages,FindLocal,CompareTimestamps,CompareVersion,NextUser decisionClass

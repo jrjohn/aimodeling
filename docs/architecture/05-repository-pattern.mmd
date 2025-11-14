@@ -1,0 +1,153 @@
+classDiagram
+    class DataRepository {
+        <<interface>>
+        +getUsers() Flow~List~User~~
+        +getUsersPage(page: Int) Result~Pair~List~User~, Int~~
+        +getTotalUserCount() Int
+        +createUser(user: User) Boolean
+        +updateUser(user: User) Boolean
+        +deleteUser(id: Int) Boolean
+    }
+
+    class Syncable {
+        <<interface>>
+        +sync() Boolean
+    }
+
+    class OfflineFirstDataRepository {
+        -userDao: UserDao
+        -userChangeDao: UserChangeDao
+        -networkDataSource: UserNetworkDataSource
+        -networkMonitor: NetworkMonitor
+        -cacheEventBus: CacheEventBus
+        +getUsers() Flow~List~User~~
+        +getUsersPage(page: Int) Result~Pair~...~~
+        +getTotalUserCount() Int
+        +createUser(user: User) Boolean
+        +updateUser(user: User) Boolean
+        +deleteUser(id: Int) Boolean
+        +sync() Boolean
+        -processOfflineChanges()
+        -resolveConflicts(...) List~User~
+        -queueCreateUser(user: User)
+        -queueUpdateUser(user: User)
+        -queueDeleteUser(id: Int)
+    }
+
+    class CachingDataRepository {
+        -delegate: DataRepository
+        -cacheEventBus: CacheEventBus
+        -pageCache: LruCache~Int, CacheEntry~...~~
+        -fullUserListCache: CacheEntry~List~User~~
+        -totalCountCache: CacheEntry~Int~
+        -scope: CoroutineScope
+        +getUsers() Flow~List~User~~
+        +getUsersPage(page: Int) Result~Pair~...~~
+        +getTotalUserCount() Int
+        +createUser(user: User) Boolean
+        +updateUser(user: User) Boolean
+        +deleteUser(id: Int) Boolean
+        +sync() Boolean
+        +invalidate()
+        +getCacheStats() CacheStats
+        -invalidateAllCaches()
+        -invalidatePageCaches()
+        -handleCacheInvalidationEvent(event)
+    }
+
+    class CacheEntry~T~ {
+        +data: T
+        +timestamp: Long
+        +isExpired() Boolean
+    }
+
+    class CacheEventBus {
+        -_events: MutableSharedFlow~CacheInvalidationEvent~
+        +events: SharedFlow~CacheInvalidationEvent~
+        +emit(event: CacheInvalidationEvent)
+        +tryEmit(event: CacheInvalidationEvent) Boolean
+    }
+
+    class CacheInvalidationEvent {
+        <<sealed class>>
+    }
+
+    class SyncCompleted {
+        <<object>>
+    }
+
+    class UserCreated {
+        +userId: Int
+    }
+
+    class UserUpdated {
+        +userId: Int
+    }
+
+    class UserDeleted {
+        +userId: Int
+    }
+
+    class InvalidateAll {
+        <<object>>
+    }
+
+    class UserDao {
+        <<interface>>
+        +getUsers() Flow~List~User~~
+        +insertUsers(users: List~User~)
+        +deleteUser(id: Int)
+        +getUserById(id: Int) User?
+    }
+
+    class UserChangeDao {
+        <<interface>>
+        +getQueuedChanges() Flow~List~UserChange~~
+        +insertChange(change: UserChange)
+        +deleteChange(id: Int)
+    }
+
+    class UserNetworkDataSource {
+        -apiService: ApiService
+        +getUsers() List~User~
+        +getUsersWithTotal() Pair~List~User~, Int~
+        +getUsersPage(page: Int) Pair~List~User~, Int~
+        +createUser(request: CreateUserRequest)
+        +updateUser(id: Int, request: ...)
+        +deleteUser(id: Int)
+    }
+
+    class NetworkMonitor {
+        +isOnline: Flow~Boolean~
+    }
+
+    %% Relationships
+    DataRepository <|.. OfflineFirstDataRepository : implements
+    DataRepository <|.. CachingDataRepository : implements
+    Syncable <|.. OfflineFirstDataRepository : implements
+    Syncable <|.. CachingDataRepository : implements
+
+    CachingDataRepository *-- DataRepository : delegates to
+    CachingDataRepository --> CacheEventBus : listens to
+    CachingDataRepository --> CacheEntry : uses
+
+    OfflineFirstDataRepository --> UserDao : reads/writes
+    OfflineFirstDataRepository --> UserChangeDao : queues changes
+    OfflineFirstDataRepository --> UserNetworkDataSource : fetches from
+    OfflineFirstDataRepository --> NetworkMonitor : checks connectivity
+    OfflineFirstDataRepository --> CacheEventBus : emits events
+
+    CacheEventBus --> CacheInvalidationEvent : emits
+
+    CacheInvalidationEvent <|-- SyncCompleted
+    CacheInvalidationEvent <|-- UserCreated
+    CacheInvalidationEvent <|-- UserUpdated
+    CacheInvalidationEvent <|-- UserDeleted
+    CacheInvalidationEvent <|-- InvalidateAll
+
+    %% Notes
+    note for CachingDataRepository "Decorator Pattern:\nAdds caching layer\nto any DataRepository"
+
+    note for OfflineFirstDataRepository "Offline-First:\n- Reads from local DB\n- Syncs with API\n- Queues offline changes\n- Resolves conflicts"
+
+    note for CacheEventBus "Event-Driven:\nCoordinates cache\ninvalidation across\nrepository layers"

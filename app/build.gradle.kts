@@ -239,3 +239,135 @@ tasks.register("assembleWithDocs") {
     description = "Assembles the app and generates API documentation"
     dependsOn("assemble", "generateApiDocs")
 }
+
+// ============================================
+// Architecture Diagrams (Mermaid → Draw.io)
+// ============================================
+
+tasks.register<Exec>("generateMermaidDiagrams") {
+    group = "documentation"
+    description = "Generates architecture diagrams from Mermaid to PNG and Draw.io format"
+
+    val docsDir = projectDir.resolve("../docs/architecture")
+    val outputDir = layout.buildDirectory.dir("docs/diagrams").get().asFile
+
+    doFirst {
+        // Check if mmdc (mermaid-cli) is available
+        val isMmdcAvailable = try {
+            val process = ProcessBuilder("which", "mmdc").start()
+            process.waitFor() == 0
+        } catch (e: Exception) {
+            false
+        }
+
+        if (!isMmdcAvailable) {
+            println("")
+            println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+            println("⚠️  Mermaid CLI (mmdc) not found!")
+            println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+            println("")
+            println("  To generate diagrams, install mermaid-cli:")
+            println("  npm install -g @mermaid-js/mermaid-cli")
+            println("")
+            println("  Or use the online converter:")
+            println("  1. Open: https://mermaid.live")
+            println("  2. Paste content from: docs/architecture/*.mmd")
+            println("  3. Export as PNG or SVG")
+            println("")
+            println("  Or import into draw.io:")
+            println("  1. Open: https://app.diagrams.net")
+            println("  2. File → Import from → Mermaid")
+            println("  3. Select .mmd files from docs/architecture/")
+            println("")
+            println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+            println("")
+
+            // Still list available diagrams
+            docsDir.listFiles()?.filter { it.extension == "mmd" }?.forEach { file ->
+                println("  📄 ${file.name}")
+            }
+            println("")
+
+            throw GradleException("Mermaid CLI not installed. See instructions above.")
+        }
+
+        // Create output directory
+        outputDir.mkdirs()
+    }
+
+    // Generate PNG diagrams from all .mmd files
+    val script = """
+        cd ${docsDir.absolutePath} &&
+        for f in *.mmd; do
+            echo "Generating ${'$'}f..." &&
+            mmdc -i "${'$'}f" -o "${outputDir.absolutePath}/${'$'}{f%.mmd}.png" -w 2048 -H 1536 -b transparent
+        done
+    """.trimIndent()
+
+    commandLine("sh", "-c", script)
+
+    doLast {
+        println("")
+        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        println("🎨 Architecture Diagrams Generated Successfully!")
+        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        println("  PNG Location: ${outputDir.absolutePath}")
+        println("  Mermaid Source: ${docsDir.absolutePath}")
+        println("")
+        println("  Diagrams generated:")
+
+        outputDir.listFiles()?.filter { it.extension == "png" }?.forEach { file ->
+            println("    ✓ ${file.name}")
+        }
+
+        println("")
+        println("  To convert to Draw.io:")
+        println("  1. Open https://app.diagrams.net")
+        println("  2. File → Import from → Mermaid")
+        println("  3. Select .mmd files from docs/architecture/")
+        println("  4. File → Export as → XML (.drawio)")
+        println("")
+        println("  Or view online:")
+        println("  Open https://mermaid.live and paste .mmd content")
+        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        println("")
+    }
+}
+
+// Task to list available diagrams without generating
+tasks.register("listDiagrams") {
+    group = "documentation"
+    description = "Lists all available Mermaid architecture diagrams"
+
+    doLast {
+        val docsDir = projectDir.resolve("../docs/architecture")
+
+        println("")
+        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        println("📊 Available Architecture Diagrams")
+        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        println("")
+
+        docsDir.listFiles()?.filter { it.extension == "mmd" }?.sortedBy { it.name }?.forEach { file ->
+            println("  ${file.name}")
+            println("    ${file.absolutePath}")
+            println("")
+        }
+
+        println("  To generate diagrams: ./gradlew generateMermaidDiagrams")
+        println("  To view online: Copy content to https://mermaid.live")
+        println("  To edit: Open .mmd files in VS Code with Mermaid extension")
+        println("")
+        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        println("")
+    }
+}
+
+// Optional: Auto-generate diagrams with documentation
+tasks.named("generateApiDocs") {
+    doLast {
+        println("  💡 Tip: Generate architecture diagrams with:")
+        println("     ./gradlew generateMermaidDiagrams")
+        println("")
+    }
+}
