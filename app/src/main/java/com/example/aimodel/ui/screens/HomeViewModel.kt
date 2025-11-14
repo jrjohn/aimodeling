@@ -1,7 +1,14 @@
 package com.example.aimodel.ui.screens
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.aimodel.core.analytics.AnalyticsScreens
+import com.example.aimodel.core.analytics.AnalyticsTracker
+import com.example.aimodel.core.analytics.AnalyticsViewModel
+import com.example.aimodel.core.analytics.Events
+import com.example.aimodel.core.analytics.Params
+import com.example.aimodel.core.analytics.annotations.TrackScreen
+import com.example.aimodel.core.analytics.trackFlow
+import com.example.aimodel.core.analytics.trackSync
 import com.example.aimodel.data.model.User
 import com.example.aimodel.domain.service.UserService
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,9 +31,11 @@ data class HomeUIState(
 )
 
 @HiltViewModel
+@TrackScreen(AnalyticsScreens.HOME)
 class HomeViewModel @Inject constructor(
-    private val userService: UserService
-) : ViewModel() {
+    private val userService: UserService,
+    analyticsTracker: AnalyticsTracker
+) : AnalyticsViewModel(analyticsTracker) {
 
     private val _uiState = MutableStateFlow(HomeUIState())
     val uiState: StateFlow<HomeUIState> = _uiState
@@ -35,16 +44,25 @@ class HomeViewModel @Inject constructor(
     val event: StateFlow<HomeUIEvent?> = _event
 
     init {
+        // Screen view automatically tracked via @TrackScreen annotation
         loadUsers()
         syncData()
     }
 
     private fun loadUsers() {
         userService.getUsers()
+            .trackFlow(
+                analyticsTracker = analyticsTracker,
+                eventName = Events.PAGE_LOADED,
+                params = mapOf(Params.SCREEN_NAME to AnalyticsScreens.HOME),
+                trackPerformance = true,
+                trackErrors = true,
+                onData = { users -> mapOf(Params.ITEM_COUNT to users.size.toString()) }
+            )
             .onEach { users ->
                 _uiState.value = _uiState.value.copy(users = users)
             }
-            .catch {
+            .catch { error ->
                 _event.value = HomeUIEvent.ShowSnackbar("Error loading users from local source")
             }
             .launchIn(viewModelScope)
@@ -53,10 +71,25 @@ class HomeViewModel @Inject constructor(
     private fun syncData() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)
-            val syncSuccessful = userService.syncUsers()
+
+            // Use trackSync extension for automatic sync event tracking
+            val syncSuccessful = try {
+                trackSync(
+                    analyticsTracker = analyticsTracker,
+                    screenName = AnalyticsScreens.HOME,
+                    trigger = "auto"
+                ) {
+                    userService.syncUsers()
+                }
+            } catch (error: Exception) {
+                _event.value = HomeUIEvent.ShowSnackbar("Sync failed")
+                false
+            }
+
             if (!syncSuccessful) {
                 _event.value = HomeUIEvent.ShowSnackbar("Sync failed")
             }
+
             // Fetch total user count from API
             val totalCount = userService.getTotalUserCount()
             _uiState.value = _uiState.value.copy(

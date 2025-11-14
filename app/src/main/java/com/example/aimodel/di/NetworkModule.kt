@@ -83,4 +83,14 @@ object NetworkModule {
     fun provideApiService(ktorfit: Ktorfit): ApiService {
         return ktorfit.createApiService()
     }
+
+    @Provides
+    @Singleton
+    fun provideJson(): Json {
+        return Json {
+            ignoreUnknownKeys = true
+            encodeDefaults = true
+            prettyPrint = false
+        }
+    }
 }

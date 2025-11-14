@@ -59,4 +59,5 @@ object AnalyticsScreens {
     const val HOME = "home"
     const val USER_LIST = "user_list"
     const val USER_DIALOG = "user_dialog"
+    const val USER_CRUD = "user_crud"
 }

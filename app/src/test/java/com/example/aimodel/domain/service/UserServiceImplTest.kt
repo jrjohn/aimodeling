@@ -1,6 +1,7 @@
 package com.example.aimodel.domain.service
 
 import com.example.aimodel.data.model.User
+import com.example.aimodel.data.repository.CacheEventBus
 import com.example.aimodel.data.repository.DataRepository
 import com.example.aimodel.sync.Synchronizer
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -21,6 +22,7 @@ class UserServiceImplTest {
     private lateinit var userService: UserServiceImpl
     private lateinit var dataRepository: DataRepository
     private lateinit var synchronizer: Synchronizer
+    private lateinit var cacheEventBus: CacheEventBus
 
     private val testUsers = listOf(
         User(id = 1, firstName = "John", lastName = "Doe", email = "john@example.com", avatar = "avatar1.jpg"),
@@ -31,7 +33,8 @@ class UserServiceImplTest {
     fun setup() {
         dataRepository = mock()
         synchronizer = mock()
-        userService = UserServiceImpl(dataRepository, synchronizer)
+        cacheEventBus = mock()
+        userService = UserServiceImpl(dataRepository, synchronizer, cacheEventBus)
     }
 
     @Test

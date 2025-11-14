@@ -7,6 +7,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.aimodel.data.local.AppDatabase
 import com.example.aimodel.data.local.UserChangeDao
 import com.example.aimodel.data.local.UserDao
+import com.example.aimodel.data.local.dao.AnalyticsEventDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -26,6 +27,30 @@ object DatabaseModule {
         }
     }
 
+    private val MIGRATION_4_5 = object : Migration(4, 5) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // Create analytics_events table
+            db.execSQL("""
+                CREATE TABLE IF NOT EXISTS analytics_events (
+                    eventId TEXT PRIMARY KEY NOT NULL,
+                    eventType TEXT NOT NULL,
+                    eventName TEXT NOT NULL,
+                    timestamp INTEGER NOT NULL,
+                    sessionId TEXT NOT NULL,
+                    userId TEXT,
+                    screenName TEXT,
+                    params TEXT NOT NULL,
+                    deviceInfo TEXT NOT NULL,
+                    appInfo TEXT NOT NULL,
+                    uploaded INTEGER NOT NULL DEFAULT 0,
+                    uploadAttempts INTEGER NOT NULL DEFAULT 0,
+                    lastUploadAttempt INTEGER,
+                    createdAt INTEGER NOT NULL DEFAULT ${System.currentTimeMillis()}
+                )
+            """.trimIndent())
+        }
+    }
+
     @Provides
     @Singleton
     fun provideAppDatabase(@ApplicationContext context: Context): AppDatabase {
@@ -34,7 +59,7 @@ object DatabaseModule {
             AppDatabase::class.java,
             "aimodel.db"
         )
-            .addMigrations(MIGRATION_3_4)
+            .addMigrations(MIGRATION_3_4, MIGRATION_4_5)
             .fallbackToDestructiveMigration(dropAllTables = true) // Fallback only if migration fails
             .build()
     }
@@ -47,5 +72,10 @@ object DatabaseModule {
     @Provides
     fun provideUserChangeDao(appDatabase: AppDatabase): UserChangeDao {
         return appDatabase.userChangeDao()
+    }
+
+    @Provides
+    fun provideAnalyticsEventDao(appDatabase: AppDatabase): AnalyticsEventDao {
+        return appDatabase.analyticsEventDao()
     }
 }

@@ -32,6 +32,7 @@ class OfflineFirstDataRepositoryTest {
     private lateinit var userChangeDao: UserChangeDao
     private lateinit var networkDataSource: UserNetworkDataSource
     private lateinit var networkMonitor: NetworkMonitor
+    private lateinit var cacheEventBus: CacheEventBus
 
     private val testUsers = listOf(
         User(id = 1, firstName = "John", lastName = "Doe", email = "john@example.com", avatar = "avatar1.jpg"),
@@ -44,11 +45,13 @@ class OfflineFirstDataRepositoryTest {
         userChangeDao = mock()
         networkDataSource = mock()
         networkMonitor = mock()
+        cacheEventBus = mock()
         repository = OfflineFirstDataRepository(
             userDao,
             userChangeDao,
             networkDataSource,
-            networkMonitor
+            networkMonitor,
+            cacheEventBus
         )
     }
 

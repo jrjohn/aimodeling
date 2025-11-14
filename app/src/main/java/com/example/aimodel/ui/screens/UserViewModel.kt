@@ -1,8 +1,15 @@
 package com.example.aimodel.ui.screens
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.aimodel.R
+import com.example.aimodel.core.analytics.AnalyticsScreens
+import com.example.aimodel.core.analytics.AnalyticsTracker
+import com.example.aimodel.core.analytics.AnalyticsViewModel
+import com.example.aimodel.core.analytics.CrudOperation
+import com.example.aimodel.core.analytics.Events
+import com.example.aimodel.core.analytics.Params
+import com.example.aimodel.core.analytics.annotations.TrackScreen
+import com.example.aimodel.core.analytics.trackCrudOperation
 import com.example.aimodel.core.common.StringProvider
 import com.example.aimodel.data.model.User
 import com.example.aimodel.domain.service.UserService
@@ -70,10 +77,12 @@ data class UserUiState(
 }
 
 @HiltViewModel
+@TrackScreen(AnalyticsScreens.USER_CRUD)
 class UserViewModel @Inject constructor(
     private val userService: UserService,
-    private val stringProvider: StringProvider
-) : ViewModel() {
+    private val stringProvider: StringProvider,
+    analyticsTracker: AnalyticsTracker
+) : AnalyticsViewModel(analyticsTracker) {
 
     private val _uiState = MutableStateFlow(UserUiState())
     val uiState: StateFlow<UserUiState> = _uiState.asStateFlow()
@@ -102,7 +111,17 @@ class UserViewModel @Inject constructor(
     private fun loadUsers() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            userService.getUsersPage(1).fold(
+
+            // Track page load with performance metrics
+            trackPerformance(
+                eventName = Events.PAGE_LOADED,
+                params = mapOf(
+                    Params.SCREEN_NAME to AnalyticsScreens.USER_CRUD,
+                    Params.PAGE_NUMBER to "1"
+                )
+            ) {
+                userService.getUsersPage(1)
+            }.fold(
                 onSuccess = { (users, totalPages) ->
                     _uiState.update {
                         it.copy(
@@ -117,6 +136,10 @@ class UserViewModel @Inject constructor(
                     _uiState.update { it.copy(isLoading = false) }
                     _effect.send(UserEffect.ShowError(
                         error.message ?: stringProvider.getString(R.string.error_failed_load_users)
+                    ))
+                    trackError(error, mapOf(
+                        Params.SCREEN_NAME to AnalyticsScreens.USER_CRUD,
+                        Params.SOURCE to "loadUsers"
                     ))
                 }
             )
@@ -147,7 +170,21 @@ class UserViewModel @Inject constructor(
         viewModelScope.launch {
             Timber.d("Loading page $nextPage")
 
-            userService.getUsersPage(nextPage).fold(
+            // Track load more event
+            trackEvent(Events.LOAD_MORE_TRIGGERED, mapOf(
+                Params.SCREEN_NAME to AnalyticsScreens.USER_CRUD,
+                Params.PAGE_NUMBER to nextPage.toString()
+            ))
+
+            trackPerformance(
+                eventName = Events.PAGE_LOADED,
+                params = mapOf(
+                    Params.SCREEN_NAME to AnalyticsScreens.USER_CRUD,
+                    Params.PAGE_NUMBER to nextPage.toString()
+                )
+            ) {
+                userService.getUsersPage(nextPage)
+            }.fold(
                 onSuccess = { (newUsers, totalPages) ->
                     Timber.d("Successfully loaded ${newUsers.size} users from page $nextPage")
                     _uiState.update {
@@ -165,6 +202,11 @@ class UserViewModel @Inject constructor(
                     _effect.send(UserEffect.ShowError(
                         error.message ?: stringProvider.getString(R.string.error_failed_load_more_users)
                     ))
+                    trackError(error, mapOf(
+                        Params.SCREEN_NAME to AnalyticsScreens.USER_CRUD,
+                        Params.SOURCE to "loadNextPage",
+                        Params.PAGE_NUMBER to nextPage.toString()
+                    ))
                 }
             )
         }
@@ -173,7 +215,30 @@ class UserViewModel @Inject constructor(
     private fun createUser(user: User) {
         viewModelScope.launch {
             Timber.d("Creating user: name=${user.name}, email=${user.email}, avatar=${user.avatar}")
-            val success = userService.createUser(user)
+
+            // Track user creation clicked
+            trackEvent(Events.USER_CREATE_CLICKED, mapOf(
+                Params.SCREEN_NAME to AnalyticsScreens.USER_CRUD
+            ))
+
+            // Use trackCrudOperation for automatic success/failure tracking
+            val success = try {
+                trackCrudOperation(
+                    analyticsTracker = analyticsTracker,
+                    operation = CrudOperation.CREATE,
+                    entity = "User",
+                    params = mapOf(
+                        Params.USER_NAME to user.name,
+                        Params.USER_EMAIL to user.email,
+                        Params.SCREEN_NAME to AnalyticsScreens.USER_CRUD
+                    )
+                ) {
+                    userService.createUser(user)
+                }
+            } catch (e: Exception) {
+                false
+            }
+
             if (success) {
                 _effect.send(UserEffect.ShowSuccess(
                     stringProvider.getString(R.string.user_created_success)
@@ -190,7 +255,32 @@ class UserViewModel @Inject constructor(
     private fun updateUser(user: User) {
         viewModelScope.launch {
             Timber.d("Updating user ${user.id}: name=${user.name}, email=${user.email}, avatar=${user.avatar}")
-            val success = userService.updateUser(user)
+
+            // Track user update clicked
+            trackEvent(Events.USER_UPDATE_CLICKED, mapOf(
+                Params.SCREEN_NAME to AnalyticsScreens.USER_CRUD,
+                Params.USER_ID to user.id.toString()
+            ))
+
+            // Use trackCrudOperation for automatic success/failure tracking
+            val success = try {
+                trackCrudOperation(
+                    analyticsTracker = analyticsTracker,
+                    operation = CrudOperation.UPDATE,
+                    entity = "User",
+                    params = mapOf(
+                        Params.USER_ID to user.id.toString(),
+                        Params.USER_NAME to user.name,
+                        Params.USER_EMAIL to user.email,
+                        Params.SCREEN_NAME to AnalyticsScreens.USER_CRUD
+                    )
+                ) {
+                    userService.updateUser(user)
+                }
+            } catch (e: Exception) {
+                false
+            }
+
             if (success) {
                 _effect.send(UserEffect.ShowSuccess(
                     stringProvider.getString(R.string.user_updated_success)
@@ -207,7 +297,31 @@ class UserViewModel @Inject constructor(
     private fun deleteUser(user: User) {
         viewModelScope.launch {
             Timber.d("Deleting user ${user.id}: ${user.name}")
-            val success = userService.deleteUser(user.id)
+
+            // Track user delete clicked
+            trackEvent(Events.USER_DELETE_CLICKED, mapOf(
+                Params.SCREEN_NAME to AnalyticsScreens.USER_CRUD,
+                Params.USER_ID to user.id.toString()
+            ))
+
+            // Use trackCrudOperation for automatic success/failure tracking
+            val success = try {
+                trackCrudOperation(
+                    analyticsTracker = analyticsTracker,
+                    operation = CrudOperation.DELETE,
+                    entity = "User",
+                    params = mapOf(
+                        Params.USER_ID to user.id.toString(),
+                        Params.USER_NAME to user.name,
+                        Params.SCREEN_NAME to AnalyticsScreens.USER_CRUD
+                    )
+                ) {
+                    userService.deleteUser(user.id)
+                }
+            } catch (e: Exception) {
+                false
+            }
+
             if (success) {
                 // Remove from all cached pages for better UX
                 _uiState.update { state ->
@@ -229,6 +343,11 @@ class UserViewModel @Inject constructor(
     }
 
     private fun refresh() {
+        // Track refresh action
+        trackEvent(Events.REFRESH_TRIGGERED, mapOf(
+            Params.SCREEN_NAME to AnalyticsScreens.USER_CRUD
+        ))
+
         // Invalidate cache before reloading to ensure fresh data
         userService.invalidateCache()
         loadUsers()
@@ -269,7 +388,15 @@ class UserViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true) }
             Timber.d("Loading specific page $page")
 
-            userService.getUsersPage(page).fold(
+            trackPerformance(
+                eventName = Events.PAGE_LOADED,
+                params = mapOf(
+                    Params.SCREEN_NAME to AnalyticsScreens.USER_CRUD,
+                    Params.PAGE_NUMBER to page.toString()
+                )
+            ) {
+                userService.getUsersPage(page)
+            }.fold(
                 onSuccess = { (users, totalPages) ->
                     Timber.d("Successfully loaded ${users.size} users from page $page")
                     _uiState.update {
@@ -286,6 +413,11 @@ class UserViewModel @Inject constructor(
                     _uiState.update { it.copy(isLoading = false) }
                     _effect.send(UserEffect.ShowError(
                         error.message ?: stringProvider.getString(R.string.error_failed_load_page, page)
+                    ))
+                    trackError(error, mapOf(
+                        Params.SCREEN_NAME to AnalyticsScreens.USER_CRUD,
+                        Params.SOURCE to "loadSpecificPage",
+                        Params.PAGE_NUMBER to page.toString()
                     ))
                 }
             )

@@ -1,6 +1,7 @@
 package com.example.aimodel.ui.screens
 
 import app.cash.turbine.test
+import com.example.aimodel.core.analytics.AnalyticsTracker
 import com.example.aimodel.data.model.User
 import com.example.aimodel.domain.service.UserService
 import kotlinx.coroutines.Dispatchers
@@ -25,12 +26,14 @@ class HomeViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var userService: UserService
+    private lateinit var analyticsTracker: AnalyticsTracker
     private lateinit var viewModel: HomeViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         userService = mock()
+        analyticsTracker = mock()
     }
 
     @After
@@ -46,7 +49,7 @@ class HomeViewModelTest {
         whenever(userService.getTotalUserCount()).thenReturn(0)
 
         // When
-        viewModel = HomeViewModel(userService)
+        viewModel = HomeViewModel(userService, analyticsTracker)
         advanceUntilIdle()
 
         // Then
@@ -67,7 +70,7 @@ class HomeViewModelTest {
         whenever(userService.getTotalUserCount()).thenReturn(2)
 
         // When
-        viewModel = HomeViewModel(userService)
+        viewModel = HomeViewModel(userService, analyticsTracker)
         advanceUntilIdle()
 
         // Then
@@ -85,7 +88,7 @@ class HomeViewModelTest {
         whenever(userService.getTotalUserCount()).thenReturn(0)
 
         // When
-        viewModel = HomeViewModel(userService)
+        viewModel = HomeViewModel(userService, analyticsTracker)
         advanceUntilIdle()
 
         // Then - verify sync was called (private method)
@@ -101,7 +104,7 @@ class HomeViewModelTest {
         whenever(userService.getTotalUserCount()).thenReturn(0)
 
         // When
-        viewModel = HomeViewModel(userService)
+        viewModel = HomeViewModel(userService, analyticsTracker)
         advanceUntilIdle()
 
         // Then
