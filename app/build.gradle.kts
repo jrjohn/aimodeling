@@ -228,8 +228,13 @@ tasks.register("generateApiDocs") {
     }
 }
 
-// Make assemble and assembleDebug/assembleRelease tasks generate documentation
-tasks.matching { it.name.matches(Regex("assemble(Debug|Release)?")) }.configureEach {
+// Auto-generate documentation on every build
+tasks.matching { it.name.matches(Regex("(assemble|compile.*Kotlin)")) }.configureEach {
+    finalizedBy("generateApiDocs")
+}
+
+// Also generate on explicit build task
+tasks.named("build") {
     finalizedBy("generateApiDocs")
 }
 

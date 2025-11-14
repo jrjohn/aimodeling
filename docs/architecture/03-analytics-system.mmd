@@ -1,0 +1,44 @@
+graph TB
+    subgraph "AOP Analytics Layer"
+        ANNOT[@TrackScreen<br/>@TrackAction<br/>Annotations]
+        BASE[AnalyticsViewModel<br/>Base Class]
+        EXT[Extension Functions<br/>trackFlow, trackSync, trackCrud]
+        NAV[NavigationAnalyticsObserver]
+    end
+
+    subgraph "ViewModels"
+        VMHOME[HomeViewModel<br/>@TrackScreen]
+        VMUSER[UserViewModel<br/>@TrackScreen]
+    end
+
+    subgraph "Analytics Core"
+        TRACKER[PersistentAnalyticsTracker]
+        MANAGER[AnalyticsManager]
+    end
+
+    subgraph "Storage & Upload"
+        DB[(Room Database<br/>analytics_events)]
+        WORKER[AnalyticsUploadWorker<br/>Batch Upload]
+        API[Analytics API]
+    end
+
+    VMHOME -.extends.-> BASE
+    VMUSER -.extends.-> BASE
+    BASE --> TRACKER
+    EXT --> TRACKER
+    NAV --> TRACKER
+
+    TRACKER --> DB
+    MANAGER --> WORKER
+    WORKER --> DB
+    WORKER --> API
+
+    ANNOT -.processed by.-> BASE
+
+    style ANNOT fill:#f8bbd0
+    style BASE fill:#f8bbd0
+    style EXT fill:#f8bbd0
+    style NAV fill:#f8bbd0
+    style TRACKER fill:#ce93d8
+    style WORKER fill:#ce93d8
+    style DB fill:#a5d6a7

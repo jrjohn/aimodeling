@@ -1,0 +1,77 @@
+sequenceDiagram
+    participant UI as Compose UI
+    participant VM as ViewModel
+    participant Service as UserService
+    participant Repo as Repository
+    participant Cache as CacheManager
+    participant DB as Room DB
+    participant API as Remote API
+    participant Net as NetworkMonitor
+
+    Note over UI,API: User Loads Screen
+
+    UI->>VM: Trigger Load
+    activate VM
+    VM->>Service: getUsers()
+    activate Service
+    Service->>Repo: getUsers()
+    activate Repo
+
+    Repo->>DB: getUsers() Flow
+    DB-->>UI: Emit Local Data (Immediate)
+
+    Repo->>Net: Check Network
+    Net-->>Repo: isOnline = true
+
+    Repo->>Cache: Get Cached Data
+    Cache-->>Repo: Cache Miss/Expired
+
+    Repo->>API: Fetch Users
+    API-->>Repo: User List + Total
+
+    Repo->>DB: insertUsers(users)
+    Repo->>Cache: updateCache(users)
+    DB-->>UI: Emit Updated Data
+
+    deactivate Repo
+    deactivate Service
+    deactivate VM
+
+    Note over UI,API: User Creates New User (Offline)
+
+    UI->>VM: createUser(user)
+    activate VM
+    VM->>Service: createUser(user)
+    activate Service
+    Service->>Repo: createUser(user)
+    activate Repo
+
+    Repo->>Net: Check Network
+    Net-->>Repo: isOnline = false
+
+    Repo->>DB: upsertUser(tempId)
+    Repo->>DB: queueChange(CREATE)
+    DB-->>UI: Success (Optimistic)
+
+    deactivate Repo
+    deactivate Service
+    deactivate VM
+
+    Note over UI,API: Background Sync (When Online)
+
+    Net->>Repo: Network Available
+    activate Repo
+    Repo->>DB: getPendingChanges()
+    DB-->>Repo: [CREATE, UPDATE, DELETE]
+
+    loop For Each Change
+        Repo->>API: Apply Change
+        API-->>Repo: Success
+        Repo->>DB: deleteChange(id)
+    end
+
+    Repo->>API: syncData()
+    API-->>Repo: Latest Data
+    Repo->>DB: updateLocalData()
+
+    deactivate Repo

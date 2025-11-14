@@ -1,0 +1,45 @@
+graph TB
+    subgraph "Presentation Layer"
+        UI[Jetpack Compose UI]
+        VM[ViewModels<br/>MVVM Pattern]
+        UIS[UI State Management]
+    end
+
+    subgraph "Domain Layer"
+        US[User Service]
+        UC[Use Cases]
+        MODELS[Domain Models]
+    end
+
+    subgraph "Data Layer"
+        REPO[Repository<br/>Offline-First]
+        CACHE[Cache Manager<br/>LRU + TTL]
+        LOCAL[Local Storage<br/>Room Database]
+        REMOTE[Remote API<br/>Ktorfit + Ktor]
+    end
+
+    subgraph "Cross-Cutting Concerns"
+        ANALYTICS[Analytics System<br/>AOP Pattern]
+        SYNC[Background Sync<br/>WorkManager]
+        NET[Network Monitor]
+        DI[Dependency Injection<br/>Hilt]
+    end
+
+    UI --> VM
+    VM --> US
+    VM --> ANALYTICS
+    US --> UC
+    UC --> REPO
+    REPO --> CACHE
+    REPO --> LOCAL
+    REPO --> REMOTE
+    REPO --> NET
+    SYNC --> REPO
+    ANALYTICS --> LOCAL
+
+    style UI fill:#e1f5fe
+    style VM fill:#b3e5fc
+    style US fill:#fff9c4
+    style REPO fill:#c8e6c9
+    style ANALYTICS fill:#f8bbd0
+    style SYNC fill:#f8bbd0

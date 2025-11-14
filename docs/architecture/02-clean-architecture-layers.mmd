@@ -1,0 +1,58 @@
+graph LR
+    subgraph "UI Layer (Presentation)"
+        direction TB
+        COMPOSE[Jetpack Compose<br/>Screens]
+        VMHOME[HomeViewModel]
+        VMUSER[UserViewModel]
+        UISTATE[UI State Classes]
+    end
+
+    subgraph "Domain Layer (Business Logic)"
+        direction TB
+        SERVICE[UserService]
+        INTERFACE[Repository Interface]
+        ENTITY[Domain Models<br/>User, etc.]
+    end
+
+    subgraph "Data Layer (Data Sources)"
+        direction TB
+        REPOIMPL[OfflineFirstDataRepository]
+        subgraph "Local Data Source"
+            ROOM[Room Database]
+            DAO[UserDao, AnalyticsDao]
+        end
+        subgraph "Remote Data Source"
+            API[Ktorfit API Service]
+            NETWORK[UserNetworkDataSource]
+        end
+    end
+
+    subgraph "Infrastructure"
+        HILT[Hilt DI]
+        WORK[WorkManager]
+        MONITOR[NetworkMonitor]
+    end
+
+    COMPOSE --> VMHOME
+    COMPOSE --> VMUSER
+    VMHOME --> SERVICE
+    VMUSER --> SERVICE
+    SERVICE --> INTERFACE
+    INTERFACE -.implements.-> REPOIMPL
+    REPOIMPL --> DAO
+    REPOIMPL --> NETWORK
+    DAO --> ROOM
+    NETWORK --> API
+    REPOIMPL --> MONITOR
+
+    HILT -.provides.-> SERVICE
+    HILT -.provides.-> REPOIMPL
+    WORK --> REPOIMPL
+
+    style COMPOSE fill:#e1f5fe
+    style VMHOME fill:#b3e5fc
+    style VMUSER fill:#b3e5fc
+    style SERVICE fill:#fff9c4
+    style REPOIMPL fill:#c8e6c9
+    style ROOM fill:#a5d6a7
+    style API fill:#a5d6a7

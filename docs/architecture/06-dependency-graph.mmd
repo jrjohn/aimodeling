@@ -1,0 +1,95 @@
+graph LR
+    subgraph "Application Module"
+        APP[MyApplication]
+    end
+
+    subgraph "UI Module"
+        MAIN[MainActivity]
+        NAV[NavGraph]
+        HOME[HomeScreen]
+        USER[UserScreen]
+        VMHOME[HomeViewModel]
+        VMUSER[UserViewModel]
+    end
+
+    subgraph "Domain Module"
+        USERSERVICE[UserService]
+        INTERFACE[DataRepository<br/>Interface]
+    end
+
+    subgraph "Data Module"
+        REPO[OfflineFirstDataRepository]
+        NETSOURCE[UserNetworkDataSource]
+        CACHE[CacheManager]
+        EVENTBUS[CacheEventBus]
+    end
+
+    subgraph "Local Storage"
+        DB[AppDatabase]
+        USERDAO[UserDao]
+        CHANGEDAO[UserChangeDao]
+        ANALYTICSDAO[AnalyticsEventDao]
+    end
+
+    subgraph "Remote API"
+        APISERVICE[ApiService<br/>Ktorfit]
+        HTTPCLIENT[Ktor HttpClient]
+    end
+
+    subgraph "Analytics"
+        ANALYTICSMANAGER[AnalyticsManager]
+        ANALYTICSTRACKER[PersistentAnalyticsTracker]
+        UPLOADWORKER[AnalyticsUploadWorker]
+    end
+
+    subgraph "Infrastructure"
+        NETMONITOR[NetworkMonitor]
+        WORKMANAGER[WorkManager]
+        STRINGPROVIDER[StringProvider]
+    end
+
+    APP --> ANALYTICSMANAGER
+    MAIN --> NAV
+    NAV --> HOME
+    NAV --> USER
+    NAV --> ANALYTICSTRACKER
+    HOME --> VMHOME
+    USER --> VMUSER
+
+    VMHOME --> USERSERVICE
+    VMHOME --> ANALYTICSTRACKER
+    VMUSER --> USERSERVICE
+    VMUSER --> ANALYTICSTRACKER
+    VMUSER --> STRINGPROVIDER
+
+    USERSERVICE --> INTERFACE
+    INTERFACE -.impl.-> REPO
+
+    REPO --> USERDAO
+    REPO --> CHANGEDAO
+    REPO --> NETSOURCE
+    REPO --> NETMONITOR
+    REPO --> EVENTBUS
+    REPO --> CACHE
+
+    NETSOURCE --> APISERVICE
+    APISERVICE --> HTTPCLIENT
+
+    DB --> USERDAO
+    DB --> CHANGEDAO
+    DB --> ANALYTICSDAO
+
+    ANALYTICSTRACKER --> ANALYTICSDAO
+    ANALYTICSMANAGER --> ANALYTICSTRACKER
+    ANALYTICSMANAGER --> WORKMANAGER
+    UPLOADWORKER --> ANALYTICSDAO
+
+    CACHE --> EVENTBUS
+
+    style APP fill:#e1f5fe
+    style VMHOME fill:#b3e5fc
+    style VMUSER fill:#b3e5fc
+    style USERSERVICE fill:#fff9c4
+    style REPO fill:#c8e6c9
+    style DB fill:#a5d6a7
+    style ANALYTICSTRACKER fill:#f8bbd0

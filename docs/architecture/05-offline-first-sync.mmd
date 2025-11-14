@@ -1,0 +1,68 @@
+graph TB
+    subgraph "User Actions"
+        CREATE[Create User]
+        UPDATE[Update User]
+        DELETE[Delete User]
+    end
+
+    subgraph "Network State"
+        ONLINE{Network<br/>Online?}
+    end
+
+    subgraph "Online Flow"
+        APIWRITE[Write to API]
+        APISYNC[Sync from API]
+        LOCALWRITE[Update Local DB]
+    end
+
+    subgraph "Offline Flow"
+        TEMPID[Generate Temp ID]
+        LOCALQUEUE[Save to Local DB]
+        QUEUECHANGE[Queue Change Record]
+        OPTIMISTIC[Return Success<br/>Optimistically]
+    end
+
+    subgraph "Background Sync (WorkManager)"
+        MONITOR[Network Monitor]
+        GETQUEUE[Get Queued Changes]
+        APPLY[Apply Changes to API]
+        CLEANUP[Delete Queue Records]
+        FETCH[Fetch Latest Data]
+    end
+
+    subgraph "Cache Invalidation"
+        EVENT[CacheInvalidationEvent]
+        BUS[EventBus]
+        CLEAR[Clear Affected Caches]
+    end
+
+    CREATE --> ONLINE
+    UPDATE --> ONLINE
+    DELETE --> ONLINE
+
+    ONLINE -->|Yes| APIWRITE
+    ONLINE -->|No| TEMPID
+
+    APIWRITE --> APISYNC
+    APISYNC --> LOCALWRITE
+    LOCALWRITE --> EVENT
+
+    TEMPID --> LOCALQUEUE
+    LOCALQUEUE --> QUEUECHANGE
+    QUEUECHANGE --> OPTIMISTIC
+    QUEUECHANGE --> EVENT
+
+    EVENT --> BUS
+    BUS --> CLEAR
+
+    MONITOR -->|Detects Online| GETQUEUE
+    GETQUEUE --> APPLY
+    APPLY --> CLEANUP
+    CLEANUP --> FETCH
+    FETCH --> LOCALWRITE
+
+    style ONLINE fill:#ffeb3b
+    style APIWRITE fill:#81c784
+    style TEMPID fill:#ff8a65
+    style MONITOR fill:#64b5f6
+    style EVENT fill:#ba68c8
