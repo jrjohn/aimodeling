@@ -95,6 +95,7 @@ class AppErrorTest {
     // ==================== Factory Methods Tests ====================
 
     @Test
+    @Suppress("USELESS_IS_CHECK")
     fun `noConnection - creates NetworkError with offline message`() {
         val error = AppError.noConnection()
 
@@ -106,6 +107,7 @@ class AppErrorTest {
     }
 
     @Test
+    @Suppress("USELESS_IS_CHECK")
     fun `validation - creates ValidationError with field and message`() {
         val error = AppError.validation("email", "Invalid email format")
 
@@ -116,6 +118,7 @@ class AppErrorTest {
     }
 
     @Test
+    @Suppress("USELESS_IS_CHECK")
     fun `validation - creates ValidationError with different field`() {
         val error = AppError.validation("password", "Password too short")
 

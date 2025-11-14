@@ -1,0 +1,153 @@
+# Severity Level Configuration
+# Defines severity levels for different types of violations
+
+version: "1.0"
+
+# Severity levels (in order of importance)
+levels:
+  CRITICAL:
+    description: "Critical security or data loss issues"
+    fail_build: true
+    fail_immediately: true
+    color: red
+    icon: "🚨"
+    examples:
+      - "Hardcoded API keys or secrets"
+      - "SQL injection vulnerabilities"
+      - "Exposed sensitive data"
+
+  ERROR:
+    description: "Architecture violations that break standards"
+    fail_build: true
+    fail_immediately: false  # Collect all errors first
+    color: red
+    icon: "❌"
+    examples:
+      - "Missing required annotations"
+      - "Android dependencies in domain layer"
+      - "Service locator pattern usage"
+      - "ViewModel not following Input/Output pattern"
+
+  WARNING:
+    description: "Style violations or missing best practices"
+    fail_build: false
+    fail_immediately: false
+    color: yellow
+    icon: "⚠️"
+    examples:
+      - "Missing test files"
+      - "Naming convention violations"
+      - "Missing KDoc comments"
+      - "Long functions or classes"
+
+  INFO:
+    description: "Suggestions for improvement"
+    fail_build: false
+    fail_immediately: false
+    color: blue
+    icon: "ℹ️"
+    examples:
+      - "Code organization suggestions"
+      - "Documentation improvements"
+      - "Performance optimization hints"
+
+# Rule-specific severity overrides
+overrides:
+  # Architecture rules
+  architecture:
+    clean_architecture:
+      domain_has_android_deps: CRITICAL
+      wrong_dependency_direction: ERROR
+      missing_layer_separation: ERROR
+
+    mvvm_pattern:
+      missing_input_interface: ERROR
+      missing_output_state: ERROR
+      missing_on_event: ERROR
+      missing_hilt_annotation: ERROR
+
+    dependency_injection:
+      service_locator_pattern: ERROR
+      missing_inject_annotation: WARNING
+
+  # Coding style rules
+  coding_style:
+    naming_conventions:
+      wrong_class_naming: WARNING
+      wrong_function_naming: WARNING
+      wrong_constant_naming: WARNING
+
+    code_organization:
+      file_too_long: WARNING
+      function_too_long: INFO
+      too_many_parameters: INFO
+
+  # Annotation rules
+  annotations:
+    missing_hilt_viewmodel: ERROR
+    missing_inject_constructor: ERROR
+    unnecessary_suppress: WARNING
+
+  # Testing rules
+  testing:
+    missing_viewmodel_test: WARNING
+    missing_service_test: WARNING
+    missing_repository_test: WARNING
+    test_naming_violation: INFO
+
+  # Documentation rules
+  documentation:
+    missing_public_kdoc: WARNING
+    missing_complex_kdoc: INFO
+    outdated_readme: INFO
+
+  # Security rules
+  security:
+    hardcoded_api_key: CRITICAL
+    hardcoded_password: CRITICAL
+    missing_input_validation: ERROR
+    sql_injection_risk: CRITICAL
+
+# Violation count thresholds
+thresholds:
+  CRITICAL:
+    max_allowed: 0          # No critical issues allowed
+    fail_immediately: true
+
+  ERROR:
+    max_allowed: 0          # No errors allowed in production
+    fail_immediately: false
+
+  WARNING:
+    max_allowed: 50         # Up to 50 warnings allowed
+    fail_immediately: false
+
+  INFO:
+    max_allowed: -1         # Unlimited info messages
+
+# Progressive severity (increase severity based on count)
+progressive:
+  enabled: true
+  rules:
+    - violation: "missing_test"
+      count_threshold: 10
+      increase_to: ERROR
+      message: "Too many missing tests, consider this a blocker"
+
+    - violation: "naming_convention"
+      count_threshold: 20
+      increase_to: ERROR
+      message: "Too many naming violations, enforce standards"
+
+# Temporary suppressions (for migration/legacy code)
+suppressions:
+  allow_file_suppression: true
+  allow_line_suppression: true
+  max_suppression_duration_days: 90
+  require_justification: true
+
+# Metrics
+metrics:
+  track_over_time: true
+  store_history: true
+  max_history_days: 365

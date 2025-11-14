@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.ktorfit)
     alias(libs.plugins.dokka)
+    id("com.example.arcana.verification.ArchitectureVerificationPlugin")
 }
 
 android {

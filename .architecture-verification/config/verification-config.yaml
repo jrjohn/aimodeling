@@ -1,0 +1,188 @@
+# Architecture Verification Configuration
+# This file controls which checks are enabled and their settings
+
+version: "1.0"
+
+# Global settings
+global:
+  fail_on_error: true              # Fail build on errors
+  fail_on_warning: false           # Don't fail build on warnings
+  parallel_checks: true            # Run checks in parallel
+  max_violations_per_check: 100   # Stop check after this many violations
+
+# Feature flags
+features:
+  experimental_checks: false       # Enable experimental checks
+  auto_fix: false                 # Enable auto-fixing violations (future)
+  detailed_reports: true          # Generate detailed reports
+
+# Check categories
+checks:
+
+  # Architecture checks
+  architecture:
+    enabled: true
+    checks:
+      clean_architecture:
+        enabled: true
+        severity: ERROR
+        check_layer_boundaries: true
+        check_dependency_direction: true
+
+      mvvm_pattern:
+        enabled: true
+        severity: ERROR
+        require_input_interface: true
+        require_output_interface: true
+        require_state_class: true
+        require_effect_interface: true
+        require_on_event_method: true
+
+      offline_first:
+        enabled: true
+        severity: WARNING
+        check_repository_pattern: true
+        check_flow_usage: true
+
+      dependency_rules:
+        enabled: true
+        severity: ERROR
+        no_android_in_domain: true
+        no_service_locators: true
+        require_constructor_injection: true
+
+  # Coding style checks
+  coding_style:
+    enabled: true
+    checks:
+      kotlin_conventions:
+        enabled: true
+        severity: WARNING
+        check_naming: true
+        check_formatting: true
+        check_imports: true
+
+      naming_conventions:
+        enabled: true
+        severity: WARNING
+        class_naming: PascalCase
+        function_naming: camelCase
+        property_naming: camelCase
+        constant_naming: UPPER_SNAKE_CASE
+
+      code_organization:
+        enabled: true
+        severity: INFO
+        max_file_length: 500
+        max_function_length: 50
+        check_file_structure: true
+
+  # Annotation checks
+  annotations:
+    enabled: true
+    checks:
+      required_annotations:
+        enabled: true
+        severity: ERROR
+        viewmodel_requires_hilt: true
+        repository_requires_inject: true
+        service_requires_inject: true
+
+      hilt_annotations:
+        enabled: true
+        severity: ERROR
+        check_module_annotations: true
+        check_scope_annotations: true
+
+      custom_annotations:
+        enabled: true
+        severity: WARNING
+        track_screen_on_viewmodels: true
+        suppress_usage: warn  # Warn when @Suppress is used
+
+  # Testing checks
+  testing:
+    enabled: true
+    checks:
+      test_coverage:
+        enabled: true
+        severity: WARNING
+        require_viewmodel_tests: true
+        require_service_tests: true
+        require_repository_tests: true
+
+      test_naming:
+        enabled: true
+        severity: WARNING
+        use_backtick_style: true
+        require_descriptive_names: true
+
+      test_structure:
+        enabled: true
+        severity: INFO
+        check_aaa_pattern: true
+        check_setup_teardown: true
+
+  # Documentation checks
+  documentation:
+    enabled: true
+    checks:
+      kdoc_comments:
+        enabled: true
+        severity: WARNING
+        require_public_kdoc: true
+        require_complex_function_kdoc: true
+
+      architecture_docs:
+        enabled: true
+        severity: INFO
+        check_readme_updated: true
+        check_architecture_docs: true
+
+  # Security checks
+  security:
+    enabled: true
+    checks:
+      no_hardcoded_secrets:
+        enabled: true
+        severity: CRITICAL
+        check_api_keys: true
+        check_passwords: true
+        check_tokens: true
+
+      input_validation:
+        enabled: true
+        severity: ERROR
+        check_user_input_validation: true
+
+# File patterns
+patterns:
+  kotlin_files: "**/*.kt"
+  test_files: "**/*Test.kt"
+  viewmodel_files: "**/*ViewModel.kt"
+  repository_files: "**/*Repository.kt"
+  service_files: "**/*Service*.kt"
+
+# Directories to scan
+scan:
+  include:
+    - "app/src/main/java"
+    - "app/src/test/java"
+  exclude:
+    - "**/build/**"
+    - "**/generated/**"
+    - "**/.gradle/**"
+
+# Report settings
+reporting:
+  format: markdown              # markdown, html, json
+  output_dir: ".architecture-verification/reports"
+  include_suggestions: true
+  include_code_snippets: true
+  max_snippet_lines: 10
+
+# Notification settings (future)
+notifications:
+  enabled: false
+  slack_webhook: ""
+  email: ""

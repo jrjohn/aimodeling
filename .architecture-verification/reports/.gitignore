@@ -1,0 +1,5 @@
+# Ignore all generated reports
+*
+
+# But keep this directory
+!.gitignore

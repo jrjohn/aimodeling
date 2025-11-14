@@ -1,0 +1,444 @@
+version: "1.0"
+category: architecture
+subcategory: clean_architecture
+
+description: |
+  Enforces Clean Architecture principles:
+  - Layer separation (UI/Presentation → Domain → Data)
+  - Dependency direction rules (outer layers depend on inner layers)
+  - No framework dependencies in domain layer
+  - Module boundaries and isolation
+
+rules:
+  # ==============================================
+  # LAYER SEPARATION RULES
+  # ==============================================
+
+  - id: CLEAN_001
+    name: "Domain layer must not depend on Android framework"
+    severity: ERROR
+    enabled: true
+    description: |
+      The domain layer (business logic) must be pure Kotlin and must not
+      contain any Android framework dependencies. This ensures the domain
+      layer is testable and platform-independent.
+    check:
+      file_pattern: "**/domain/**/*.kt"
+      must_not_contain:
+        - "import android."
+        - "import androidx."
+      exclude_patterns:
+        - "**/test/**"
+        - "**/androidTest/**"
+    message: "Domain layer file contains Android framework imports"
+    suggestion: |
+      Remove Android framework dependencies from domain layer.
+
+      If you need Android-specific functionality:
+      1. Define an interface in the domain layer
+      2. Implement it in the data or UI layer
+      3. Inject the implementation via constructor
+
+      Example:
+      // Domain layer (interface only)
+      interface ResourceProvider {
+          fun getString(id: Int): String
+      }
+
+      // Data/UI layer (implementation)
+      class AndroidResourceProvider(private val context: Context) : ResourceProvider {
+          override fun getString(id: Int) = context.getString(id)
+      }
+    reference: "docs/ARCHITECTURE.md#domain-layer"
+    examples:
+      good:
+        - "import kotlinx.coroutines.flow.Flow"
+        - "import javax.inject.Inject"
+      bad:
+        - "import android.content.Context"
+        - "import androidx.lifecycle.ViewModel"
+
+  - id: CLEAN_002
+    name: "Data layer must not depend on UI layer"
+    severity: ERROR
+    enabled: true
+    description: |
+      The data layer should only depend on the domain layer.
+      It must not import or reference UI layer classes.
+    check:
+      file_pattern: "**/data/**/*.kt"
+      must_not_contain:
+        - "import com.example.arcana.ui."
+        - "import androidx.compose."
+        - "import androidx.lifecycle.ViewModel"
+    message: "Data layer contains dependency on UI layer"
+    suggestion: |
+      Remove UI layer dependencies from data layer.
+
+      Proper dependency direction:
+      UI → Domain ← Data
+
+      If you need to pass data to UI:
+      1. Define domain models
+      2. Return domain models from repositories
+      3. Convert domain models to UI models in ViewModel
+    reference: "docs/ARCHITECTURE.md#dependency-rules"
+
+  - id: CLEAN_003
+    name: "UI layer should depend on domain, not data layer"
+    severity: WARNING
+    enabled: true
+    description: |
+      UI layer (ViewModels, Composables) should interact with the domain layer
+      (use cases, services) rather than directly accessing repositories.
+    check:
+      file_pattern: "**/ui/**/*.kt"
+      must_not_contain:
+        - "import com.example.arcana.data.repository."
+      within_class:
+        type: "ViewModel"
+    message: "ViewModel directly depends on repository instead of use case/service"
+    suggestion: |
+      Inject services or use cases instead of repositories:
+
+      Bad:
+      class MyViewModel @Inject constructor(
+          private val repository: MyRepository
+      )
+
+      Good:
+      class MyViewModel @Inject constructor(
+          private val service: MyService
+      )
+    reference: "docs/ARCHITECTURE.md#layer-responsibilities"
+
+  # ==============================================
+  # MODULE ORGANIZATION RULES
+  # ==============================================
+
+  - id: CLEAN_004
+    name: "Domain models must be in domain package"
+    severity: ERROR
+    enabled: true
+    description: |
+      Domain models (business entities) must reside in the domain.model package,
+      not in data or ui packages.
+    check:
+      file_pattern: "**/domain/model/**/*.kt"
+      must_not_contain:
+        - "import com.example.arcana.data.local.entity."
+        - "import com.example.arcana.data.remote.dto."
+    message: "Domain model contains references to data layer entities/DTOs"
+    suggestion: |
+      Keep domain models pure and separate from data layer entities.
+
+      Structure:
+      - domain/model/*.kt - Pure business models
+      - data/local/entity/*.kt - Room entities
+      - data/remote/dto/*.kt - Network DTOs
+
+      Use mappers to convert between layers:
+      fun EntityDto.toDomain(): DomainModel
+      fun DomainModel.toEntity(): EntityDto
+    reference: "docs/ARCHITECTURE.md#domain-models"
+
+  - id: CLEAN_005
+    name: "Services must be in domain.service package"
+    severity: WARNING
+    enabled: true
+    description: |
+      Business logic services should be organized in domain.service package.
+    check:
+      file_pattern: "**/*Service.kt"
+      file_must_be_in_directory: "**/domain/service/**"
+    message: "Service class is not in domain.service package"
+    suggestion: |
+      Move service classes to domain.service package.
+
+      Expected location:
+      com.example.arcana.domain.service.MyService
+    reference: "docs/ARCHITECTURE.md#service-layer"
+
+  # ==============================================
+  # DEPENDENCY INJECTION RULES
+  # ==============================================
+
+  - id: CLEAN_006
+    name: "Use constructor injection for dependencies"
+    severity: ERROR
+    enabled: true
+    description: |
+      All dependencies must be injected via constructor, not field injection
+      or service locators.
+    check:
+      file_pattern: "**/*.kt"
+      must_not_contain:
+        - "@Inject lateinit var"
+        - "@Inject var"
+        - "ServiceLocator.get"
+        - "Injector.get"
+      exclude_patterns:
+        - "**/di/**"
+        - "**/*Module.kt"
+    message: "Found field injection or service locator usage"
+    suggestion: |
+      Use constructor injection:
+
+      Bad:
+      class MyClass {
+          @Inject lateinit var dependency: MyDependency
+      }
+
+      Good:
+      class MyClass @Inject constructor(
+          private val dependency: MyDependency
+      )
+    reference: "docs/ARCHITECTURE.md#dependency-injection"
+
+  # ==============================================
+  # REPOSITORY PATTERN RULES
+  # ==============================================
+
+  - id: CLEAN_007
+    name: "Repositories must implement interfaces"
+    severity: WARNING
+    enabled: true
+    description: |
+      Repository implementations should implement repository interfaces
+      defined in the domain layer.
+    check:
+      file_pattern: "**/data/repository/**/*RepositoryImpl.kt"
+      must_contain: ": "
+      must_contain_pattern: "class\\s+\\w+RepositoryImpl.*:\\s*\\w+Repository"
+    message: "Repository implementation doesn't implement interface"
+    suggestion: |
+      Define repository interface in domain layer and implement in data layer.
+
+      Domain layer:
+      interface UserRepository {
+          fun getUser(id: String): Flow<User>
+      }
+
+      Data layer:
+      class UserRepositoryImpl @Inject constructor(
+          private val dao: UserDao
+      ) : UserRepository {
+          override fun getUser(id: String) = dao.getUser(id)
+      }
+    reference: "docs/ARCHITECTURE.md#repository-pattern"
+
+  # ==============================================
+  # OFFLINE-FIRST PATTERN RULES
+  # ==============================================
+
+  - id: CLEAN_008
+    name: "Repositories must use Flow for reactive data"
+    severity: ERROR
+    enabled: true
+    description: |
+      Repositories should return Flow for reactive data streams to support
+      offline-first architecture.
+    check:
+      file_pattern: "**/repository/**/*Repository*.kt"
+      must_contain: "import kotlinx.coroutines.flow.Flow"
+      within_interface: true
+    message: "Repository interface doesn't use Flow for reactive data"
+    suggestion: |
+      Use Flow to expose reactive data streams:
+
+      interface MyRepository {
+          fun getData(): Flow<List<Data>>
+          suspend fun refreshData()
+      }
+
+      This allows:
+      - Automatic UI updates when data changes
+      - Offline-first data access
+      - Reactive composition
+    reference: "docs/ARCHITECTURE.md#offline-first"
+
+  # ==============================================
+  # ERROR HANDLING RULES
+  # ==============================================
+
+  - id: CLEAN_009
+    name: "Use domain-specific error types"
+    severity: WARNING
+    enabled: true
+    description: |
+      Domain layer should define its own error types, not expose
+      implementation details from data layer.
+    check:
+      file_pattern: "**/domain/**/*.kt"
+      must_not_contain:
+        - "import retrofit2.HttpException"
+        - "import java.io.IOException"
+        - "import android.database.SQLException"
+    message: "Domain layer exposes data layer exception types"
+    suggestion: |
+      Define domain-specific error types:
+
+      sealed interface DomainError {
+          data class NetworkError(val message: String) : DomainError
+          data class ValidationError(val field: String) : DomainError
+          data object NotFoundError : DomainError
+      }
+
+      Then map data layer exceptions to domain errors in repositories.
+    reference: "docs/ARCHITECTURE.md#error-handling"
+
+  # ==============================================
+  # USE CASE PATTERN RULES
+  # ==============================================
+
+  - id: CLEAN_010
+    name: "Complex business logic should be in use cases"
+    severity: INFO
+    enabled: true
+    description: |
+      Complex business logic that involves multiple repositories or
+      orchestration should be in dedicated use case classes.
+    check:
+      file_pattern: "**/*ViewModel.kt"
+      detect_complex_logic:
+        multiple_repository_calls: true
+        business_logic_in_viewmodel: true
+    message: "Complex business logic detected in ViewModel"
+    suggestion: |
+      Extract complex logic to use case:
+
+      class ProcessOrderUseCase @Inject constructor(
+          private val orderRepository: OrderRepository,
+          private val paymentRepository: PaymentRepository,
+          private val notificationService: NotificationService
+      ) {
+          suspend operator fun invoke(order: Order): Result<OrderConfirmation> {
+              // Complex orchestration logic here
+          }
+      }
+
+      ViewModel:
+      class OrderViewModel @Inject constructor(
+          private val processOrder: ProcessOrderUseCase
+      ) {
+          fun onSubmitOrder(order: Order) {
+              viewModelScope.launch {
+                  val result = processOrder(order)
+                  // Handle result
+              }
+          }
+      }
+    reference: "docs/ARCHITECTURE.md#use-cases"
+
+  # ==============================================
+  # PACKAGE NAMING RULES
+  # ==============================================
+
+  - id: CLEAN_011
+    name: "Follow package structure conventions"
+    severity: WARNING
+    enabled: true
+    description: |
+      Package structure must follow the defined architecture layers.
+    check:
+      directory_structure:
+        required_packages:
+          - "ui"
+          - "domain"
+          - "data"
+        ui_subpackages:
+          - "ui/screens"
+          - "ui/components"
+          - "ui/theme"
+        domain_subpackages:
+          - "domain/model"
+          - "domain/service"
+          - "domain/repository"
+        data_subpackages:
+          - "data/repository"
+          - "data/local"
+          - "data/remote"
+    message: "Package structure doesn't follow architecture conventions"
+    suggestion: |
+      Organize code into proper package structure:
+
+      com.example.arcana/
+      ├── ui/
+      │   ├── screens/
+      │   ├── components/
+      │   └── theme/
+      ├── domain/
+      │   ├── model/
+      │   ├── service/
+      │   └── repository/
+      └── data/
+          ├── repository/
+          ├── local/
+          └── remote/
+    reference: "docs/ARCHITECTURE.md#package-structure"
+
+  # ==============================================
+  # TESTING RULES
+  # ==============================================
+
+  - id: CLEAN_012
+    name: "Domain layer must be unit testable"
+    severity: WARNING
+    enabled: true
+    description: |
+      Domain layer classes should be easily unit testable without
+      Android dependencies or complex setup.
+    check:
+      file_pattern: "**/domain/**/*.kt"
+      requires_test_file: true
+      test_should_not_need:
+        - "Robolectric"
+        - "AndroidJUnit4"
+        - "Instrumentation"
+    message: "Domain layer class doesn't have pure unit tests"
+    suggestion: |
+      Domain layer should have pure Kotlin unit tests:
+
+      // Domain layer (testable)
+      class CalculateDiscountService @Inject constructor() {
+          fun calculate(price: Double, userTier: UserTier): Double {
+              return when (userTier) {
+                  UserTier.GOLD -> price * 0.8
+                  UserTier.SILVER -> price * 0.9
+                  UserTier.BRONZE -> price * 0.95
+              }
+          }
+      }
+
+      // Test (no Android dependencies)
+      class CalculateDiscountServiceTest {
+          @Test
+          fun `gold tier gets 20 percent discount`() {
+              val service = CalculateDiscountService()
+              val result = service.calculate(100.0, UserTier.GOLD)
+              assertEquals(80.0, result)
+          }
+      }
+    reference: "docs/ARCHITECTURE.md#testing-strategy"
+
+metadata:
+  total_rules: 12
+  last_updated: "2025-11-14"
+  author: "Architecture Team"
+  version: "1.0"
+
+best_practices:
+  - "Keep domain layer pure Kotlin - no Android dependencies"
+  - "Use interfaces to define contracts between layers"
+  - "Apply dependency inversion principle"
+  - "Use constructor injection for all dependencies"
+  - "Return Flow from repositories for reactive data"
+  - "Define domain-specific error types"
+  - "Extract complex business logic to use cases"
+  - "Follow package structure conventions"
+  - "Ensure domain layer is easily unit testable"
+
+references:
+  - "docs/ARCHITECTURE.md"
+  - "docs/CLEAN_ARCHITECTURE.md"
+  - "https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html"

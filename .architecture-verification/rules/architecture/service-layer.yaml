@@ -1,0 +1,588 @@
+version: "1.0"
+category: architecture
+subcategory: service_layer
+
+description: |
+  Enforces Service Layer (Use Case) patterns for business logic:
+  - Business logic encapsulation
+  - Single responsibility
+  - Testability
+  - Orchestration of multiple repositories
+  - Domain-specific operations
+
+rules:
+  # ==============================================
+  # SERVICE LOCATION RULES
+  # ==============================================
+
+  - id: SERVICE_001
+    name: "Services must be in domain.service package"
+    severity: ERROR
+    enabled: true
+    description: |
+      Service classes containing business logic must be located in the
+      domain.service package to maintain clean architecture boundaries.
+    check:
+      file_pattern: "**/*Service.kt"
+      must_be_in_directory: "**/domain/service/**"
+      exclude_patterns:
+        - "**/*ApiService.kt"  # Network services
+        - "**/data/**"         # Data layer services
+    message: "Service class not in domain.service package"
+    suggestion: |
+      Move service to domain layer:
+
+      Expected location:
+      com.example.arcana.domain.service.UserManagementService
+
+      Domain services contain business logic and use cases.
+      Data services (like API services) belong in data layer.
+    reference: "docs/ARCHITECTURE.md#service-layer"
+
+  # ==============================================
+  # SERVICE NAMING RULES
+  # ==============================================
+
+  - id: SERVICE_002
+    name: "Service classes should have descriptive names"
+    severity: WARNING
+    enabled: true
+    description: |
+      Service names should clearly describe the business capability they provide.
+      Use domain language in service names.
+    check:
+      file_pattern: "**/domain/service/**/*Service.kt"
+      class_naming_should_be_descriptive: true
+      avoid_generic_names:
+        - "DataService"
+        - "AppService"
+        - "MainService"
+        - "HelperService"
+      prefer_domain_names:
+        - "*ManagementService"
+        - "*ProcessingService"
+        - "*ValidationService"
+        - "*CalculationService"
+    message: "Service name is too generic or not descriptive"
+    suggestion: |
+      Use descriptive service names that reflect business domain:
+
+      Good names:
+      - UserAuthenticationService
+      - OrderProcessingService
+      - InventoryManagementService
+      - PriceCalculationService
+      - DataSynchronizationService
+
+      Bad names:
+      - DataService
+      - HelperService
+      - UtilityService
+      - AppService
+    reference: "docs/ARCHITECTURE.md#naming-conventions"
+
+  # ==============================================
+  # SERVICE RESPONSIBILITIES
+  # ==============================================
+
+  - id: SERVICE_003
+    name: "Services should encapsulate business logic"
+    severity: ERROR
+    enabled: true
+    description: |
+      Services should contain business logic that doesn't belong in
+      repositories or ViewModels. Avoid anemic services that just delegate.
+    check:
+      file_pattern: "**/domain/service/**/*Service.kt"
+      should_not_be_simple_delegation: true
+      should_contain_business_logic: true
+    message: "Service appears to be anemic (no business logic)"
+    suggestion: |
+      Services should add value through business logic:
+
+      ❌ Bad - Just delegation (anemic):
+      class UserService(
+          private val repository: UserRepository
+      ) {
+          fun getUser(id: String) = repository.getUser(id)
+          fun saveUser(user: User) = repository.saveUser(user)
+      }
+
+      ✅ Good - Contains business logic:
+      class UserAuthenticationService(
+          private val userRepository: UserRepository,
+          private val cryptoService: CryptoService,
+          private val tokenService: TokenService
+      ) {
+          suspend fun authenticateUser(
+              email: String,
+              password: String
+          ): Result<AuthToken> {
+              // Business logic: validation, hashing, token generation
+              if (!email.isValidEmail()) {
+                  return Result.failure(InvalidEmailError())
+              }
+
+              val hashedPassword = cryptoService.hash(password)
+              return when (val user = userRepository.findByEmail(email)) {
+                  null -> Result.failure(UserNotFoundError())
+                  else -> {
+                      if (user.passwordHash == hashedPassword) {
+                          val token = tokenService.generateToken(user)
+                          Result.success(token)
+                      } else {
+                          Result.failure(InvalidCredentialsError())
+                      }
+                  }
+              }
+          }
+      }
+    reference: "docs/ARCHITECTURE.md#service-responsibilities"
+
+  - id: SERVICE_004
+    name: "Services should orchestrate multiple repositories"
+    severity: INFO
+    enabled: true
+    description: |
+      Services are ideal for operations that involve multiple repositories
+      or complex business logic workflows.
+    check:
+      file_pattern: "**/domain/service/**/*Service.kt"
+      ideal_when_multiple_dependencies: true
+    message: "Consider if this service provides orchestration value"
+    suggestion: |
+      Use services for multi-repository orchestration:
+
+      class OrderProcessingService @Inject constructor(
+          private val orderRepository: OrderRepository,
+          private val inventoryRepository: InventoryRepository,
+          private val paymentRepository: PaymentRepository,
+          private val notificationService: NotificationService
+      ) {
+          suspend fun processOrder(order: Order): Result<OrderConfirmation> {
+              // Complex orchestration across multiple domains
+              return try {
+                  // 1. Check inventory
+                  val availability = inventoryRepository.checkAvailability(order.items)
+                  if (!availability.allAvailable) {
+                      return Result.failure(OutOfStockError(availability.unavailable))
+                  }
+
+                  // 2. Process payment
+                  val payment = paymentRepository.processPayment(
+                      order.total,
+                      order.paymentMethod
+                  )
+
+                  // 3. Reserve inventory
+                  inventoryRepository.reserveItems(order.items)
+
+                  // 4. Create order
+                  val confirmedOrder = orderRepository.createOrder(order, payment)
+
+                  // 5. Send notifications
+                  notificationService.sendOrderConfirmation(confirmedOrder)
+
+                  Result.success(OrderConfirmation(confirmedOrder))
+              } catch (e: Exception) {
+                  // Rollback logic
+                  Result.failure(e)
+                  }
+          }
+      }
+    reference: "docs/ARCHITECTURE.md#service-orchestration"
+
+  # ==============================================
+  # SERVICE STRUCTURE RULES
+  # ==============================================
+
+  - id: SERVICE_005
+    name: "Services should have single responsibility"
+    severity: WARNING
+    enabled: true
+    description: |
+      Each service should have a single, well-defined responsibility.
+      Large services should be split into smaller, focused services.
+    check:
+      file_pattern: "**/domain/service/**/*Service.kt"
+      max_functions: 10
+      max_dependencies: 5
+      functions_should_be_related: true
+    message: "Service has too many responsibilities"
+    suggestion: |
+      Split large services into focused services:
+
+      ❌ Bad - Too many responsibilities:
+      class UserService {
+          fun authenticateUser()
+          fun validateEmail()
+          fun sendWelcomeEmail()
+          fun calculateUserTier()
+          fun processSubscription()
+          fun exportUserData()
+          // Too much!
+      }
+
+      ✅ Good - Focused services:
+      class UserAuthenticationService {
+          fun authenticateUser()
+          fun validateCredentials()
+      }
+
+      class UserNotificationService {
+          fun sendWelcomeEmail()
+          fun sendPasswordReset()
+      }
+
+      class UserTierService {
+          fun calculateUserTier()
+          fun updateTierBenefits()
+      }
+    reference: "docs/ARCHITECTURE.md#single-responsibility"
+
+  - id: SERVICE_006
+    name: "Service functions should return Result for operations that can fail"
+    severity: ERROR
+    enabled: true
+    description: |
+      Service operations that can fail should return Result<T> for
+      explicit error handling.
+    check:
+      file_pattern: "**/domain/service/**/*Service.kt"
+      suspend_functions_should_return: "Result<"
+      exclude_simple_getters: true
+    message: "Service operation should return Result for error handling"
+    suggestion: |
+      Use Result for error-prone operations:
+
+      class PaymentService @Inject constructor(
+          private val paymentRepository: PaymentRepository
+      ) {
+          suspend fun processPayment(
+              amount: Double,
+              method: PaymentMethod
+          ): Result<PaymentConfirmation> {
+              return try {
+                  if (amount <= 0) {
+                      return Result.failure(InvalidAmountError())
+                  }
+
+                  val payment = paymentRepository.process(amount, method)
+                  Result.success(PaymentConfirmation(payment))
+              } catch (e: PaymentException) {
+                  Result.failure(PaymentFailedError(e.message))
+              }
+          }
+      }
+    reference: "docs/ARCHITECTURE.md#error-handling"
+    examples:
+      good:
+        - "suspend fun processOrder(order: Order): Result<OrderConfirmation>"
+        - "suspend fun validateUser(user: User): Result<ValidationResult>"
+      bad:
+        - "suspend fun processOrder(order: Order): OrderConfirmation"
+        - "suspend fun validateUser(user: User): ValidationResult"
+
+  # ==============================================
+  # DEPENDENCY RULES
+  # ==============================================
+
+  - id: SERVICE_007
+    name: "Services should use constructor injection"
+    severity: ERROR
+    enabled: true
+    description: |
+      Services must use constructor injection for all dependencies.
+      No field injection or service locators.
+    check:
+      file_pattern: "**/domain/service/**/*Service.kt"
+      must_use_constructor_injection: true
+      must_not_contain:
+        - "@Inject lateinit var"
+        - "ServiceLocator"
+    message: "Service must use constructor injection"
+    suggestion: |
+      Use constructor injection:
+
+      ✅ Good:
+      class OrderService @Inject constructor(
+          private val orderRepository: OrderRepository,
+          private val notificationService: NotificationService
+      ) {
+          // Implementation
+      }
+
+      ❌ Bad - Field injection:
+      class OrderService {
+          @Inject lateinit var orderRepository: OrderRepository
+          @Inject lateinit var notificationService: NotificationService
+      }
+    reference: "docs/ARCHITECTURE.md#dependency-injection"
+
+  - id: SERVICE_008
+    name: "Services should depend on interfaces, not implementations"
+    severity: WARNING
+    enabled: true
+    description: |
+      Services should depend on repository interfaces (domain layer),
+      not repository implementations (data layer).
+    check:
+      file_pattern: "**/domain/service/**/*Service.kt"
+      dependencies_should_be_interfaces: true
+      must_not_depend_on: "*RepositoryImpl"
+    message: "Service depends on implementation instead of interface"
+    suggestion: |
+      Depend on interfaces:
+
+      ✅ Good:
+      class UserService @Inject constructor(
+          private val userRepository: UserRepository  // Interface
+      )
+
+      ❌ Bad:
+      class UserService @Inject constructor(
+          private val userRepository: UserRepositoryImpl  // Implementation
+      )
+    reference: "docs/ARCHITECTURE.md#dependency-inversion"
+
+  - id: SERVICE_009
+    name: "Services can depend on other services"
+    severity: INFO
+    enabled: true
+    description: |
+      Services can depend on other services for composition,
+      but watch for circular dependencies.
+    check:
+      file_pattern: "**/domain/service/**/*Service.kt"
+      allow_service_dependencies: true
+      detect_circular_dependencies: true
+    message: "Potential circular dependency between services"
+    suggestion: |
+      Services can compose other services:
+
+      ✅ Good - Hierarchical dependencies:
+      class OrderService(
+          private val inventoryService: InventoryService,
+          private val paymentService: PaymentService
+      )
+
+      class CheckoutService(
+          private val orderService: OrderService,
+          private val shippingService: ShippingService
+      )
+
+      ❌ Bad - Circular dependency:
+      class ServiceA(private val serviceB: ServiceB)
+      class ServiceB(private val serviceA: ServiceA)
+    reference: "docs/ARCHITECTURE.md#service-composition"
+
+  # ==============================================
+  # TESTING RULES
+  # ==============================================
+
+  - id: SERVICE_010
+    name: "Services must have unit tests"
+    severity: ERROR
+    enabled: true
+    description: |
+      All service classes must have comprehensive unit tests.
+      Services contain business logic that must be thoroughly tested.
+    check:
+      file_pattern: "**/domain/service/**/*Service.kt"
+      requires_test_file: true
+      test_file_pattern: "**/*ServiceTest.kt"
+    message: "Service missing unit tests"
+    suggestion: |
+      Create service tests:
+
+      class OrderProcessingServiceTest {
+          private lateinit var service: OrderProcessingService
+          private lateinit var orderRepository: OrderRepository
+          private lateinit var inventoryRepository: InventoryRepository
+
+          @Before
+          fun setup() {
+              orderRepository = mock()
+              inventoryRepository = mock()
+              service = OrderProcessingService(
+                  orderRepository,
+                  inventoryRepository
+              )
+          }
+
+          @Test
+          fun `processOrder succeeds when inventory available`() = runTest {
+              // Arrange
+              val order = Order(items = listOf(item1, item2))
+              whenever(inventoryRepository.checkAvailability(order.items))
+                  .thenReturn(Availability.AllAvailable)
+
+              // Act
+              val result = service.processOrder(order)
+
+              // Assert
+              assertTrue(result.isSuccess)
+          }
+
+          @Test
+          fun `processOrder fails when item out of stock`() = runTest {
+              // Arrange
+              val order = Order(items = listOf(item1))
+              whenever(inventoryRepository.checkAvailability(order.items))
+                  .thenReturn(Availability.OutOfStock(item1))
+
+              // Act
+              val result = service.processOrder(order)
+
+              // Assert
+              assertTrue(result.isFailure)
+              assertTrue(result.exceptionOrNull() is OutOfStockError)
+          }
+      }
+    reference: "docs/TESTING.md#service-tests"
+
+  - id: SERVICE_011
+    name: "Service tests should not require Android dependencies"
+    severity: ERROR
+    enabled: true
+    description: |
+      Service tests should be pure JVM unit tests that don't require
+      Android framework or Robolectric.
+    check:
+      file_pattern: "**/test/**/domain/service/**/*ServiceTest.kt"
+      must_not_contain:
+        - "@RunWith(AndroidJUnit4::class)"
+        - "@RunWith(RobolectricTestRunner::class)"
+        - "import android."
+        - "import androidx."
+    message: "Service test requires Android dependencies"
+    suggestion: |
+      Services in domain layer should have pure unit tests:
+
+      ✅ Good - Pure JVM test:
+      class UserServiceTest {
+          @Test
+          fun `authenticateUser returns token for valid credentials`() = runTest {
+              val service = UserService(mockRepository)
+              val result = service.authenticateUser("test@example.com", "password")
+              assertTrue(result.isSuccess)
+          }
+      }
+
+      ❌ Bad - Requires Android:
+      @RunWith(AndroidJUnit4::class)
+      class UserServiceTest {
+          // Don't need Android for domain logic tests
+      }
+    reference: "docs/TESTING.md#unit-test-principles"
+
+  # ==============================================
+  # PERFORMANCE RULES
+  # ==============================================
+
+  - id: SERVICE_012
+    name: "Long-running service operations should be suspending"
+    severity: ERROR
+    enabled: true
+    description: |
+      Operations that may take time (network, database, computation)
+      should be suspend functions.
+    check:
+      file_pattern: "**/domain/service/**/*Service.kt"
+      functions_with_side_effects:
+        must_be_suspend: true
+      functions_calling_repositories:
+        must_be_suspend: true
+    message: "Long-running operation should be suspend function"
+    suggestion: |
+      Make operations suspending:
+
+      ✅ Good:
+      class DataSyncService @Inject constructor(
+          private val repository: DataRepository
+      ) {
+          suspend fun syncData(): Result<SyncResult> {
+              // Long-running operation
+          }
+      }
+
+      ❌ Bad - Blocking:
+      class DataSyncService {
+          fun syncData(): Result<SyncResult> {
+              // This will block the calling thread
+          }
+      }
+    reference: "docs/ARCHITECTURE.md#coroutines"
+
+  # ==============================================
+  # DOCUMENTATION RULES
+  # ==============================================
+
+  - id: SERVICE_013
+    name: "Services should have KDoc documentation"
+    severity: WARNING
+    enabled: true
+    description: |
+      Service classes and public functions should have KDoc comments
+      explaining their purpose and behavior.
+    check:
+      file_pattern: "**/domain/service/**/*Service.kt"
+      class_should_have_kdoc: true
+      public_functions_should_have_kdoc: true
+    message: "Service missing KDoc documentation"
+    suggestion: |
+      Add KDoc documentation:
+
+      /**
+       * Manages user authentication and authorization.
+       *
+       * Handles:
+       * - User login with credentials
+       * - Token generation and validation
+       * - Password reset flows
+       * - Session management
+       */
+      class UserAuthenticationService @Inject constructor(
+          private val userRepository: UserRepository,
+          private val tokenService: TokenService
+      ) {
+          /**
+           * Authenticates a user with email and password.
+           *
+           * @param email User's email address
+           * @param password User's password (plain text, will be hashed)
+           * @return Result containing auth token on success, error on failure
+           */
+          suspend fun authenticateUser(
+              email: String,
+              password: String
+          ): Result<AuthToken> {
+              // Implementation
+          }
+      }
+    reference: "docs/DOCUMENTATION.md#kdoc"
+
+metadata:
+  total_rules: 13
+  last_updated: "2025-11-14"
+  author: "Architecture Team"
+  version: "1.0"
+
+best_practices:
+  - "Place services in domain.service package"
+  - "Use descriptive, domain-specific names"
+  - "Encapsulate business logic, not just delegation"
+  - "Orchestrate multiple repositories when needed"
+  - "Maintain single responsibility per service"
+  - "Return Result for operations that can fail"
+  - "Use constructor injection"
+  - "Depend on interfaces, not implementations"
+  - "Write comprehensive unit tests"
+  - "Make long-running operations suspending"
+  - "Document with KDoc"
+  - "Keep services testable without Android dependencies"
+
+references:
+  - "docs/ARCHITECTURE.md"
+  - "docs/SERVICE_LAYER.md"
+  - "docs/BUSINESS_LOGIC.md"

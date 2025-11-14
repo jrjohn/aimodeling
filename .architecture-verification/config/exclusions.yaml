@@ -1,0 +1,137 @@
+# Exclusion Configuration
+# Specify files, directories, or patterns to exclude from verification checks
+
+version: "1.0"
+
+# Global exclusions (apply to all checks)
+global:
+  directories:
+    - "**/build/**"
+    - "**/generated/**"
+    - "**/.gradle/**"
+    - "**/buildSrc/build/**"
+    - "**/app/build/**"
+
+  files:
+    - "**/BuildConfig.kt"
+    - "**/R.kt"
+    - "**/*_*.kt"  # Generated files often have underscores
+
+  patterns:
+    - "**/*Generated.kt"
+    - "**/*_Impl.kt"
+    - "**/Hilt_*.kt"
+
+# Check-specific exclusions
+checks:
+
+  # Architecture checks
+  architecture:
+    mvvm_pattern:
+      # Exclude base classes that don't need full pattern
+      exclude:
+        - "**/AnalyticsViewModel.kt"
+        - "**/BaseViewModel.kt"
+
+    clean_architecture:
+      # Allow certain cross-layer dependencies for testing
+      exclude:
+        - "**/test/**"
+        - "**/androidTest/**"
+
+  # Coding style checks
+  coding_style:
+    file_length:
+      # Allow longer files for specific cases
+      exclude:
+        - "**/Theme.kt"
+        - "**/NavGraph.kt"
+        - "**/di/**Module.kt"
+
+    naming_conventions:
+      # Exclude test files from certain naming rules
+      exclude:
+        - "**/*Test.kt"
+        - "**/*Spec.kt"
+
+  # Testing checks
+  testing:
+    test_coverage:
+      # Don't require tests for these files
+      exclude:
+        - "**/MainActivity.kt"
+        - "**/MyApplication.kt"
+        - "**/ui/theme/**"
+        - "**/di/**Module.kt"
+        - "**/*Module.kt"
+
+  # Documentation checks
+  documentation:
+    kdoc_comments:
+      # Don't require KDoc for trivial classes
+      exclude:
+        - "**/data/model/**"
+        - "**/ui/theme/**"
+        - "**/*Dto.kt"
+
+# Legacy code exclusions (temporary)
+legacy:
+  enabled: true
+  # Files grandfathered in during migration
+  files:
+    # Add legacy files here during migration
+    # - "app/src/main/java/com/example/arcana/legacy/OldClass.kt"
+
+  until_date: "2025-12-31"  # Re-enable checks after this date
+  reason: "Migration period for new architecture standards"
+
+# Third-party code exclusions
+third_party:
+  directories:
+    - "**/libs/**"
+    - "**/vendor/**"
+
+# Generated code patterns
+generated:
+  patterns:
+    - "**/*_Factory.kt"
+    - "**/*_HiltModules.kt"
+    - "**/*_MembersInjector.kt"
+    - "**/*_Provide*.kt"
+    - "**/Hilt_*.kt"
+    - "**/DaggerHilt_*.kt"
+
+# Exclude by file size (skip very large files)
+size_limits:
+  enabled: true
+  max_file_size_kb: 1000  # Skip files larger than 1MB
+
+# Exclude by complexity (skip overly complex legacy files)
+complexity_limits:
+  enabled: true
+  max_cyclomatic_complexity: 50
+
+# Custom exclusion rules
+custom:
+  # Exclude files with specific markers
+  marker_comments:
+    - "// @ArchitectureVerification:skip"
+    - "// TODO: Fix architecture violation"
+
+  # Exclude files matching regex patterns
+  regex_patterns:
+    - ".*Migration.*\\.kt$"
+    - ".*Debug.*\\.kt$"
+
+# Per-developer exclusions (for local development)
+# This section is ignored in CI/CD
+local_dev:
+  enabled: true
+  exclude_files: []
+  # Developers can add temporary exclusions here
+
+# Report on excluded files
+reporting:
+  show_excluded_files: true
+  show_exclusion_reason: true
+  count_excluded_violations: true

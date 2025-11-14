@@ -438,10 +438,22 @@ open docs/api/index.html
 ./gradlew copyAllDocsToProject
 ```
 
+#### Architecture Verification
+```bash
+# Run architecture compliance checks:
+./gradlew verifyArchitecture
+
+# Generate detailed architecture report:
+./gradlew generateArchitectureReport
+
+# Output: ARCHITECTURE_VERIFICATION_REPORT.md
+```
+
 ### Manual Documentation
 
 - 📖 [Architecture Guide](docs/ARCHITECTURE.md) - Comprehensive architecture documentation
 - 🏗️ [ViewModel Pattern](docs/VIEWMODEL_PATTERN.md) - Input/Output pattern implementation guide
+- 🔍 [Architecture Verification](docs/ARCHITECTURE_VERIFICATION.md) - Automated verification system
 - ✅ [Input Validation Implementation](USER_DIALOG_VALIDATION_IMPLEMENTATION.md) - UserDialog validation details
 - 🎨 [Mermaid Diagrams](docs/architecture/) - Source diagrams
 - 🔧 [API Docs](docs/api/index.html) - Auto-generated from code comments (after build)
@@ -539,6 +551,10 @@ arcana-android/
 # View all tasks
 ./gradlew tasks
 
+# Architecture Verification tasks
+./gradlew verifyArchitecture       # Verify architecture compliance (runs with check)
+./gradlew generateArchitectureReport # Generate detailed architecture report
+
 # Documentation tasks
 ./gradlew generateApiDocs          # Generate API documentation (auto-copied to docs/)
 ./gradlew generateMermaidDiagrams  # Generate PNG diagrams (auto-copied to docs/)
@@ -554,7 +570,8 @@ arcana-android/
 
 # Build tasks
 ./gradlew clean                    # Clean build directory
-./gradlew build                    # Full build + tests + docs
+./gradlew build                    # Full build + tests + verification
+./gradlew check                    # Run tests + architecture verification
 ./gradlew assembleWithDocs         # Build + generate docs
 ```
 

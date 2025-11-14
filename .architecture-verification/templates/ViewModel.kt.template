@@ -1,0 +1,120 @@
+package {{package_name}}
+
+import androidx.lifecycle.viewModelScope
+import com.example.arcana.core.analytics.AnalyticsScreens
+import com.example.arcana.core.analytics.AnalyticsTracker
+import com.example.arcana.core.analytics.AnalyticsViewModel
+import com.example.arcana.core.analytics.annotations.TrackScreen
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+/**
+ * ViewModel for {{screen_name}}
+ *
+ * @param {{dependency_name}} Description of dependency
+ * @param analyticsTracker Analytics tracking service
+ */
+@HiltViewModel
+@TrackScreen(AnalyticsScreens.{{SCREEN_CONSTANT}})
+class {{ClassName}}ViewModel @Inject constructor(
+    private val {{dependency_name}}: {{DependencyType}},
+    analyticsTracker: AnalyticsTracker
+) : AnalyticsViewModel(analyticsTracker) {
+
+    // ============================================
+    // Input - Events from UI to ViewModel
+    // ============================================
+    sealed interface Input {
+        data object LoadData : Input
+        data class {{Action}}(val param: {{ParamType}}) : Input
+        // Add more input events here
+    }
+
+    // ============================================
+    // Output - State and Effects to UI
+    // ============================================
+    sealed interface Output {
+        /**
+         * State - Represents the current UI state for binding
+         */
+        data class State(
+            val data: List<{{ItemType}}> = emptyList(),
+            val isLoading: Boolean = false,
+            val error: String? = null
+        ) {
+            // Computed properties for derived data
+            val hasData: Boolean get() = data.isNotEmpty()
+            val itemCount: Int get() = data.size
+        }
+
+        /**
+         * Effect - One-time events from ViewModel to UI
+         */
+        sealed interface Effect {
+            data class ShowError(val message: String) : Effect
+            data class ShowSuccess(val message: String) : Effect
+            data class Navigate(val route: String) : Effect
+        }
+    }
+
+    // ============================================
+    // State & Effect Channels
+    // ============================================
+    private val _state = MutableStateFlow(Output.State())
+    val state: StateFlow<Output.State> = _state.asStateFlow()
+
+    private val _effect = Channel<Output.Effect>(Channel.BUFFERED)
+    val effect = _effect.receiveAsFlow()
+
+    init {
+        // Initialize with default event
+        onEvent(Input.LoadData)
+    }
+
+    // ============================================
+    // Event Handler
+    // ============================================
+    fun onEvent(input: Input) {
+        when (input) {
+            is Input.LoadData -> loadData()
+            is Input.{{Action}} -> handle{{Action}}(input.param)
+        }
+    }
+
+    // ============================================
+    // Private Methods
+    // ============================================
+    private fun loadData() {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isLoading = true)
+
+            try {
+                // TODO: Implement data loading
+                val data = {{dependency_name}}.getData()
+                _state.value = _state.value.copy(
+                    data = data,
+                    isLoading = false,
+                    error = null
+                )
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(
+                    isLoading = false,
+                    error = e.message
+                )
+                _effect.send(Output.Effect.ShowError(e.message ?: "Unknown error"))
+            }
+        }
+    }
+
+    private fun handle{{Action}}(param: {{ParamType}}) {
+        viewModelScope.launch {
+            // TODO: Implement action handling
+        }
+    }
+}

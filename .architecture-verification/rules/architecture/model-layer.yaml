@@ -1,0 +1,648 @@
+version: "1.0"
+category: architecture
+subcategory: model_layer
+
+description: |
+  Enforces domain model best practices:
+  - Immutability
+  - Data classes for models
+  - Clear separation of concerns
+  - Proper encapsulation
+  - Validation logic
+
+rules:
+  # ==============================================
+  # MODEL LOCATION RULES
+  # ==============================================
+
+  - id: MODEL_001
+    name: "Domain models must be in domain.model package"
+    severity: ERROR
+    enabled: true
+    description: |
+      Domain models (business entities) must be located in the
+      domain.model package to maintain clean architecture boundaries.
+    check:
+      file_pattern: "**/model/**/*.kt"
+      must_be_in_directory: "**/domain/model/**"
+      exclude_patterns:
+        - "**/data/local/entity/**"  # Room entities
+        - "**/data/remote/dto/**"     # Network DTOs
+        - "**/ui/model/**"            # UI models
+    message: "Domain model not in domain.model package"
+    suggestion: |
+      Organize models by layer:
+
+      Domain models (business logic):
+      com.example.arcana.domain.model.User
+      com.example.arcana.domain.model.Order
+
+      Data layer entities:
+      com.example.arcana.data.local.entity.UserEntity
+      com.example.arcana.data.remote.dto.UserDto
+
+      UI models (if needed):
+      com.example.arcana.ui.model.UserUiModel
+    reference: "docs/ARCHITECTURE.md#model-organization"
+
+  # ==============================================
+  # IMMUTABILITY RULES
+  # ==============================================
+
+  - id: MODEL_002
+    name: "Domain models should be immutable"
+    severity: ERROR
+    enabled: true
+    description: |
+      Domain models should be immutable (use val, not var) to prevent
+      unexpected mutations and enable safe sharing across threads.
+    check:
+      file_pattern: "**/domain/model/**/*.kt"
+      data_classes:
+        properties_should_be: "val"
+        should_not_contain: "var"
+    message: "Domain model has mutable properties"
+    suggestion: |
+      Use immutable properties:
+
+      ✅ Good - Immutable:
+      data class User(
+          val id: String,
+          val name: String,
+          val email: String,
+          val createdAt: Long
+      )
+
+      ❌ Bad - Mutable:
+      data class User(
+          var id: String,      // Mutable - bad!
+          var name: String,    // Mutable - bad!
+          val email: String
+      )
+
+      Benefits of immutability:
+      - Thread-safe
+      - Predictable behavior
+      - Easier to test
+      - Works with Flow and StateFlow
+      - Prevents accidental mutations
+
+      To modify: Create new instance with copy()
+      val updatedUser = user.copy(name = "New Name")
+    reference: "docs/ARCHITECTURE.md#immutability"
+    examples:
+      good:
+        - "data class User(val id: String, val name: String)"
+        - "data class Order(val id: String, val items: List<Item>)"
+      bad:
+        - "data class User(var id: String, var name: String)"
+        - "class User { var name: String = \"\" }"
+
+  - id: MODEL_003
+    name: "Use data classes for domain models"
+    severity: ERROR
+    enabled: true
+    description: |
+      Domain models should be data classes to get automatic
+      equals(), hashCode(), copy(), and toString() implementations.
+    check:
+      file_pattern: "**/domain/model/**/*.kt"
+      classes_should_be: "data class"
+      exclude_sealed_interfaces: true
+      exclude_enums: true
+    message: "Domain model should be a data class"
+    suggestion: |
+      Use data classes for models:
+
+      ✅ Good:
+      data class User(
+          val id: String,
+          val name: String,
+          val email: String
+      )
+
+      Automatic benefits:
+      - equals() and hashCode()
+      - copy() function
+      - toString()
+      - componentN() for destructuring
+
+      Usage:
+      val user1 = User("1", "John", "john@example.com")
+      val user2 = user1.copy(name = "Jane")
+      val (id, name, email) = user1
+
+      ❌ Bad - Regular class:
+      class User(
+          val id: String,
+          val name: String,
+          val email: String
+      )
+      // Missing: equals, hashCode, copy, toString
+    reference: "docs/ARCHITECTURE.md#data-classes"
+
+  # ==============================================
+  # COLLECTION IMMUTABILITY RULES
+  # ==============================================
+
+  - id: MODEL_004
+    name: "Use immutable collection types"
+    severity: WARNING
+    enabled: true
+    description: |
+      Domain models should use immutable collection types (List, Set, Map)
+      instead of mutable ones (MutableList, MutableSet, MutableMap).
+    check:
+      file_pattern: "**/domain/model/**/*.kt"
+      should_use: ["List<", "Set<", "Map<"]
+      should_not_use: ["MutableList<", "MutableSet<", "MutableMap<"]
+    message: "Domain model uses mutable collection type"
+    suggestion: |
+      Use immutable collections:
+
+      ✅ Good:
+      data class Order(
+          val id: String,
+          val items: List<OrderItem>,      // Immutable
+          val tags: Set<String>,           // Immutable
+          val metadata: Map<String, Any>   // Immutable
+      )
+
+      ❌ Bad:
+      data class Order(
+          val id: String,
+          val items: MutableList<OrderItem>,    // Mutable!
+          val tags: MutableSet<String>,         // Mutable!
+          val metadata: MutableMap<String, Any> // Mutable!
+      )
+
+      To add items, create new instance:
+      val newOrder = order.copy(
+          items = order.items + newItem
+      )
+    reference: "docs/ARCHITECTURE.md#collection-immutability"
+    examples:
+      good:
+        - "val items: List<Item>"
+        - "val tags: Set<String>"
+      bad:
+        - "val items: MutableList<Item>"
+        - "val tags: MutableSet<String>"
+
+  # ==============================================
+  # VALIDATION RULES
+  # ==============================================
+
+  - id: MODEL_005
+    name: "Complex validation should be in domain model or service"
+    severity: INFO
+    enabled: true
+    description: |
+      Business validation logic should be encapsulated in domain models
+      or services, not scattered in ViewModels or UI.
+    check:
+      file_pattern: "**/domain/model/**/*.kt"
+      can_have_validation_functions: true
+      should_be_pure_functions: true
+    message: "Consider adding validation logic to domain model"
+    suggestion: |
+      Add validation to domain models:
+
+      data class Email(val value: String) {
+          init {
+              require(value.contains("@")) { "Invalid email format" }
+          }
+
+          companion object {
+              fun isValid(email: String): Boolean {
+                  return email.contains("@") && email.contains(".")
+              }
+          }
+      }
+
+      data class Order(
+          val id: String,
+          val items: List<OrderItem>,
+          val total: Double
+      ) {
+          fun isValid(): Boolean {
+              return items.isNotEmpty() && total > 0
+          }
+
+          fun calculateTax(): Double {
+              return total * 0.08
+          }
+      }
+
+      Or use services for complex validation:
+      class OrderValidationService {
+          fun validate(order: Order): ValidationResult {
+              // Complex validation logic
+          }
+      }
+    reference: "docs/ARCHITECTURE.md#domain-validation"
+
+  # ==============================================
+  # COMPUTED PROPERTIES RULES
+  # ==============================================
+
+  - id: MODEL_006
+    name: "Use computed properties for derived data"
+    severity: INFO
+    enabled: true
+    description: |
+      Derived data should be computed properties, not stored fields.
+      This ensures consistency and reduces redundancy.
+    check:
+      file_pattern: "**/domain/model/**/*.kt"
+      encourage_computed_properties: true
+      for_derived_data: true
+    message: "Consider using computed property for derived data"
+    suggestion: |
+      Use computed properties:
+
+      ✅ Good - Computed:
+      data class Order(
+          val items: List<OrderItem>,
+          val subtotal: Double
+      ) {
+          val tax: Double get() = subtotal * 0.08
+          val total: Double get() = subtotal + tax
+          val itemCount: Int get() = items.size
+          val isEmpty: Boolean get() = items.isEmpty()
+      }
+
+      ❌ Bad - Stored and potentially inconsistent:
+      data class Order(
+          val items: List<OrderItem>,
+          val subtotal: Double,
+          val tax: Double,      // Could become inconsistent
+          val total: Double,    // Could become inconsistent
+          val itemCount: Int    // Could become inconsistent
+      )
+
+      Benefits:
+      - Always consistent
+      - No redundant data
+      - Easier to maintain
+      - Clear data dependencies
+    reference: "docs/ARCHITECTURE.md#computed-properties"
+
+  # ==============================================
+  # MODEL DESIGN RULES
+  # ==============================================
+
+  - id: MODEL_007
+    name: "Avoid nullable properties when possible"
+    severity: WARNING
+    enabled: true
+    description: |
+      Use non-nullable types when the property should always have a value.
+      Use defaults or separate types for optional data.
+    check:
+      file_pattern: "**/domain/model/**/*.kt"
+      minimize_nullable_properties: true
+      suggest_defaults_or_sealed_types: true
+    message: "Consider if nullable property is necessary"
+    suggestion: |
+      Minimize nullable properties:
+
+      ✅ Good - Non-nullable with defaults:
+      data class User(
+          val id: String,
+          val name: String,
+          val email: String,
+          val role: UserRole = UserRole.USER,     // Default
+          val preferences: Preferences = Preferences()  // Default
+      )
+
+      ✅ Good - Separate sealed type for optional data:
+      sealed interface UserData {
+          data object Loading : UserData
+          data class Loaded(val user: User) : UserData
+          data object NotFound : UserData
+      }
+
+      ❌ Bad - Overuse of nullables:
+      data class User(
+          val id: String?,      // Should always exist
+          val name: String?,    // Should always exist
+          val email: String?,   // Should always exist
+          val role: UserRole?,  // Use default instead
+          val preferences: Preferences?  // Use default instead
+      )
+
+      When nullable is appropriate:
+      - Truly optional data (e.g., middle name)
+      - Data that may not be loaded yet (consider sealed type)
+      - Optional associations
+    reference: "docs/ARCHITECTURE.md#nullable-properties"
+
+  - id: MODEL_008
+    name: "Use sealed interfaces for state variations"
+    severity: INFO
+    enabled: true
+    description: |
+      When a model has distinct variations or states, use sealed
+      interfaces/classes instead of nullable or boolean flags.
+    check:
+      file_pattern: "**/domain/model/**/*.kt"
+      prefer_sealed_over_flags: true
+      avoid_excessive_booleans: true
+    message: "Consider using sealed interface for state variations"
+    suggestion: |
+      Use sealed interfaces for variations:
+
+      ✅ Good - Sealed interface:
+      sealed interface UserStatus {
+          data object Active : UserStatus
+          data object Suspended : UserStatus
+          data class Banned(val reason: String, val until: Long) : UserStatus
+      }
+
+      data class User(
+          val id: String,
+          val name: String,
+          val status: UserStatus
+      )
+
+      ❌ Bad - Multiple booleans:
+      data class User(
+          val id: String,
+          val name: String,
+          val isActive: Boolean,
+          val isSuspended: Boolean,
+          val isBanned: Boolean,
+          val banReason: String?,  // Only for banned
+          val banUntil: Long?      // Only for banned
+      )
+
+      Benefits:
+      - Type-safe state handling
+      - Impossible invalid states
+      - Clear intent
+      - Exhaustive when expressions
+    reference: "docs/ARCHITECTURE.md#sealed-types"
+
+  # ==============================================
+  # VALUE OBJECT RULES
+  # ==============================================
+
+  - id: MODEL_009
+    name: "Consider value objects for domain primitives"
+    severity: INFO
+    enabled: true
+    description: |
+      Wrap primitive types (String, Int, etc.) in value objects when
+      they have domain meaning and validation rules.
+    check:
+      file_pattern: "**/domain/model/**/*.kt"
+      consider_value_objects_for:
+        - "Email"
+        - "PhoneNumber"
+        - "PostalCode"
+        - "Currency"
+        - "Percentage"
+    message: "Consider creating value object for domain primitive"
+    suggestion: |
+      Create value objects:
+
+      ✅ Good - Value objects:
+      @JvmInline
+      value class Email(val value: String) {
+          init {
+              require(value.contains("@")) { "Invalid email" }
+          }
+      }
+
+      @JvmInline
+      value class UserId(val value: String) {
+          init {
+              require(value.isNotBlank()) { "User ID cannot be blank" }
+          }
+      }
+
+      data class User(
+          val id: UserId,
+          val email: Email,
+          val name: String
+      )
+
+      ❌ Bad - Primitive obsession:
+      data class User(
+          val id: String,      // Any string?
+          val email: String,   // Validated?
+          val name: String
+      )
+
+      Benefits:
+      - Type safety
+      - Validation in one place
+      - Clear intent
+      - Compile-time checks
+      - No runtime overhead with @JvmInline
+    reference: "docs/ARCHITECTURE.md#value-objects"
+
+  # ==============================================
+  # SERIALIZATION RULES
+  # ==============================================
+
+  - id: MODEL_010
+    name: "Domain models should not have serialization annotations"
+    severity: WARNING
+    enabled: true
+    description: |
+      Domain models should be pure business models without
+      serialization concerns. Use separate DTOs for serialization.
+    check:
+      file_pattern: "**/domain/model/**/*.kt"
+      should_not_contain:
+        - "@Serializable"
+        - "@SerializedName"
+        - "@Json"
+        - "@Entity"
+        - "@ColumnInfo"
+    message: "Domain model has serialization annotations"
+    suggestion: |
+      Separate domain models from serialization:
+
+      ✅ Good - Pure domain model:
+      // domain/model/User.kt
+      data class User(
+          val id: String,
+          val name: String,
+          val email: String
+      )
+
+      // data/remote/dto/UserDto.kt
+      @Serializable
+      data class UserDto(
+          @SerializedName("user_id") val id: String,
+          @SerializedName("full_name") val name: String,
+          @SerializedName("email_address") val email: String
+      )
+
+      // data/local/entity/UserEntity.kt
+      @Entity(tableName = "users")
+      data class UserEntity(
+          @PrimaryKey val id: String,
+          @ColumnInfo(name = "user_name") val name: String,
+          val email: String
+      )
+
+      ❌ Bad - Mixed concerns:
+      @Serializable
+      @Entity(tableName = "users")
+      data class User(  // Domain model shouldn't know about serialization
+          @SerializedName("user_id")
+          @PrimaryKey
+          val id: String,
+          val name: String,
+          val email: String
+      )
+
+      Use mappers:
+      fun UserDto.toDomain() = User(id, name, email)
+      fun UserEntity.toDomain() = User(id, name, email)
+    reference: "docs/ARCHITECTURE.md#serialization-separation"
+
+  # ==============================================
+  # ENUM VS SEALED RULES
+  # ==============================================
+
+  - id: MODEL_011
+    name: "Use sealed interfaces over enums for complex types"
+    severity: INFO
+    enabled: true
+    description: |
+      When types need to carry data or have behavior, use sealed
+      interfaces instead of enums.
+    check:
+      file_pattern: "**/domain/model/**/*.kt"
+      prefer_sealed_when:
+        types_carry_data: true
+        types_have_behavior: true
+    message: "Consider sealed interface instead of enum"
+    suggestion: |
+      Choose appropriate type:
+
+      ✅ Enum - Simple values, no data:
+      enum class UserRole {
+          ADMIN,
+          USER,
+          GUEST
+      }
+
+      ✅ Sealed - Types with data:
+      sealed interface PaymentMethod {
+          data class CreditCard(
+              val last4: String,
+              val expiryMonth: Int,
+              val expiryYear: Int
+          ) : PaymentMethod
+
+          data class BankAccount(
+              val accountNumber: String,
+              val routingNumber: String
+          ) : PaymentMethod
+
+          data object Cash : PaymentMethod
+      }
+
+      ❌ Enum with complex data (awkward):
+      enum class PaymentMethod(
+          val cardNumber: String? = null,
+          val accountNumber: String? = null
+      ) {
+          CREDIT_CARD("1234", null),
+          BANK_ACCOUNT(null, "5678")
+      }
+
+      Rule of thumb:
+      - Enum: Fixed set of simple values
+      - Sealed: Types with different structures or data
+    reference: "docs/ARCHITECTURE.md#enums-vs-sealed"
+
+  # ==============================================
+  # DOCUMENTATION RULES
+  # ==============================================
+
+  - id: MODEL_012
+    name: "Complex domain models should have KDoc"
+    severity: WARNING
+    enabled: true
+    description: |
+      Important domain models should have KDoc explaining their
+      purpose, invariants, and usage.
+    check:
+      file_pattern: "**/domain/model/**/*.kt"
+      complex_models_should_have_kdoc: true
+      when_properties_count: "> 5"
+      when_has_validation: true
+    message: "Complex domain model missing KDoc documentation"
+    suggestion: |
+      Document domain models:
+
+      /**
+       * Represents a user order in the system.
+       *
+       * Invariants:
+       * - Must have at least one item
+       * - Total must be greater than zero
+       * - Order ID is immutable after creation
+       *
+       * @property id Unique order identifier
+       * @property userId ID of user who placed the order
+       * @property items List of ordered items (immutable)
+       * @property status Current order status
+       * @property createdAt Timestamp when order was created
+       * @property updatedAt Timestamp of last update
+       */
+      data class Order(
+          val id: String,
+          val userId: String,
+          val items: List<OrderItem>,
+          val status: OrderStatus,
+          val createdAt: Long,
+          val updatedAt: Long
+      ) {
+          /**
+           * Validates that the order is in a consistent state.
+           *
+           * @return true if order is valid, false otherwise
+           */
+          fun isValid(): Boolean {
+              return items.isNotEmpty() && total > 0
+          }
+
+          /** Total order value including all items */
+          val total: Double get() = items.sumOf { it.price * it.quantity }
+      }
+    reference: "docs/DOCUMENTATION.md#model-documentation"
+
+metadata:
+  total_rules: 12
+  last_updated: "2025-11-14"
+  author: "Architecture Team"
+  version: "1.0"
+
+best_practices:
+  - "Place domain models in domain.model package"
+  - "Use immutable properties (val, not var)"
+  - "Use data classes for models"
+  - "Use immutable collection types (List, Set, Map)"
+  - "Add validation logic to domain models or services"
+  - "Use computed properties for derived data"
+  - "Minimize nullable properties"
+  - "Use sealed interfaces for state variations"
+  - "Consider value objects for domain primitives"
+  - "Keep domain models free from serialization concerns"
+  - "Use sealed interfaces over enums for complex types"
+  - "Document complex domain models with KDoc"
+
+references:
+  - "docs/ARCHITECTURE.md"
+  - "docs/DOMAIN_MODELS.md"
+  - "docs/VALUE_OBJECTS.md"
+  - "https://kotlinlang.org/docs/data-classes.html"
+  - "https://kotlinlang.org/docs/inline-classes.html"

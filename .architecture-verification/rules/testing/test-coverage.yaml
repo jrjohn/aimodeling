@@ -1,0 +1,596 @@
+version: "1.0"
+category: testing
+subcategory: test_coverage
+
+description: |
+  Enforces test coverage requirements:
+  - Required test files for each component type
+  - Test file naming conventions
+  - Coverage thresholds
+  - Test completeness
+
+rules:
+  # ==============================================
+  # VIEWMODEL TEST RULES
+  # ==============================================
+
+  - id: TEST_COV_001
+    name: "ViewModels must have test files"
+    severity: ERROR
+    enabled: true
+    description: |
+      Every ViewModel must have a corresponding test file to verify
+      the Input/Output pattern, state management, and business logic.
+    check:
+      file_pattern: "**/*ViewModel.kt"
+      requires_test_file: true
+      test_file_pattern: "**/*ViewModelTest.kt"
+      test_file_location: "app/src/test/java"
+    message: "ViewModel missing test file"
+    suggestion: |
+      Create a test file for your ViewModel:
+
+      Source: app/src/main/java/com/example/arcana/ui/user/UserViewModel.kt
+      Test:   app/src/test/java/com/example/arcana/ui/user/UserViewModelTest.kt
+
+      Minimum test coverage should include:
+      - Initial state verification
+      - Each Input event handling
+      - State updates for each operation
+      - Effect emissions
+      - Error handling
+
+      Example:
+      class UserViewModelTest {
+          private lateinit var viewModel: UserViewModel
+          private lateinit var userService: UserService
+
+          @Before
+          fun setup() {
+              userService = mock()
+              viewModel = UserViewModel(userService)
+          }
+
+          @Test
+          fun `initial state is correct`() {
+              val state = viewModel.state.value
+              assertTrue(state.users.isEmpty())
+              assertFalse(state.isLoading)
+          }
+
+          @Test
+          fun `LoadData input loads users`() = runTest {
+              // Test implementation
+          }
+      }
+    reference: "docs/TESTING.md#viewmodel-tests"
+    examples:
+      good:
+        - "UserViewModel.kt → UserViewModelTest.kt"
+        - "OrderDetailViewModel.kt → OrderDetailViewModelTest.kt"
+
+  - id: TEST_COV_002
+    name: "ViewModel tests must cover all Input events"
+    severity: WARNING
+    enabled: true
+    description: |
+      ViewModel tests should include test cases for each Input event
+      defined in the ViewModel.
+    check:
+      file_pattern: "**/*ViewModelTest.kt"
+      should_test_all_input_events: true
+      from_corresponding_viewmodel: true
+    message: "ViewModel test doesn't cover all Input events"
+    suggestion: |
+      Add test cases for each Input event:
+
+      If ViewModel has:
+      sealed interface Input {
+          data object LoadData : Input
+          data class SelectUser(val id: String) : Input
+          data object Refresh : Input
+      }
+
+      Tests should have:
+      @Test fun `LoadData input loads data`()
+      @Test fun `SelectUser input updates selected user`()
+      @Test fun `Refresh input refreshes data`()
+    reference: "docs/TESTING.md#input-coverage"
+
+  - id: TEST_COV_003
+    name: "ViewModel tests must verify state updates"
+    severity: WARNING
+    enabled: true
+    description: |
+      ViewModel tests should verify that state is updated correctly
+      for each operation.
+    check:
+      file_pattern: "**/*ViewModelTest.kt"
+      should_verify_state_updates: true
+      should_test_loading_states: true
+      should_test_error_states: true
+    message: "ViewModel test doesn't verify state updates"
+    suggestion: |
+      Test state updates:
+
+      @Test
+      fun `LoadData sets loading state and then updates data`() = runTest {
+          // Arrange
+          val users = listOf(user1, user2)
+          whenever(userService.getUsers()).thenReturn(flowOf(users))
+
+          // Act
+          viewModel.onEvent(Input.LoadData)
+
+          // Assert - Verify loading state
+          assertTrue(viewModel.state.value.isLoading)
+
+          // Assert - Verify final state
+          advanceUntilIdle()
+          assertFalse(viewModel.state.value.isLoading)
+          assertEquals(users, viewModel.state.value.users)
+      }
+    reference: "docs/TESTING.md#state-testing"
+
+  # ==============================================
+  # SERVICE TEST RULES
+  # ==============================================
+
+  - id: TEST_COV_004
+    name: "Services must have test files"
+    severity: ERROR
+    enabled: true
+    description: |
+      Every service class must have comprehensive unit tests covering
+      all business logic paths.
+    check:
+      file_pattern: "**/domain/service/**/*Service.kt"
+      requires_test_file: true
+      test_file_pattern: "**/*ServiceTest.kt"
+      test_file_location: "app/src/test/java"
+    message: "Service missing test file"
+    suggestion: |
+      Create a test file for your service:
+
+      Source: app/src/main/java/com/example/arcana/domain/service/UserService.kt
+      Test:   app/src/test/java/com/example/arcana/domain/service/UserServiceTest.kt
+
+      Service tests should cover:
+      - All public methods
+      - Success scenarios
+      - Error scenarios
+      - Edge cases
+      - Business logic validation
+
+      Example:
+      class UserServiceTest {
+          private lateinit var service: UserService
+          private lateinit var repository: UserRepository
+
+          @Before
+          fun setup() {
+              repository = mock()
+              service = UserService(repository)
+          }
+
+          @Test
+          fun `authenticateUser returns token for valid credentials`() = runTest {
+              // Test implementation
+          }
+      }
+    reference: "docs/TESTING.md#service-tests"
+
+  - id: TEST_COV_005
+    name: "Service tests must cover error scenarios"
+    severity: WARNING
+    enabled: true
+    description: |
+      Service tests should include test cases for error scenarios
+      and edge cases, not just happy paths.
+    check:
+      file_pattern: "**/*ServiceTest.kt"
+      should_test_error_scenarios: true
+      should_test_edge_cases: true
+      minimum_error_tests: 2
+    message: "Service test doesn't adequately cover error scenarios"
+    suggestion: |
+      Add error scenario tests:
+
+      @Test
+      fun `processOrder fails when payment declined`() = runTest {
+          // Arrange
+          whenever(paymentService.process(any()))
+              .thenReturn(Result.failure(PaymentDeclinedError()))
+
+          // Act
+          val result = service.processOrder(order)
+
+          // Assert
+          assertTrue(result.isFailure)
+          assertTrue(result.exceptionOrNull() is PaymentDeclinedError)
+      }
+
+      @Test
+      fun `processOrder fails when inventory unavailable`() = runTest {
+          // Test implementation
+      }
+    reference: "docs/TESTING.md#error-testing"
+
+  # ==============================================
+  # REPOSITORY TEST RULES
+  # ==============================================
+
+  - id: TEST_COV_006
+    name: "Repository implementations must have test files"
+    severity: ERROR
+    enabled: true
+    description: |
+      Every repository implementation must have unit tests verifying
+      data access, caching, and synchronization logic.
+    check:
+      file_pattern: "**/data/repository/**/*RepositoryImpl.kt"
+      requires_test_file: true
+      test_file_pattern: "**/*RepositoryTest.kt"
+      test_file_location: "app/src/test/java"
+    message: "Repository implementation missing test file"
+    suggestion: |
+      Create a test file for your repository:
+
+      Source: app/src/main/java/com/example/arcana/data/repository/UserRepositoryImpl.kt
+      Test:   app/src/test/java/com/example/arcana/data/repository/UserRepositoryImplTest.kt
+
+      Repository tests should verify:
+      - Data flow from database
+      - Data mapping (entity ↔ domain)
+      - Network synchronization
+      - Error handling
+      - Offline scenarios
+
+      Example:
+      class UserRepositoryImplTest {
+          private lateinit var repository: UserRepositoryImpl
+          private lateinit var userDao: UserDao
+          private lateinit var userApi: UserApi
+
+          @Before
+          fun setup() {
+              userDao = mock()
+              userApi = mock()
+              repository = UserRepositoryImpl(userDao, userApi, testDispatcher)
+          }
+
+          @Test
+          fun `getUser returns flow from database`() = runTest {
+              // Test implementation
+          }
+      }
+    reference: "docs/TESTING.md#repository-tests"
+
+  - id: TEST_COV_007
+    name: "Repository tests must verify offline-first behavior"
+    severity: WARNING
+    enabled: true
+    description: |
+      Repository tests should verify that data is returned from cache
+      and that network errors don't prevent data access.
+    check:
+      file_pattern: "**/*RepositoryTest.kt"
+      should_test_offline_behavior: true
+      should_test_cache_first: true
+    message: "Repository test doesn't verify offline-first behavior"
+    suggestion: |
+      Test offline-first behavior:
+
+      @Test
+      fun `getUsers returns cached data immediately`() = runTest {
+          // Arrange
+          val cachedUsers = listOf(user1, user2)
+          whenever(userDao.observeUsers()).thenReturn(flowOf(cachedUsers))
+
+          // Act
+          val result = repository.getUsers().first()
+
+          // Assert
+          assertEquals(cachedUsers, result)
+          verify(userDao).observeUsers()
+          verifyNoInteractions(userApi)  // No network call
+      }
+
+      @Test
+      fun `refreshUsers handles network failure gracefully`() = runTest {
+          // Arrange
+          whenever(userApi.getUsers()).thenThrow(IOException())
+
+          // Act
+          val result = repository.refreshUsers()
+
+          // Assert
+          assertTrue(result.isFailure)
+          // Cached data still available via getUsers()
+      }
+    reference: "docs/TESTING.md#offline-testing"
+
+  # ==============================================
+  # COMPOSABLE TEST RULES
+  # ==============================================
+
+  - id: TEST_COV_008
+    name: "Complex composables should have UI tests"
+    severity: WARNING
+    enabled: true
+    description: |
+      Complex or reusable composables should have UI tests verifying
+      rendering and interactions.
+    check:
+      file_pattern: "**/ui/components/**/*Screen.kt"
+      should_have_ui_test: true
+      when_complex:
+        multiple_states: true
+        user_interactions: true
+        conditional_rendering: true
+    message: "Complex composable missing UI test"
+    suggestion: |
+      Create UI tests for complex composables:
+
+      @Test
+      fun `UserListScreen displays users`() {
+          composeTestRule.setContent {
+              UserListScreen(
+                  state = State(users = listOf(user1, user2)),
+                  onEvent = {}
+              )
+          }
+
+          composeTestRule.onNodeWithText(user1.name).assertIsDisplayed()
+          composeTestRule.onNodeWithText(user2.name).assertIsDisplayed()
+      }
+
+      @Test
+      fun `UserListScreen shows loading indicator`() {
+          composeTestRule.setContent {
+              UserListScreen(
+                  state = State(isLoading = true),
+                  onEvent = {}
+              )
+          }
+
+          composeTestRule.onNodeWithTag("loading").assertIsDisplayed()
+      }
+    reference: "docs/TESTING.md#composable-tests"
+
+  # ==============================================
+  # MAPPER TEST RULES
+  # ==============================================
+
+  - id: TEST_COV_009
+    name: "Mapper functions should have tests"
+    severity: WARNING
+    enabled: true
+    description: |
+      Data mapping functions (entity ↔ domain, dto ↔ domain) should
+      have tests verifying correct transformation.
+    check:
+      file_pattern: "**/*Mapper.kt"
+      requires_test_file: true
+      test_file_pattern: "**/*MapperTest.kt"
+    message: "Mapper missing test file"
+    suggestion: |
+      Test mapper functions:
+
+      class UserMapperTest {
+          @Test
+          fun `entity toDomain maps all fields correctly`() {
+              // Arrange
+              val entity = UserEntity(
+                  id = "123",
+                  name = "John",
+                  email = "john@example.com"
+              )
+
+              // Act
+              val domain = entity.toDomain()
+
+              // Assert
+              assertEquals("123", domain.id)
+              assertEquals("John", domain.name)
+              assertEquals("john@example.com", domain.email)
+          }
+
+          @Test
+          fun `dto toEntity maps all fields correctly`() {
+              // Test implementation
+          }
+      }
+    reference: "docs/TESTING.md#mapper-tests"
+
+  # ==============================================
+  # UTILITY/HELPER TEST RULES
+  # ==============================================
+
+  - id: TEST_COV_010
+    name: "Utility classes should have tests"
+    severity: WARNING
+    enabled: true
+    description: |
+      Utility and helper classes with logic should have unit tests.
+    check:
+      file_pattern: "**/*Util.kt"
+      requires_test_file: true
+      when_contains_logic: true
+    message: "Utility class with logic missing tests"
+    suggestion: |
+      Test utility functions:
+
+      class DateUtilTest {
+          @Test
+          fun `formatDate formats ISO date correctly`() {
+              val date = "2025-11-14"
+              val result = DateUtil.formatDate(date)
+              assertEquals("Nov 14, 2025", result)
+          }
+
+          @Test
+          fun `isValidEmail returns true for valid email`() {
+              assertTrue(EmailUtil.isValidEmail("test@example.com"))
+          }
+
+          @Test
+          fun `isValidEmail returns false for invalid email`() {
+              assertFalse(EmailUtil.isValidEmail("invalid"))
+          }
+      }
+    reference: "docs/TESTING.md#utility-tests"
+
+  # ==============================================
+  # TEST NAMING RULES
+  # ==============================================
+
+  - id: TEST_COV_011
+    name: "Test files must follow naming convention"
+    severity: ERROR
+    enabled: true
+    description: |
+      Test files must be named with "Test" suffix matching the source file.
+    check:
+      test_file_naming: "*Test.kt"
+      should_match_source_file: true
+    message: "Test file doesn't follow naming convention"
+    suggestion: |
+      Follow naming conventions:
+
+      Source file: UserViewModel.kt
+      Test file:   UserViewModelTest.kt
+
+      Source file: OrderService.kt
+      Test file:   OrderServiceTest.kt
+
+      Source file: UserRepositoryImpl.kt
+      Test file:   UserRepositoryImplTest.kt
+    reference: "docs/TESTING.md#naming-conventions"
+    examples:
+      good:
+        - "UserViewModel.kt → UserViewModelTest.kt"
+        - "OrderService.kt → OrderServiceTest.kt"
+      bad:
+        - "UserViewModel.kt → UserViewModelTests.kt"
+        - "UserViewModel.kt → TestUserViewModel.kt"
+
+  - id: TEST_COV_012
+    name: "Test files must be in corresponding test directory"
+    severity: ERROR
+    enabled: true
+    description: |
+      Test files must mirror the source file package structure in the
+      test directory (src/test/java or src/androidTest/java).
+    check:
+      test_file_location:
+        unit_tests: "src/test/java"
+        instrumentation_tests: "src/androidTest/java"
+      should_mirror_package_structure: true
+    message: "Test file not in correct test directory"
+    suggestion: |
+      Mirror package structure:
+
+      Source:
+      app/src/main/java/com/example/arcana/ui/user/UserViewModel.kt
+
+      Unit test:
+      app/src/test/java/com/example/arcana/ui/user/UserViewModelTest.kt
+
+      Instrumentation test:
+      app/src/androidTest/java/com/example/arcana/ui/user/UserScreenTest.kt
+    reference: "docs/TESTING.md#test-organization"
+
+  # ==============================================
+  # COVERAGE THRESHOLD RULES
+  # ==============================================
+
+  - id: TEST_COV_013
+    name: "Minimum test coverage thresholds"
+    severity: WARNING
+    enabled: true
+    description: |
+      Projects should maintain minimum test coverage thresholds.
+    check:
+      coverage_thresholds:
+        domain_layer: 80
+        viewmodels: 75
+        repositories: 70
+        overall: 70
+    message: "Test coverage below threshold"
+    suggestion: |
+      Maintain coverage thresholds:
+
+      - Domain layer (services): 80%+
+      - ViewModels: 75%+
+      - Repositories: 70%+
+      - Overall project: 70%+
+
+      Run coverage report:
+      ./gradlew testDebugUnitTestCoverage
+
+      View report:
+      app/build/reports/coverage/test/debug/index.html
+    reference: "docs/TESTING.md#coverage-thresholds"
+
+  # ==============================================
+  # EXCLUSION RULES
+  # ==============================================
+
+  - id: TEST_COV_014
+    name: "Define reasonable test coverage exclusions"
+    severity: INFO
+    enabled: true
+    description: |
+      Some files may be excluded from test coverage requirements,
+      but exclusions should be justified.
+    check:
+      allowed_exclusions:
+        - "**/di/**/*Module.kt"  # DI configuration
+        - "**/*Application.kt"    # App entry point
+        - "**/theme/**"           # UI theming
+        - "**/*Activity.kt"       # Android framework
+        - "**/BuildConfig.kt"     # Generated
+      require_justification: true
+    message: "Test coverage exclusion should be justified"
+    suggestion: |
+      Reasonable exclusions:
+      - Hilt/Dagger modules (DI wiring)
+      - Application class
+      - Theme definitions
+      - Simple Activities (framework integration)
+      - Generated code
+
+      Document exclusions in exclusions.yaml:
+      checks:
+        testing:
+          test_coverage:
+            exclude:
+              - "**/di/*Module.kt"  # DI wiring only
+              - "**/*Application.kt"  # Framework entry point
+    reference: "docs/TESTING.md#coverage-exclusions"
+
+metadata:
+  total_rules: 14
+  last_updated: "2025-11-14"
+  author: "Architecture Team"
+  version: "1.0"
+
+best_practices:
+  - "Every ViewModel must have tests"
+  - "Every Service must have tests"
+  - "Every Repository must have tests"
+  - "Test all Input events in ViewModels"
+  - "Test error scenarios, not just happy paths"
+  - "Verify offline-first behavior in repositories"
+  - "Test complex composables"
+  - "Test mapper functions"
+  - "Follow naming conventions"
+  - "Mirror package structure in tests"
+  - "Maintain coverage thresholds"
+  - "Document coverage exclusions"
+
+references:
+  - "docs/TESTING.md"
+  - "docs/TEST_COVERAGE.md"
+  - "docs/VIEWMODEL_TESTING.md"

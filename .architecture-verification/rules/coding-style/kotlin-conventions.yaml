@@ -1,0 +1,356 @@
+# Kotlin Coding Conventions Rules
+# Based on official Kotlin coding conventions
+
+version: "1.0"
+category: coding_style
+subcategory: kotlin_conventions
+
+description: |
+  Enforces Kotlin coding conventions as defined in:
+  https://kotlinlang.org/docs/coding-conventions.html
+
+rules:
+
+  # Naming Conventions
+
+  - id: KOTLIN_001
+    name: "Class names use PascalCase"
+    severity: WARNING
+    enabled: true
+    check:
+      file_pattern: "**/*.kt"
+      class_naming: "^[A-Z][a-zA-Z0-9]*$"
+    message: "Class names should use PascalCase"
+    examples:
+      good: ["UserViewModel", "DataRepository", "EmailAddress"]
+      bad: ["userViewModel", "data_repository", "email_address"]
+
+  - id: KOTLIN_002
+    name: "Function names use camelCase"
+    severity: WARNING
+    enabled: true
+    check:
+      file_pattern: "**/*.kt"
+      function_naming: "^[a-z][a-zA-Z0-9]*$"
+      exclude_test_files: true
+    message: "Function names should use camelCase"
+    examples:
+      good: ["loadUsers", "createUser", "onEvent"]
+      bad: ["LoadUsers", "CreateUser", "OnEvent", "load_users"]
+
+  - id: KOTLIN_003
+    name: "Properties use camelCase"
+    severity: WARNING
+    enabled: true
+    check:
+      file_pattern: "**/*.kt"
+      property_naming: "^[a-z][a-zA-Z0-9]*$"
+    message: "Properties should use camelCase"
+    examples:
+      good: ["userName", "userId", "isLoading"]
+      bad: ["UserName", "user_id", "is_loading"]
+
+  - id: KOTLIN_004
+    name: "Constants use UPPER_SNAKE_CASE"
+    severity: WARNING
+    enabled: true
+    check:
+      file_pattern: "**/*.kt"
+      const_naming: "^[A-Z][A-Z0-9_]*$"
+    message: "Constants should use UPPER_SNAKE_CASE"
+    examples:
+      good: ["MAX_SIZE", "DEFAULT_TIMEOUT", "API_KEY"]
+      bad: ["maxSize", "defaultTimeout", "ApiKey"]
+
+  - id: KOTLIN_005
+    name: "Package names use lowercase"
+    severity: WARNING
+    enabled: true
+    check:
+      file_pattern: "**/*.kt"
+      package_naming: "^[a-z][a-z0-9]*(\\.[a-z][a-z0-9]*)*$"
+    message: "Package names should be lowercase without underscores"
+    examples:
+      good: ["com.example.arcana.domain", "com.example.arcana.ui"]
+      bad: ["com.Example.Arcana", "com.example_arcana"]
+
+  # Code Organization
+
+  - id: KOTLIN_010
+    name: "One class per file"
+    severity: WARNING
+    enabled: true
+    check:
+      file_pattern: "**/*.kt"
+      max_top_level_classes: 1
+      exceptions:
+        - sealed_classes_with_subclasses
+        - data_classes_group
+    message: "Each file should contain only one public class"
+
+  - id: KOTLIN_011
+    name: "File name matches class name"
+    severity: ERROR
+    enabled: true
+    check:
+      file_pattern: "**/*.kt"
+      file_name_must_match_class_name: true
+    message: "File name must match the public class name"
+    examples:
+      good: "UserViewModel.kt contains class UserViewModel"
+      bad: "ViewModel.kt contains class UserViewModel"
+
+  - id: KOTLIN_012
+    name: "Import order"
+    severity: INFO
+    enabled: true
+    check:
+      file_pattern: "**/*.kt"
+      import_order:
+        - android
+        - androidx
+        - kotlin
+        - kotlinx
+        - third_party
+        - project
+    message: "Imports should be ordered by category"
+
+  - id: KOTLIN_013
+    name: "No wildcard imports"
+    severity: WARNING
+    enabled: true
+    check:
+      file_pattern: "**/*.kt"
+      no_wildcard_imports: true
+      exceptions: ["java.util.*"]
+    message: "Avoid wildcard imports, use explicit imports"
+
+  # Code Structure
+
+  - id: KOTLIN_020
+    name: "Prefer expressions over statements"
+    severity: INFO
+    enabled: true
+    description: "Use when expressions instead of if-else statements"
+    examples:
+      good: |
+        val result = when (x) {
+            1 -> "one"
+            2 -> "two"
+            else -> "other"
+        }
+      bad: |
+        val result: String
+        if (x == 1) {
+            result = "one"
+        } else if (x == 2) {
+            result = "two"
+        } else {
+            result = "other"
+        }
+
+  - id: KOTLIN_021
+    name: "Use data classes for data holders"
+    severity: INFO
+    enabled: true
+    check:
+      classes_with_only_properties_should_be_data: true
+    message: "Classes that only hold data should be data classes"
+
+  - id: KOTLIN_022
+    name: "Use sealed classes for restricted hierarchies"
+    severity: INFO
+    enabled: true
+    description: "Use sealed classes/interfaces for Input, Output, Effect, etc."
+
+  - id: KOTLIN_023
+    name: "Prefer val over var"
+    severity: INFO
+    enabled: true
+    check:
+      prefer_immutable: true
+    message: "Prefer immutable (val) over mutable (var) variables"
+
+  # Function Design
+
+  - id: KOTLIN_030
+    name: "Functions should be small"
+    severity: WARNING
+    enabled: true
+    check:
+      max_function_length: 50
+      exclude_patterns: ["init", "onCreate", "onViewCreated"]
+    message: "Functions should be under 50 lines"
+
+  - id: KOTLIN_031
+    name: "Limit function parameters"
+    severity: WARNING
+    enabled: true
+    check:
+      max_parameters: 5
+    message: "Functions should have at most 5 parameters"
+    suggestion: "Consider using a parameter object or builder pattern"
+
+  - id: KOTLIN_032
+    name: "Use named arguments for clarity"
+    severity: INFO
+    enabled: true
+    check:
+      require_named_args_when:
+        parameter_count: 3
+        same_type_count: 2
+    message: "Use named arguments when calling functions with multiple parameters"
+
+  - id: KOTLIN_033
+    name: "Prefer extension functions"
+    severity: INFO
+    enabled: true
+    description: "Use extension functions instead of utility classes"
+
+  # Null Safety
+
+  - id: KOTLIN_040
+    name: "Avoid !! operator"
+    severity: WARNING
+    enabled: true
+    check:
+      file_pattern: "**/*.kt"
+      pattern: "!!\\s*\\)"
+    message: "Avoid !! operator, use safe calls (?.) or let"
+    suggestion: "Use safe call (?.), elvis (?:), or let { } instead"
+
+  - id: KOTLIN_041
+    name: "Prefer safe calls over null checks"
+    severity: INFO
+    enabled: true
+    description: "Use safe call operator (?.) instead of explicit null checks"
+    examples:
+      good: "user?.name"
+      bad: "if (user != null) user.name else null"
+
+  # Lambda and Higher-Order Functions
+
+  - id: KOTLIN_050
+    name: "Use it for single parameter lambdas"
+    severity: INFO
+    enabled: true
+    check:
+      single_param_lambda_should_use_it: true
+    examples:
+      good: "users.filter { it.isActive }"
+      bad: "users.filter { user -> user.isActive }"
+
+  - id: KOTLIN_051
+    name: "Use trailing lambda syntax"
+    severity: INFO
+    enabled: true
+    description: "Move lambda outside parentheses when it's the last parameter"
+    examples:
+      good: "viewModelScope.launch { }"
+      bad: "viewModelScope.launch({ })"
+
+  - id: KOTLIN_052
+    name: "Prefer method references"
+    severity: INFO
+    enabled: true
+    examples:
+      good: "users.map(::transformUser)"
+      bad: "users.map { transformUser(it) }"
+
+  # Collections
+
+  - id: KOTLIN_060
+    name: "Use collection builders"
+    severity: INFO
+    enabled: true
+    examples:
+      good: "buildList { add(item1); add(item2) }"
+      bad: "mutableListOf<Item>().apply { add(item1); add(item2) }"
+
+  - id: KOTLIN_061
+    name: "Prefer immutable collections"
+    severity: INFO
+    enabled: true
+    message: "Return List instead of MutableList from public APIs"
+
+  # Documentation
+
+  - id: KOTLIN_070
+    name: "Use KDoc for public APIs"
+    severity: WARNING
+    enabled: true
+    check:
+      require_kdoc_for:
+        - public_classes
+        - public_functions
+        - complex_functions
+    message: "Public APIs should have KDoc comments"
+
+  - id: KOTLIN_071
+    name: "KDoc should describe why, not what"
+    severity: INFO
+    enabled: true
+    description: "Documentation should explain intent, not restate the code"
+
+  # Formatting
+
+  - id: KOTLIN_080
+    name: "Maximum line length"
+    severity: INFO
+    enabled: true
+    check:
+      max_line_length: 120
+    message: "Lines should not exceed 120 characters"
+
+  - id: KOTLIN_081
+    name: "Indentation with spaces"
+    severity: WARNING
+    enabled: true
+    check:
+      indent_size: 4
+      use_tabs: false
+    message: "Use 4 spaces for indentation"
+
+  - id: KOTLIN_082
+    name: "Blank lines around declarations"
+    severity: INFO
+    enabled: true
+    check:
+      blank_lines_between_declarations: true
+
+  # Best Practices
+
+  - id: KOTLIN_090
+    name: "Use apply for object configuration"
+    severity: INFO
+    enabled: true
+    examples:
+      good: "user.apply { name = \"John\"; age = 30 }"
+
+  - id: KOTLIN_091
+    name: "Use let for null checks"
+    severity: INFO
+    enabled: true
+    examples:
+      good: "user?.let { process(it) }"
+      bad: "if (user != null) { process(user) }"
+
+  - id: KOTLIN_092
+    name: "Use require/check for preconditions"
+    severity: INFO
+    enabled: true
+    description: "Use require() for argument validation, check() for state validation"
+
+  - id: KOTLIN_093
+    name: "Prefer sealed classes over enums with state"
+    severity: INFO
+    enabled: true
+    description: "Use sealed classes when enum cases need different data"
+
+# Auto-fix capabilities (future feature)
+auto_fix:
+  enabled: false
+  rules:
+    - KOTLIN_013  # Can auto-fix wildcard imports
+    - KOTLIN_080  # Can auto-fix line length
+    - KOTLIN_081  # Can auto-fix indentation

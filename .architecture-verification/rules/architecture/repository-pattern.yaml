@@ -1,0 +1,600 @@
+version: "1.0"
+category: architecture
+subcategory: repository_pattern
+
+description: |
+  Enforces Repository Pattern for data access:
+  - Single source of truth principle
+  - Offline-first architecture
+  - Reactive data streams with Flow
+  - Proper data synchronization
+  - Error handling and mapping
+
+rules:
+  # ==============================================
+  # REPOSITORY INTERFACE RULES
+  # ==============================================
+
+  - id: REPO_001
+    name: "Repository interfaces must be in domain layer"
+    severity: ERROR
+    enabled: true
+    description: |
+      Repository interfaces should be defined in the domain layer,
+      implementations in the data layer. This follows dependency inversion.
+    check:
+      file_pattern: "**/*Repository.kt"
+      must_be_interface: true
+      must_be_in_directory: "**/domain/repository/**"
+      exclude_patterns:
+        - "**/*RepositoryImpl.kt"
+    message: "Repository interface not in domain.repository package"
+    suggestion: |
+      Define repository interfaces in domain layer:
+
+      // domain/repository/UserRepository.kt
+      interface UserRepository {
+          fun getUser(id: String): Flow<User>
+          suspend fun refreshUser(id: String): Result<Unit>
+      }
+
+      // data/repository/UserRepositoryImpl.kt
+      class UserRepositoryImpl @Inject constructor(
+          private val localDataSource: UserDao,
+          private val remoteDataSource: UserApi
+      ) : UserRepository {
+          // Implementation
+      }
+    reference: "docs/ARCHITECTURE.md#repository-pattern"
+
+  - id: REPO_002
+    name: "Repository implementations must be in data layer"
+    severity: ERROR
+    enabled: true
+    description: |
+      Repository implementations (*RepositoryImpl) must be in data.repository package.
+    check:
+      file_pattern: "**/*RepositoryImpl.kt"
+      must_be_in_directory: "**/data/repository/**"
+    message: "Repository implementation not in data.repository package"
+    suggestion: |
+      Move repository implementation to data layer:
+
+      Expected location:
+      com.example.arcana.data.repository.UserRepositoryImpl
+    reference: "docs/ARCHITECTURE.md#repository-implementation"
+
+  # ==============================================
+  # OFFLINE-FIRST RULES
+  # ==============================================
+
+  - id: REPO_003
+    name: "Repositories must return Flow for data streams"
+    severity: ERROR
+    enabled: true
+    description: |
+      Repositories should expose data as Flow to enable reactive,
+      offline-first architecture with automatic UI updates.
+    check:
+      file_pattern: "**/domain/repository/*Repository.kt"
+      must_contain: "import kotlinx.coroutines.flow.Flow"
+      must_have_function_returning: "Flow<"
+    message: "Repository doesn't use Flow for data streams"
+    suggestion: |
+      Use Flow to expose data:
+
+      interface UserRepository {
+          // Good - Reactive data stream
+          fun getUser(id: String): Flow<User>
+          fun getAllUsers(): Flow<List<User>>
+
+          // Good - Suspend for one-time operations
+          suspend fun updateUser(user: User): Result<Unit>
+          suspend fun deleteUser(id: String): Result<Unit>
+
+          // Bad - Direct return (not reactive)
+          // fun getUser(id: String): User
+      }
+
+      Benefits:
+      - Automatic UI updates when data changes
+      - Offline-first: emit cached data immediately
+      - Reactive composition with other Flows
+    reference: "docs/ARCHITECTURE.md#offline-first"
+    examples:
+      good:
+        - "fun getUsers(): Flow<List<User>>"
+        - "fun observeUser(id: String): Flow<User?>"
+      bad:
+        - "fun getUsers(): List<User>"
+        - "suspend fun getUser(id: String): User"
+
+  - id: REPO_004
+    name: "Use suspend for write operations"
+    severity: ERROR
+    enabled: true
+    description: |
+      Write operations (create, update, delete) should be suspend functions
+      that return Result or throw exceptions.
+    check:
+      file_pattern: "**/domain/repository/*Repository.kt"
+      functions_matching:
+        patterns: ["^(insert|update|delete|save|create|remove)"]
+        must_be_suspend: true
+    message: "Write operation is not a suspend function"
+    suggestion: |
+      Make write operations suspend functions:
+
+      interface UserRepository {
+          // Good - Suspend for side effects
+          suspend fun saveUser(user: User): Result<Unit>
+          suspend fun deleteUser(id: String): Result<Unit>
+
+          // Bad - Blocking operation
+          // fun saveUser(user: User): Unit
+      }
+    reference: "docs/ARCHITECTURE.md#repository-operations"
+
+  # ==============================================
+  # SINGLE SOURCE OF TRUTH RULES
+  # ==============================================
+
+  - id: REPO_005
+    name: "Repository must use local database as single source of truth"
+    severity: ERROR
+    enabled: true
+    description: |
+      Repositories should use local database (Room) as the single source of
+      truth. Network data should update the database, not be returned directly.
+    check:
+      file_pattern: "**/data/repository/*RepositoryImpl.kt"
+      must_contain:
+        - "Dao"
+      pattern_should_exist: |
+        Flow operations should read from database:
+        return dao.observe().map { it.toDomain() }
+
+        Network operations should update database:
+        api.getData().also { dao.insert(it) }
+    message: "Repository doesn't follow single source of truth pattern"
+    suggestion: |
+      Implement single source of truth pattern:
+
+      class UserRepositoryImpl @Inject constructor(
+          private val userDao: UserDao,
+          private val userApi: UserApi
+      ) : UserRepository {
+
+          // ✅ Good - Database is source of truth
+          override fun getUser(id: String): Flow<User> {
+              return userDao.observeUser(id)
+                  .map { it?.toDomain() }
+                  .filterNotNull()
+          }
+
+          override suspend fun refreshUser(id: String): Result<Unit> {
+              return try {
+                  val dto = userApi.getUser(id)
+                  userDao.insertUser(dto.toEntity())
+                  Result.success(Unit)
+              } catch (e: Exception) {
+                  Result.failure(e)
+              }
+          }
+      }
+
+      Key points:
+      1. Read operations return Flow from database
+      2. Network responses update database
+      3. UI observes database, not network directly
+    reference: "docs/ARCHITECTURE.md#single-source-of-truth"
+
+  - id: REPO_006
+    name: "Repository must inject both local and remote data sources"
+    severity: WARNING
+    enabled: true
+    description: |
+      Repository implementations should inject both DAO (local) and
+      API (remote) data sources for offline-first architecture.
+    check:
+      file_pattern: "**/data/repository/*RepositoryImpl.kt"
+      constructor_must_have:
+        - type_containing: "Dao"
+        - type_containing: "Api"
+      severity_can_downgrade_if:
+        - "Repository is read-only (no network sync needed)"
+        - "Repository is write-only (no local caching)"
+    message: "Repository missing local or remote data source injection"
+    suggestion: |
+      Inject both data sources:
+
+      @Singleton
+      class UserRepositoryImpl @Inject constructor(
+          private val userDao: UserDao,           // Local source
+          private val userApi: UserApi,           // Remote source
+          private val ioDispatcher: CoroutineDispatcher
+      ) : UserRepository {
+          // Implementation
+      }
+    reference: "docs/ARCHITECTURE.md#repository-dependencies"
+
+  # ==============================================
+  # DATA MAPPING RULES
+  # ==============================================
+
+  - id: REPO_007
+    name: "Repository must map between data and domain models"
+    severity: ERROR
+    enabled: true
+    description: |
+      Repositories must convert between data layer models (entities, DTOs)
+      and domain models. Don't expose data layer models to domain.
+    check:
+      file_pattern: "**/data/repository/*RepositoryImpl.kt"
+      should_have_mapper_functions:
+        - "toDomain()"
+        - "toEntity()"
+      or_import_mappers:
+        - "*.mapper.*"
+    message: "Repository doesn't convert between data and domain models"
+    suggestion: |
+      Create mapper functions:
+
+      // In repository or separate mapper file
+      private fun UserEntity.toDomain() = User(
+          id = id,
+          name = name,
+          email = email
+      )
+
+      private fun UserDto.toEntity() = UserEntity(
+          id = id,
+          name = name,
+          email = email,
+          lastSynced = System.currentTimeMillis()
+      )
+
+      // Usage in repository
+      override fun getUser(id: String): Flow<User> {
+          return userDao.observeUser(id)
+              .map { it?.toDomain() }  // ✅ Convert to domain model
+              .filterNotNull()
+      }
+    reference: "docs/ARCHITECTURE.md#data-mapping"
+
+  # ==============================================
+  # ERROR HANDLING RULES
+  # ==============================================
+
+  - id: REPO_008
+    name: "Repository must return Result for operations that can fail"
+    severity: ERROR
+    enabled: true
+    description: |
+      Operations that can fail (network calls, validation) should return
+      Result<T> to handle errors explicitly.
+    check:
+      file_pattern: "**/domain/repository/*Repository.kt"
+      suspend_functions_with_side_effects:
+        must_return: "Result<"
+      functions_calling_network:
+        must_return: "Result<"
+    message: "Repository operation should return Result for error handling"
+    suggestion: |
+      Use Result for error handling:
+
+      interface UserRepository {
+          // Good - Explicit error handling
+          suspend fun refreshUser(id: String): Result<Unit>
+          suspend fun syncUsers(): Result<SyncResult>
+
+          // Bad - Errors as exceptions only
+          // suspend fun refreshUser(id: String)
+      }
+
+      Implementation:
+      override suspend fun refreshUser(id: String): Result<Unit> {
+          return try {
+              val dto = userApi.getUser(id)
+              userDao.insertUser(dto.toEntity())
+              Result.success(Unit)
+          } catch (e: IOException) {
+              Result.failure(NetworkError(e.message))
+          } catch (e: Exception) {
+              Result.failure(UnknownError(e))
+          }
+      }
+    reference: "docs/ARCHITECTURE.md#error-handling"
+    examples:
+      good:
+        - "suspend fun saveUser(user: User): Result<Unit>"
+        - "suspend fun syncData(): Result<SyncStatus>"
+      bad:
+        - "suspend fun saveUser(user: User): Unit"
+        - "suspend fun syncData(): SyncStatus"
+
+  - id: REPO_009
+    name: "Map data layer exceptions to domain errors"
+    severity: WARNING
+    enabled: true
+    description: |
+      Repositories should catch data layer exceptions and map them to
+      domain-specific error types.
+    check:
+      file_pattern: "**/data/repository/*RepositoryImpl.kt"
+      try_catch_blocks:
+        should_not_rethrow: "IOException"
+        should_not_rethrow: "HttpException"
+        should_map_to: "DomainError"
+    message: "Repository exposes data layer exception types"
+    suggestion: |
+      Map exceptions to domain errors:
+
+      override suspend fun refreshUser(id: String): Result<Unit> {
+          return try {
+              val dto = userApi.getUser(id)
+              userDao.insertUser(dto.toEntity())
+              Result.success(Unit)
+          } catch (e: HttpException) {
+              when (e.code()) {
+                  404 -> Result.failure(UserNotFoundError(id))
+                  401 -> Result.failure(UnauthorizedError())
+                  else -> Result.failure(NetworkError(e.message))
+              }
+          } catch (e: IOException) {
+              Result.failure(NetworkError("No connection"))
+          }
+      }
+    reference: "docs/ARCHITECTURE.md#error-mapping"
+
+  # ==============================================
+  # DATA SYNCHRONIZATION RULES
+  # ==============================================
+
+  - id: REPO_010
+    name: "Repository should have separate read and refresh operations"
+    severity: WARNING
+    enabled: true
+    description: |
+      Separate data reading (Flow) from data refreshing (suspend).
+      This enables offline-first with explicit refresh.
+    check:
+      file_pattern: "**/domain/repository/*Repository.kt"
+      should_have_pattern:
+        - "fun get.*(): Flow<"
+        - "suspend fun refresh.*(): Result<"
+    message: "Repository should separate read and refresh operations"
+    suggestion: |
+      Separate read from refresh:
+
+      interface UserRepository {
+          // Read - Returns cached data immediately, updates reactively
+          fun getUsers(): Flow<List<User>>
+
+          // Refresh - Fetches from network, updates cache
+          suspend fun refreshUsers(): Result<Unit>
+      }
+
+      Usage in ViewModel:
+      init {
+          // Observe cached data
+          userRepository.getUsers()
+              .onEach { users -> _state.value = State(users) }
+              .launchIn(viewModelScope)
+
+          // Trigger refresh
+          viewModelScope.launch {
+              userRepository.refreshUsers()
+          }
+      }
+    reference: "docs/ARCHITECTURE.md#data-synchronization"
+
+  - id: REPO_011
+    name: "Repository should handle offline scenarios"
+    severity: INFO
+    enabled: true
+    description: |
+      Repositories should gracefully handle offline scenarios by:
+      1. Returning cached data immediately
+      2. Attempting network refresh in background
+      3. Not failing if network unavailable
+    check:
+      file_pattern: "**/data/repository/*RepositoryImpl.kt"
+      should_handle_offline:
+        - "NetworkUnavailableException"
+        - "IOException"
+        - "SocketTimeoutException"
+    message: "Repository should handle offline scenarios gracefully"
+    suggestion: |
+      Handle offline scenarios:
+
+      override suspend fun refreshUser(id: String): Result<Unit> {
+          return try {
+              val dto = userApi.getUser(id)
+              userDao.insertUser(dto.toEntity())
+              Result.success(Unit)
+          } catch (e: IOException) {
+              // Network unavailable - not a critical error
+              // Cached data still available via Flow
+              Log.d(TAG, "Offline - using cached data")
+              Result.failure(OfflineError())
+          }
+      }
+
+      // UI still works with cached data
+      override fun getUser(id: String): Flow<User> {
+          return userDao.observeUser(id)
+              .map { it?.toDomain() }
+              .filterNotNull()
+      }
+    reference: "docs/ARCHITECTURE.md#offline-handling"
+
+  # ==============================================
+  # DEPENDENCY INJECTION RULES
+  # ==============================================
+
+  - id: REPO_012
+    name: "Repository implementations must use @Singleton scope"
+    severity: WARNING
+    enabled: true
+    description: |
+      Repository implementations should be singletons to maintain
+      consistent cache state across the app.
+    check:
+      file_pattern: "**/data/repository/*RepositoryImpl.kt"
+      class_must_have_annotation: "@Singleton"
+    message: "Repository implementation should be @Singleton"
+    suggestion: |
+      Add @Singleton annotation:
+
+      @Singleton
+      class UserRepositoryImpl @Inject constructor(
+          private val userDao: UserDao,
+          private val userApi: UserApi
+      ) : UserRepository {
+          // Implementation
+      }
+
+      This ensures:
+      - Single cache instance
+      - Consistent data across app
+      - Efficient memory usage
+    reference: "docs/ARCHITECTURE.md#repository-lifecycle"
+
+  - id: REPO_013
+    name: "Repository binding must be in DI module"
+    severity: ERROR
+    enabled: true
+    description: |
+      Repository interface-to-implementation binding must be declared
+      in a Hilt module.
+    check:
+      requires_module_binding:
+        interface: "*Repository"
+        implementation: "*RepositoryImpl"
+        in_file: "**/di/*Module.kt"
+    message: "Repository binding missing in DI module"
+    suggestion: |
+      Create Hilt module binding:
+
+      @Module
+      @InstallIn(SingletonComponent::class)
+      abstract class RepositoryModule {
+
+          @Binds
+          @Singleton
+          abstract fun bindUserRepository(
+              impl: UserRepositoryImpl
+          ): UserRepository
+      }
+    reference: "docs/ARCHITECTURE.md#dependency-injection"
+
+  # ==============================================
+  # PERFORMANCE RULES
+  # ==============================================
+
+  - id: REPO_014
+    name: "Repository should specify IO dispatcher for operations"
+    severity: WARNING
+    enabled: true
+    description: |
+      Repository operations should use IO dispatcher for network and
+      database operations.
+    check:
+      file_pattern: "**/data/repository/*RepositoryImpl.kt"
+      should_inject: "CoroutineDispatcher"
+      with_qualifier: "@IoDispatcher"
+    message: "Repository should inject IO dispatcher"
+    suggestion: |
+      Inject and use IO dispatcher:
+
+      @Singleton
+      class UserRepositoryImpl @Inject constructor(
+          private val userDao: UserDao,
+          private val userApi: UserApi,
+          @IoDispatcher private val ioDispatcher: CoroutineDispatcher
+      ) : UserRepository {
+
+          override suspend fun refreshUser(id: String): Result<Unit> {
+              return withContext(ioDispatcher) {
+                  try {
+                      val dto = userApi.getUser(id)
+                      userDao.insertUser(dto.toEntity())
+                      Result.success(Unit)
+                  } catch (e: Exception) {
+                      Result.failure(e)
+                  }
+              }
+          }
+      }
+    reference: "docs/ARCHITECTURE.md#coroutine-dispatchers"
+
+  # ==============================================
+  # TESTING RULES
+  # ==============================================
+
+  - id: REPO_015
+    name: "Repository must have unit tests"
+    severity: WARNING
+    enabled: true
+    description: |
+      All repository implementations should have comprehensive unit tests.
+    check:
+      file_pattern: "**/data/repository/*RepositoryImpl.kt"
+      requires_test_file: true
+      test_file_pattern: "**/*RepositoryTest.kt"
+    message: "Repository implementation missing unit tests"
+    suggestion: |
+      Create repository tests:
+
+      class UserRepositoryImplTest {
+          private lateinit var repository: UserRepositoryImpl
+          private lateinit var userDao: UserDao
+          private lateinit var userApi: UserApi
+
+          @Before
+          fun setup() {
+              userDao = mock()
+              userApi = mock()
+              repository = UserRepositoryImpl(userDao, userApi, testDispatcher)
+          }
+
+          @Test
+          fun `getUser returns flow from database`() = runTest {
+              // Arrange
+              val entity = UserEntity(id = "1", name = "Test")
+              whenever(userDao.observeUser("1")).thenReturn(flowOf(entity))
+
+              // Act
+              val result = repository.getUser("1").first()
+
+              // Assert
+              assertEquals("Test", result.name)
+          }
+      }
+    reference: "docs/TESTING.md#repository-tests"
+
+metadata:
+  total_rules: 15
+  last_updated: "2025-11-14"
+  author: "Architecture Team"
+  version: "1.0"
+
+best_practices:
+  - "Define repository interfaces in domain layer"
+  - "Implement repositories in data layer"
+  - "Use Flow for reactive data streams"
+  - "Use suspend for write operations"
+  - "Database is single source of truth"
+  - "Network updates database, doesn't return directly"
+  - "Map between data and domain models"
+  - "Return Result for operations that can fail"
+  - "Handle offline scenarios gracefully"
+  - "Use @Singleton scope for repositories"
+  - "Inject IO dispatcher for operations"
+  - "Write comprehensive unit tests"
+
+references:
+  - "docs/ARCHITECTURE.md"
+  - "docs/REPOSITORY_PATTERN.md"
+  - "docs/OFFLINE_FIRST.md"

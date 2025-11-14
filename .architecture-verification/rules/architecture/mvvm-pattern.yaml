@@ -1,0 +1,320 @@
+# MVVM Pattern Rules
+# Defines rules for ViewModel Input/Output pattern compliance
+
+version: "1.0"
+category: architecture
+subcategory: mvvm
+
+description: |
+  Ensures all ViewModels follow the Input/Output pattern as defined in
+  docs/VIEWMODEL_PATTERN.md
+
+rules:
+
+  # Rule 1: Input Interface
+  - id: MVVM_001
+    name: "ViewModel must have Input sealed interface"
+    severity: ERROR
+    enabled: true
+    description: "All ViewModels must define a sealed interface named 'Input' for user events"
+    check:
+      file_pattern: "**/*ViewModel.kt"
+      must_contain: "sealed interface Input"
+      within_class: true
+    message: "ViewModel must define 'sealed interface Input' to receive user events"
+    suggestion: |
+      Add the following to your ViewModel:
+
+      sealed interface Input {
+          data object LoadData : Input
+          // Add your input events here
+      }
+    reference: "docs/VIEWMODEL_PATTERN.md#input-sealed-interface"
+
+  # Rule 2: Output Interface
+  - id: MVVM_002
+    name: "ViewModel must have Output sealed interface"
+    severity: ERROR
+    enabled: true
+    description: "All ViewModels must define a sealed interface named 'Output'"
+    check:
+      file_pattern: "**/*ViewModel.kt"
+      must_contain: "sealed interface Output"
+      within_class: true
+    message: "ViewModel must define 'sealed interface Output'"
+    reference: "docs/VIEWMODEL_PATTERN.md#output-interface"
+
+  # Rule 3: State Class
+  - id: MVVM_003
+    name: "Output must contain State data class"
+    severity: ERROR
+    enabled: true
+    description: "Output interface must contain an immutable State data class"
+    check:
+      file_pattern: "**/*ViewModel.kt"
+      must_contain: "data class State"
+      within_interface: "Output"
+    message: "Output must contain 'data class State' for UI state"
+    suggestion: |
+      Add inside Output interface:
+
+      data class State(
+          val isLoading: Boolean = false,
+          val data: List<Item> = emptyList()
+      )
+    reference: "docs/VIEWMODEL_PATTERN.md#output-state"
+
+  # Rule 4: Effect Interface
+  - id: MVVM_004
+    name: "Output must contain Effect sealed interface"
+    severity: ERROR
+    enabled: true
+    description: "Output interface must contain Effect for one-time events"
+    check:
+      file_pattern: "**/*ViewModel.kt"
+      must_contain: "sealed interface Effect"
+      within_interface: "Output"
+    message: "Output must contain 'sealed interface Effect' for one-time events"
+    suggestion: |
+      Add inside Output interface:
+
+      sealed interface Effect {
+          data class ShowError(val message: String) : Effect
+          data class ShowSuccess(val message: String) : Effect
+      }
+    reference: "docs/VIEWMODEL_PATTERN.md#output-effect"
+
+  # Rule 5: onEvent Method
+  - id: MVVM_005
+    name: "ViewModel must have onEvent method"
+    severity: ERROR
+    enabled: true
+    description: "ViewModels must handle all input through a single onEvent method"
+    check:
+      file_pattern: "**/*ViewModel.kt"
+      must_contain_pattern: "fun\\s+onEvent\\s*\\(\\s*input:\\s*Input\\s*\\)"
+    message: "ViewModel must have 'fun onEvent(input: Input)' method"
+    suggestion: |
+      Add event handler:
+
+      fun onEvent(input: Input) {
+          when (input) {
+              is Input.LoadData -> loadData()
+              // Handle other inputs
+          }
+      }
+    reference: "docs/VIEWMODEL_PATTERN.md#event-handler"
+
+  # Rule 6: StateFlow for State
+  - id: MVVM_006
+    name: "ViewModel must expose State as StateFlow"
+    severity: ERROR
+    enabled: true
+    description: "UI State must be exposed as StateFlow"
+    check:
+      file_pattern: "**/*ViewModel.kt"
+      must_contain_pattern: "StateFlow<.*State>"
+    message: "State must be exposed as StateFlow<Output.State>"
+    suggestion: |
+      Add state exposure:
+
+      private val _state = MutableStateFlow(Output.State())
+      val state: StateFlow<Output.State> = _state.asStateFlow()
+    reference: "docs/VIEWMODEL_PATTERN.md#state-flow"
+
+  # Rule 7: Channel for Effects
+  - id: MVVM_007
+    name: "ViewModel should use Channel for Effects"
+    severity: WARNING
+    enabled: true
+    description: "Effects should be exposed through Channel/Flow"
+    check:
+      file_pattern: "**/*ViewModel.kt"
+      must_contain_pattern: "Channel<.*Effect>"
+    message: "Effects should use Channel for one-time events"
+    suggestion: |
+      Add effect channel:
+
+      private val _effect = Channel<Output.Effect>(Channel.BUFFERED)
+      val effect = _effect.receiveAsFlow()
+    reference: "docs/VIEWMODEL_PATTERN.md#effect-channel"
+
+  # Rule 8: Hilt Annotation
+  - id: MVVM_008
+    name: "ViewModel must use @HiltViewModel annotation"
+    severity: ERROR
+    enabled: true
+    description: "ViewModels must be annotated with @HiltViewModel for DI"
+    check:
+      file_pattern: "**/*ViewModel.kt"
+      must_contain: "@HiltViewModel"
+      before_class_declaration: true
+    message: "ViewModel must have @HiltViewModel annotation"
+    suggestion: |
+      Add annotation before class:
+
+      @HiltViewModel
+      class MyViewModel @Inject constructor(
+          // dependencies
+      ) : ViewModel() {
+          // ...
+      }
+    reference: "docs/VIEWMODEL_PATTERN.md#dependency-injection"
+
+  # Rule 9: Constructor Injection
+  - id: MVVM_009
+    name: "ViewModel must use constructor injection"
+    severity: ERROR
+    enabled: true
+    description: "ViewModels must use @Inject constructor for dependencies"
+    check:
+      file_pattern: "**/*ViewModel.kt"
+      must_contain: "@Inject constructor"
+    message: "ViewModel must use '@Inject constructor' for dependency injection"
+    reference: "docs/VIEWMODEL_PATTERN.md#dependency-injection"
+
+  # Rule 10: Extend ViewModel
+  - id: MVVM_010
+    name: "ViewModel classes must extend ViewModel or AnalyticsViewModel"
+    severity: ERROR
+    enabled: true
+    description: "All ViewModel classes must extend the base ViewModel class"
+    check:
+      file_pattern: "**/*ViewModel.kt"
+      must_contain_pattern: ":\\s*(ViewModel|AnalyticsViewModel)"
+      in_class_declaration: true
+    message: "ViewModel must extend ViewModel or AnalyticsViewModel"
+
+  # Rule 11: Immutable State
+  - id: MVVM_011
+    name: "State class must be immutable (data class)"
+    severity: WARNING
+    enabled: true
+    description: "State should be a data class for immutability"
+    check:
+      file_pattern: "**/*ViewModel.kt"
+      state_class_must_be_data_class: true
+    message: "State should be a data class for immutability and copy() method"
+
+  # Rule 12: Private Event Handlers
+  - id: MVVM_012
+    name: "Event handlers should be private"
+    severity: WARNING
+    enabled: true
+    description: "Individual event handler methods should be private"
+    check:
+      file_pattern: "**/*ViewModel.kt"
+      pattern: "^\\s*fun\\s+(load|create|update|delete|fetch)"
+      must_have_modifier: "private"
+    message: "Event handler methods should be private, expose only through onEvent()"
+    suggestion: "Make handler methods private and call them from onEvent()"
+
+# Best practices (info level)
+best_practices:
+
+  - id: MVVM_BP_001
+    name: "Use descriptive Input names"
+    severity: INFO
+    description: "Input events should use action verbs"
+    check:
+      input_events_naming: true
+    examples:
+      good:
+        - "data object LoadUsers : Input"
+        - "data class CreateUser(val user: User) : Input"
+      bad:
+        - "data object Users : Input"
+        - "data class User(val user: User) : Input"
+
+  - id: MVVM_BP_002
+    name: "Use computed properties for derived state"
+    severity: INFO
+    description: "Don't store derived data in State, use computed properties"
+    examples:
+      good: |
+        data class State(
+            val users: List<User> = emptyList()
+        ) {
+            val userCount: Int get() = users.size
+            val hasUsers: Boolean get() = users.isNotEmpty()
+        }
+      bad: |
+        data class State(
+            val users: List<User> = emptyList(),
+            val userCount: Int = 0,  // Redundant
+            val hasUsers: Boolean = false  // Redundant
+        )
+
+  - id: MVVM_BP_003
+    name: "Keep State flat and simple"
+    severity: INFO
+    description: "Avoid nested state objects, keep it flat"
+    reference: "docs/VIEWMODEL_PATTERN.md#best-practices"
+
+# Examples
+examples:
+  correct: |
+    @HiltViewModel
+    class UserViewModel @Inject constructor(
+        private val userService: UserService
+    ) : AnalyticsViewModel(analyticsTracker) {
+
+        sealed interface Input {
+            data object LoadUsers : Input
+            data class CreateUser(val user: User) : Input
+        }
+
+        sealed interface Output {
+            data class State(
+                val users: List<User> = emptyList(),
+                val isLoading: Boolean = false
+            )
+
+            sealed interface Effect {
+                data class ShowError(val message: String) : Effect
+            }
+        }
+
+        private val _state = MutableStateFlow(Output.State())
+        val state: StateFlow<Output.State> = _state.asStateFlow()
+
+        private val _effect = Channel<Output.Effect>(Channel.BUFFERED)
+        val effect = _effect.receiveAsFlow()
+
+        fun onEvent(input: Input) {
+            when (input) {
+                is Input.LoadUsers -> loadUsers()
+                is Input.CreateUser -> createUser(input.user)
+            }
+        }
+
+        private fun loadUsers() {
+            // Implementation
+        }
+
+        private fun createUser(user: User) {
+            // Implementation
+        }
+    }
+
+  incorrect: |
+    // Missing @HiltViewModel
+    class UserViewModel constructor(
+        private val userService: UserService
+    ) : ViewModel() {
+
+        // Missing Input interface
+        // Missing Output interface
+
+        // Exposed MutableStateFlow (should be StateFlow)
+        val users = MutableStateFlow<List<User>>(emptyList())
+
+        // Public methods instead of onEvent
+        fun loadUsers() {
+            // Implementation
+        }
+
+        fun createUser(user: User) {
+            // Implementation
+        }
+    }

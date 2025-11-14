@@ -1,0 +1,736 @@
+version: "1.0"
+category: testing
+subcategory: test_structure
+
+description: |
+  Enforces test structure and organization:
+  - AAA pattern (Arrange-Act-Assert)
+  - Test naming conventions
+  - Setup and teardown
+  - Mock usage patterns
+  - Test isolation
+
+rules:
+  # ==============================================
+  # TEST NAMING RULES
+  # ==============================================
+
+  - id: TEST_STR_001
+    name: "Test functions must use backtick naming"
+    severity: WARNING
+    enabled: true
+    description: |
+      Test function names should use backtick style with descriptive
+      natural language describing what is being tested.
+    check:
+      file_pattern: "**/*Test.kt"
+      test_functions:
+        should_use_backticks: true
+        should_be_descriptive: true
+      pattern: "`[a-z].*`"
+    message: "Test function doesn't use backtick naming convention"
+    suggestion: |
+      Use backtick naming for tests:
+
+      ✅ Good - Descriptive backtick names:
+      @Test
+      fun `getUser returns user when found in database`() { }
+
+      @Test
+      fun `processOrder fails when payment is declined`() { }
+
+      @Test
+      fun `LoadData input sets loading state then loads users`() { }
+
+      ❌ Bad - Camel case or unclear:
+      @Test
+      fun testGetUser() { }
+
+      @Test
+      fun getUserReturnsUser() { }
+
+      @Test
+      fun test1() { }
+
+      Benefits of backtick naming:
+      - Natural language descriptions
+      - Easy to understand test purpose
+      - Better test failure messages
+      - Self-documenting tests
+    reference: "docs/TESTING.md#naming-conventions"
+    examples:
+      good:
+        - "`initial state has empty user list`"
+        - "`LoadData input loads users from service`"
+        - "`save user returns success when validation passes`"
+      bad:
+        - "testInitialState"
+        - "loadDataTest"
+        - "test_save_user"
+
+  - id: TEST_STR_002
+    name: "Test names should describe behavior, not implementation"
+    severity: INFO
+    enabled: true
+    description: |
+      Test names should focus on what behavior is being tested,
+      not implementation details.
+    check:
+      file_pattern: "**/*Test.kt"
+      test_names_should_describe_behavior: true
+      avoid_implementation_details: true
+    message: "Test name focuses on implementation rather than behavior"
+    suggestion: |
+      Focus on behavior in test names:
+
+      ✅ Good - Behavior-focused:
+      `displays error message when login fails`
+      `disables submit button when form is invalid`
+      `sends notification after order is confirmed`
+
+      ❌ Bad - Implementation-focused:
+      `calls repository getUser method`
+      `updates _state MutableStateFlow`
+      `uses viewModelScope to launch coroutine`
+
+      Why behavior over implementation:
+      - Tests remain valid if implementation changes
+      - Clearer test purpose
+      - Better documentation of requirements
+    reference: "docs/TESTING.md#behavior-driven-testing"
+
+  # ==============================================
+  # AAA PATTERN RULES
+  # ==============================================
+
+  - id: TEST_STR_003
+    name: "Tests should follow AAA pattern"
+    severity: WARNING
+    enabled: true
+    description: |
+      Tests should be organized with Arrange-Act-Assert pattern,
+      with clear sections for setup, execution, and verification.
+    check:
+      file_pattern: "**/*Test.kt"
+      test_functions:
+        should_have_aaa_structure: true
+        should_have_comments: "optional"
+    message: "Test doesn't follow AAA pattern"
+    suggestion: |
+      Structure tests with AAA pattern:
+
+      @Test
+      fun `processOrder creates order when payment succeeds`() = runTest {
+          // Arrange
+          val order = Order(items = listOf(item1, item2), total = 100.0)
+          whenever(paymentService.process(100.0))
+              .thenReturn(Result.success(Payment(id = "pay123")))
+          whenever(orderRepository.createOrder(any()))
+              .thenReturn(Result.success(order))
+
+          // Act
+          val result = service.processOrder(order)
+
+          // Assert
+          assertTrue(result.isSuccess)
+          assertEquals(order, result.getOrNull())
+          verify(paymentService).process(100.0)
+          verify(orderRepository).createOrder(order)
+      }
+
+      AAA Benefits:
+      - Clear test structure
+      - Easy to understand
+      - Easy to maintain
+      - Separates concerns
+
+      Optional: Use blank lines instead of comments if structure is clear
+    reference: "docs/TESTING.md#aaa-pattern"
+    examples:
+      good: |
+        @Test
+        fun `test name`() {
+            // Arrange
+            val input = TestData()
+
+            // Act
+            val result = sut.doSomething(input)
+
+            // Assert
+            assertEquals(expected, result)
+        }
+
+  - id: TEST_STR_004
+    name: "Arrange section should set up test data and mocks"
+    severity: INFO
+    enabled: true
+    description: |
+      The Arrange section should set up all necessary test data,
+      configure mocks, and prepare the system under test.
+    check:
+      file_pattern: "**/*Test.kt"
+      arrange_section:
+        should_setup_test_data: true
+        should_configure_mocks: true
+        should_be_complete: true
+    message: "Arrange section incomplete or unclear"
+    suggestion: |
+      Complete Arrange section:
+
+      @Test
+      fun `example test`() = runTest {
+          // Arrange
+          // 1. Create test data
+          val user = User(id = "123", name = "Test User")
+          val order = Order(userId = user.id, total = 100.0)
+
+          // 2. Configure mocks
+          whenever(userRepository.getUser("123"))
+              .thenReturn(flowOf(user))
+          whenever(orderRepository.createOrder(any()))
+              .thenReturn(Result.success(order))
+
+          // 3. Set up system state if needed
+          viewModel.onEvent(Input.SelectUser("123"))
+          advanceUntilIdle()
+
+          // Act
+          val result = viewModel.onEvent(Input.CreateOrder(order))
+
+          // Assert
+          assertTrue(result.isSuccess)
+      }
+    reference: "docs/TESTING.md#arrange-section"
+
+  - id: TEST_STR_005
+    name: "Act section should perform single operation"
+    severity: WARNING
+    enabled: true
+    description: |
+      The Act section should perform a single operation that is being tested.
+      If testing multiple operations, split into multiple tests.
+    check:
+      file_pattern: "**/*Test.kt"
+      act_section:
+        should_be_single_operation: true
+        should_be_focused: true
+    message: "Act section contains multiple operations"
+    suggestion: |
+      Keep Act section focused on single operation:
+
+      ✅ Good - Single operation:
+      @Test
+      fun `LoadData input loads users`() = runTest {
+          // Arrange
+          val users = listOf(user1, user2)
+          whenever(userService.getUsers()).thenReturn(flowOf(users))
+
+          // Act
+          viewModel.onEvent(Input.LoadData)
+
+          // Assert
+          advanceUntilIdle()
+          assertEquals(users, viewModel.state.value.users)
+      }
+
+      ❌ Bad - Multiple operations:
+      @Test
+      fun `multiple operations test`() = runTest {
+          // Arrange
+          val users = listOf(user1, user2)
+
+          // Act
+          viewModel.onEvent(Input.LoadData)  // Operation 1
+          advanceUntilIdle()
+          viewModel.onEvent(Input.SelectUser("123"))  // Operation 2
+          viewModel.onEvent(Input.DeleteUser("123"))  // Operation 3
+
+          // Assert
+          // What are we actually testing?
+      }
+
+      Split into separate tests:
+      - `LoadData input loads users`
+      - `SelectUser input updates selected user`
+      - `DeleteUser input removes user from list`
+    reference: "docs/TESTING.md#act-section"
+
+  - id: TEST_STR_006
+    name: "Assert section should verify expected outcomes"
+    severity: WARNING
+    enabled: true
+    description: |
+      The Assert section should verify all expected outcomes of the
+      operation, including state changes, return values, and side effects.
+    check:
+      file_pattern: "**/*Test.kt"
+      assert_section:
+        should_verify_outcomes: true
+        should_be_complete: true
+        should_use_descriptive_assertions: true
+    message: "Assert section incomplete or unclear"
+    suggestion: |
+      Complete Assert section:
+
+      @Test
+      fun `processOrder creates order and sends notification`() = runTest {
+          // Arrange
+          val order = Order(items = listOf(item1))
+          whenever(orderRepository.createOrder(any()))
+              .thenReturn(Result.success(order))
+
+          // Act
+          val result = service.processOrder(order)
+
+          // Assert
+          // 1. Verify return value
+          assertTrue(result.isSuccess)
+          assertEquals(order, result.getOrNull())
+
+          // 2. Verify repository interactions
+          verify(orderRepository).createOrder(order)
+
+          // 3. Verify side effects
+          verify(notificationService).sendOrderConfirmation(order)
+
+          // 4. Verify no unexpected interactions
+          verifyNoMoreInteractions(orderRepository)
+      }
+
+      Use descriptive assertion messages when helpful:
+      assertEquals(
+          expected = 2,
+          actual = result.items.size,
+          message = "Order should contain 2 items"
+      )
+    reference: "docs/TESTING.md#assert-section"
+
+  # ==============================================
+  # TEST SETUP RULES
+  # ==============================================
+
+  - id: TEST_STR_007
+    name: "Use @Before for common setup"
+    severity: WARNING
+    enabled: true
+    description: |
+      Common setup code should be in @Before method to avoid duplication
+      and ensure consistent test initialization.
+    check:
+      file_pattern: "**/*Test.kt"
+      should_have_before_method: true
+      when_setup_repeated: true
+    message: "Repeated setup code should be in @Before method"
+    suggestion: |
+      Use @Before for common setup:
+
+      class UserViewModelTest {
+          private lateinit var viewModel: UserViewModel
+          private lateinit var userService: UserService
+          private lateinit var testDispatcher: TestCoroutineDispatcher
+
+          @Before
+          fun setup() {
+              // Common setup for all tests
+              testDispatcher = TestCoroutineDispatcher()
+              userService = mock()
+              viewModel = UserViewModel(userService, testDispatcher)
+          }
+
+          @After
+          fun tearDown() {
+              testDispatcher.cleanupTestCoroutines()
+          }
+
+          @Test
+          fun `initial state is correct`() {
+              // No setup needed, @Before handled it
+              val state = viewModel.state.value
+              assertTrue(state.users.isEmpty())
+          }
+
+          @Test
+          fun `LoadData loads users`() = runTest {
+              // Test-specific arrange
+              whenever(userService.getUsers())
+                  .thenReturn(flowOf(listOf(user1)))
+
+              // Act & Assert
+              viewModel.onEvent(Input.LoadData)
+              advanceUntilIdle()
+              assertEquals(1, viewModel.state.value.users.size)
+          }
+      }
+    reference: "docs/TESTING.md#test-setup"
+
+  - id: TEST_STR_008
+    name: "Clean up resources in @After"
+    severity: WARNING
+    enabled: true
+    description: |
+      Resources that need cleanup (coroutines, files, connections)
+      should be cleaned up in @After method.
+    check:
+      file_pattern: "**/*Test.kt"
+      should_have_after_method: true
+      when_resources_need_cleanup: true
+    message: "Resources should be cleaned up in @After method"
+    suggestion: |
+      Clean up in @After:
+
+      class DatabaseTest {
+          private lateinit var database: TestDatabase
+          private lateinit var dao: UserDao
+
+          @Before
+          fun setup() {
+              database = Room.inMemoryDatabaseBuilder(
+                  context,
+                  TestDatabase::class.java
+              ).build()
+              dao = database.userDao()
+          }
+
+          @After
+          fun tearDown() {
+              database.close()
+          }
+
+          @Test
+          fun `test database operations`() {
+              // Test using dao
+          }
+      }
+
+      Common cleanup scenarios:
+      - Closing databases
+      - Cleaning up coroutine dispatchers
+      - Deleting temporary files
+      - Closing network connections
+    reference: "docs/TESTING.md#test-cleanup"
+
+  # ==============================================
+  # MOCK USAGE RULES
+  # ==============================================
+
+  - id: TEST_STR_009
+    name: "Use mock() for creating mocks"
+    severity: WARNING
+    enabled: true
+    description: |
+      Create mocks using mock() function from Mockito-Kotlin,
+      not Mockito.mock() directly.
+    check:
+      file_pattern: "**/*Test.kt"
+      should_use: "mock()"
+      should_not_use: "Mockito.mock()"
+    message: "Use mock() instead of Mockito.mock()"
+    suggestion: |
+      Use Mockito-Kotlin mock():
+
+      ✅ Good:
+      private val userRepository: UserRepository = mock()
+      private val userService: UserService = mock()
+
+      ❌ Bad:
+      private val userRepository = Mockito.mock(UserRepository::class.java)
+
+      Benefits of mock():
+      - Cleaner syntax
+      - Kotlin-friendly
+      - Type inference
+      - Less verbose
+
+      Import:
+      import org.mockito.kotlin.mock
+    reference: "docs/TESTING.md#mocking"
+
+  - id: TEST_STR_010
+    name: "Use whenever instead of when for stubbing"
+    severity: WARNING
+    enabled: true
+    description: |
+      Use whenever() from Mockito-Kotlin instead of Mockito.when()
+      to avoid conflict with Kotlin's when keyword.
+    check:
+      file_pattern: "**/*Test.kt"
+      should_use: "whenever("
+      should_not_use: "`when`("
+      should_not_use: "Mockito.`when`("
+    message: "Use whenever() instead of when()"
+    suggestion: |
+      Use Mockito-Kotlin whenever():
+
+      ✅ Good:
+      whenever(userRepository.getUser("123"))
+          .thenReturn(flowOf(user))
+
+      ❌ Bad:
+      Mockito.`when`(userRepository.getUser("123"))
+          .thenReturn(flowOf(user))
+
+      Import:
+      import org.mockito.kotlin.whenever
+    reference: "docs/TESTING.md#stubbing"
+    examples:
+      good:
+        - "whenever(mock.method()).thenReturn(value)"
+        - "whenever(mock.method()).thenThrow(Exception())"
+      bad:
+        - "Mockito.`when`(mock.method()).thenReturn(value)"
+
+  - id: TEST_STR_011
+    name: "Verify mock interactions explicitly"
+    severity: WARNING
+    enabled: true
+    description: |
+      Important mock interactions should be verified explicitly
+      to ensure expected behavior.
+    check:
+      file_pattern: "**/*Test.kt"
+      should_verify_important_interactions: true
+      use_verify_statements: true
+    message: "Consider verifying important mock interactions"
+    suggestion: |
+      Verify mock interactions:
+
+      @Test
+      fun `saveUser calls repository save method`() = runTest {
+          // Arrange
+          val user = User(id = "123", name = "Test")
+          whenever(userRepository.saveUser(user))
+              .thenReturn(Result.success(Unit))
+
+          // Act
+          val result = service.saveUser(user)
+
+          // Assert
+          assertTrue(result.isSuccess)
+          verify(userRepository).saveUser(user)  // Verify interaction
+          verifyNoMoreInteractions(userRepository)  // No other calls
+      }
+
+      Verification patterns:
+      - verify(mock).method() - Called once
+      - verify(mock, times(2)).method() - Called twice
+      - verify(mock, never()).method() - Never called
+      - verifyNoMoreInteractions(mock) - No other calls
+    reference: "docs/TESTING.md#verification"
+
+  - id: TEST_STR_012
+    name: "Use argument matchers correctly"
+    severity: WARNING
+    enabled: true
+    description: |
+      When using argument matchers, all arguments must be matchers.
+      Don't mix matchers and concrete values.
+    check:
+      file_pattern: "**/*Test.kt"
+      argument_matchers:
+        should_be_consistent: true
+        all_or_none: true
+    message: "Mixing argument matchers and concrete values"
+    suggestion: |
+      Argument matcher rules:
+
+      ✅ Good - All matchers:
+      whenever(repository.saveUser(any()))
+          .thenReturn(Result.success(Unit))
+
+      ✅ Good - All concrete:
+      whenever(repository.getUser("123"))
+          .thenReturn(flowOf(user))
+
+      ✅ Good - Specific matcher:
+      whenever(repository.saveUser(argThat { it.id == "123" }))
+          .thenReturn(Result.success(Unit))
+
+      ❌ Bad - Mixed:
+      whenever(repository.saveUser(any(), "123"))  // Error!
+          .thenReturn(Result.success(Unit))
+
+      Common matchers:
+      - any() - Any value
+      - eq(value) - Specific value (when mixing)
+      - argThat { predicate } - Custom matcher
+      - isNull() - Null value
+      - isNotNull() - Non-null value
+
+      Import:
+      import org.mockito.kotlin.any
+      import org.mockito.kotlin.eq
+      import org.mockito.kotlin.argThat
+    reference: "docs/TESTING.md#argument-matchers"
+
+  # ==============================================
+  # COROUTINE TESTING RULES
+  # ==============================================
+
+  - id: TEST_STR_013
+    name: "Use runTest for coroutine tests"
+    severity: ERROR
+    enabled: true
+    description: |
+      Tests with coroutines should use runTest from kotlinx-coroutines-test.
+    check:
+      file_pattern: "**/*Test.kt"
+      suspend_tests:
+        should_use: "runTest"
+        should_not_use: "runBlocking"
+    message: "Use runTest instead of runBlocking for tests"
+    suggestion: |
+      Use runTest for coroutine tests:
+
+      ✅ Good:
+      @Test
+      fun `suspend function test`() = runTest {
+          val result = service.loadData()
+          assertTrue(result.isSuccess)
+      }
+
+      ❌ Bad:
+      @Test
+      fun `suspend function test`() = runBlocking {
+          val result = service.loadData()
+          assertTrue(result.isSuccess)
+      }
+
+      Benefits of runTest:
+      - Virtual time control
+      - Automatic cleanup
+      - Exception handling
+      - Test-specific dispatcher
+
+      Import:
+      import kotlinx.coroutines.test.runTest
+    reference: "docs/TESTING.md#coroutine-testing"
+    examples:
+      good:
+        - "@Test fun `test`() = runTest { }"
+      bad:
+        - "@Test fun `test`() = runBlocking { }"
+
+  - id: TEST_STR_014
+    name: "Use advanceUntilIdle for Flow testing"
+    severity: WARNING
+    enabled: true
+    description: |
+      When testing Flows and StateFlows, use advanceUntilIdle()
+      to ensure all coroutines complete.
+    check:
+      file_pattern: "**/*Test.kt"
+      when_testing_flows:
+        should_use: "advanceUntilIdle()"
+    message: "Use advanceUntilIdle() when testing Flows"
+    suggestion: |
+      Use advanceUntilIdle() for Flow tests:
+
+      @Test
+      fun `LoadData updates state`() = runTest {
+          // Arrange
+          val users = listOf(user1, user2)
+          whenever(userService.getUsers()).thenReturn(flowOf(users))
+
+          // Act
+          viewModel.onEvent(Input.LoadData)
+
+          // Important: Wait for coroutines to complete
+          advanceUntilIdle()
+
+          // Assert
+          assertEquals(users, viewModel.state.value.users)
+      }
+
+      Other time control functions:
+      - advanceTimeBy(millis) - Advance by specific time
+      - runCurrent() - Run immediately scheduled coroutines
+      - advanceUntilIdle() - Run all pending coroutines
+    reference: "docs/TESTING.md#flow-testing"
+
+  # ==============================================
+  # TEST ISOLATION RULES
+  # ==============================================
+
+  - id: TEST_STR_015
+    name: "Tests should be independent"
+    severity: ERROR
+    enabled: true
+    description: |
+      Each test should be independent and not rely on other tests.
+      Tests should be runnable in any order.
+    check:
+      file_pattern: "**/*Test.kt"
+      tests_should_be_independent: true
+      no_shared_mutable_state: true
+    message: "Tests appear to have shared state or dependencies"
+    suggestion: |
+      Ensure test independence:
+
+      ❌ Bad - Shared mutable state:
+      class BadTest {
+          private val sharedList = mutableListOf<User>()  // Dangerous!
+
+          @Test
+          fun `test 1`() {
+              sharedList.add(user1)
+              assertEquals(1, sharedList.size)
+          }
+
+          @Test
+          fun `test 2`() {
+              // Depends on test 1's state!
+              assertEquals(1, sharedList.size)  // May fail
+          }
+      }
+
+      ✅ Good - Independent tests:
+      class GoodTest {
+          private lateinit var viewModel: UserViewModel
+          private lateinit var userService: UserService
+
+          @Before
+          fun setup() {
+              // Fresh state for each test
+              userService = mock()
+              viewModel = UserViewModel(userService)
+          }
+
+          @Test
+          fun `test 1`() {
+              // Independent test
+          }
+
+          @Test
+          fun `test 2`() {
+              // Independent test
+          }
+      }
+    reference: "docs/TESTING.md#test-isolation"
+
+metadata:
+  total_rules: 15
+  last_updated: "2025-11-14"
+  author: "Architecture Team"
+  version: "1.0"
+
+best_practices:
+  - "Use backtick naming for test functions"
+  - "Describe behavior, not implementation"
+  - "Follow AAA pattern (Arrange-Act-Assert)"
+  - "Keep Act section focused on single operation"
+  - "Verify all expected outcomes in Assert"
+  - "Use @Before for common setup"
+  - "Clean up resources in @After"
+  - "Use mock() and whenever() from Mockito-Kotlin"
+  - "Verify important mock interactions"
+  - "Use argument matchers consistently"
+  - "Use runTest for coroutine tests"
+  - "Use advanceUntilIdle() for Flow testing"
+  - "Ensure test independence"
+  - "No shared mutable state between tests"
+
+references:
+  - "docs/TESTING.md"
+  - "docs/TEST_STRUCTURE.md"
+  - "docs/MOCKITO_KOTLIN.md"
+  - "https://kotlinlang.org/docs/coroutines-guide.html#testing"
