@@ -266,9 +266,9 @@ UI Layer (Compose)
     ↓
 ViewModel (with Effects)
     ↓
-Use Cases (Business Logic) ← NEW
+Service Layer (Business Logic)
     ↓
-Service Layer
+Repository
     ↓
 Repository Layer (with Retry) ← ENHANCED
     ↓

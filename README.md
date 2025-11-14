@@ -165,41 +165,16 @@ class HomeViewModel : AnalyticsViewModel(analyticsTracker) {
 
 ### 📊 View Architecture Diagrams
 
-Comprehensive architecture diagrams are available in multiple formats:
-
-#### Quick View (PNG Images)
-After building, view the generated diagrams:
-
-1. ![Overall Architecture](docs/diagrams/01-overall-architecture.png)
-2. ![Clean Architecture Layers](docs/diagrams/02-clean-architecture-layers.png)
-3. ![Caching System](docs/diagrams/03-caching-system.png)
-4. ![Data Flow](docs/diagrams/04-data-flow.png)
-5. ![Offline-First Sync](docs/diagrams/05-offline-first-sync.png)
-6. ![Dependency Graph](docs/diagrams/06-dependency-graph.png)
-
-**Additional Diagrams:**
-- ![Architecture Layers](docs/diagrams/01-layers.png)
-- ![Data Flow Detail](docs/diagrams/02-data-flow.png)
-- ![Sync Process](docs/diagrams/04-sync-process.png)
-- ![Repository Pattern](docs/diagrams/05-repository-pattern.png)
-- ![Dependency Injection](docs/diagrams/06-dependency-injection.png)
+Comprehensive architecture diagrams are available in Mermaid format:
 
 #### Source Files (Mermaid)
-Edit or view online:
-1. [Overall Architecture](docs/architecture/01-overall-architecture.mmd) - Copy to [Mermaid Live](https://mermaid.live)
+View and edit online at [Mermaid Live](https://mermaid.live):
+1. [Overall Architecture](docs/architecture/01-overall-architecture.mmd)
 2. [Clean Architecture Layers](docs/architecture/02-clean-architecture-layers.mmd)
 3. [Caching System](docs/architecture/03-caching-system.mmd)
 4. [Data Flow](docs/architecture/04-data-flow.mmd)
 5. [Offline-First Sync](docs/architecture/05-offline-first-sync.mmd)
 6. [Dependency Graph](docs/architecture/06-dependency-graph.mmd)
-
-#### Generate PNG Diagrams
-```bash
-# Requires: npm install -g @mermaid-js/mermaid-cli
-./gradlew generateMermaidDiagrams
-
-# Output: docs/diagrams/*.png (auto-copied from build)
-```
 
 #### Detailed Documentation
 📖 Read the complete [Architecture Documentation](docs/ARCHITECTURE.md)

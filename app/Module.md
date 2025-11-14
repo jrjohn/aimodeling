@@ -20,9 +20,9 @@ This is a modern Android application built with Kotlin and Jetpack Compose, demo
 - **Network**: Ktor client with Ktorfit for REST API communication
 
 ### Domain Layer (`com.example.arcana.domain`)
-- **Use Cases**: Business logic encapsulation
-- **Services**: Application services for data operations
-- **Models**: Core business entities
+- **Services**: Business logic and application services for data operations
+- **Models**: Core business entities and value objects
+- **Validation**: Input validators for domain entities
 
 ### UI Layer (`com.example.arcana.ui`)
 - **Jetpack Compose**: Modern declarative UI framework

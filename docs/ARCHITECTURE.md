@@ -69,7 +69,7 @@ Output: `app/build/docs/diagrams/*.png`
 - Single Source of Truth
 
 ### 2. Domain Layer (`domain/`)
-**Responsibility**: Business Logic and Use Cases
+**Responsibility**: Business Logic and Services
 
 - **UserService** - Orchestrates user-related operations
 - **Repository Interfaces** - Abstract data sources

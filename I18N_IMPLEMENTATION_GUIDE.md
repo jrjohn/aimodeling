@@ -94,7 +94,7 @@ class UserViewModel @Inject constructor(
 }
 ```
 
-### In Domain Layer (Use Cases, Validators)
+### In Domain Layer (Services, Validators)
 
 Same as ViewModels - inject `StringProvider`:
 
