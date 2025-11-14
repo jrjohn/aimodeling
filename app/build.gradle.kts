@@ -376,3 +376,73 @@ tasks.named("generateApiDocs") {
         println("")
     }
 }
+
+// ============================================
+// Copy Documentation to Project Docs
+// ============================================
+
+tasks.register<Copy>("copyDocsToProject") {
+    group = "documentation"
+    description = "Copies generated API docs and diagrams to project/docs directory"
+
+    dependsOn("generateApiDocs")
+
+    // Copy API documentation
+    from(layout.buildDirectory.dir("docs/api"))
+    into(projectDir.resolve("../docs/api"))
+
+    doLast {
+        println("")
+        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        println("📋 API Documentation copied to project docs!")
+        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        println("  Destination: ${projectDir.resolve("../docs/api").absolutePath}")
+        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        println("")
+    }
+}
+
+tasks.register<Copy>("copyDiagramsToProject") {
+    group = "documentation"
+    description = "Copies generated diagrams to project/docs/diagrams directory"
+
+    dependsOn("generateMermaidDiagrams")
+
+    // Copy diagram files
+    from(layout.buildDirectory.dir("docs/diagrams"))
+    into(projectDir.resolve("../docs/diagrams"))
+    include("*.png")
+
+    doLast {
+        val targetDir = projectDir.resolve("../docs/diagrams")
+        println("")
+        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        println("🎨 Diagrams copied to project docs!")
+        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        println("  Destination: ${targetDir.absolutePath}")
+        println("")
+        println("  Copied diagrams:")
+        targetDir.listFiles()?.filter { it.extension == "png" }?.forEach { file ->
+            println("    ✓ ${file.name}")
+        }
+        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        println("")
+    }
+}
+
+// Composite task to copy all documentation
+tasks.register("copyAllDocsToProject") {
+    group = "documentation"
+    description = "Copies all generated documentation (API docs and diagrams) to project/docs"
+
+    dependsOn("copyDocsToProject", "copyDiagramsToProject")
+}
+
+// Auto-copy documentation to project docs on build
+tasks.named("generateApiDocs") {
+    finalizedBy("copyDocsToProject")
+}
+
+tasks.named("generateMermaidDiagrams") {
+    finalizedBy("copyDiagramsToProject")
+}

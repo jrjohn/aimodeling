@@ -114,7 +114,18 @@ class HomeViewModel : AnalyticsViewModel(analyticsTracker) {
 
 Comprehensive architecture diagrams are available in multiple formats:
 
-#### Quick View (Online)
+#### Quick View (PNG Images)
+After building, view the generated diagrams:
+
+1. ![Overall Architecture](docs/diagrams/01-overall-architecture.png)
+2. ![Clean Architecture Layers](docs/diagrams/02-clean-architecture-layers.png)
+3. ![Analytics System](docs/diagrams/03-analytics-system.png)
+4. ![Data Flow](docs/diagrams/04-data-flow.png)
+5. ![Offline-First Sync](docs/diagrams/05-offline-first-sync.png)
+6. ![Dependency Graph](docs/diagrams/06-dependency-graph.png)
+
+#### Source Files (Mermaid)
+Edit or view online:
 1. [Overall Architecture](docs/architecture/01-overall-architecture.mmd) - Copy to [Mermaid Live](https://mermaid.live)
 2. [Clean Architecture Layers](docs/architecture/02-clean-architecture-layers.mmd)
 3. [Analytics System](docs/architecture/03-analytics-system.mmd)
@@ -127,7 +138,7 @@ Comprehensive architecture diagrams are available in multiple formats:
 # Requires: npm install -g @mermaid-js/mermaid-cli
 ./gradlew generateMermaidDiagrams
 
-# Output: app/build/docs/diagrams/*.png
+# Output: docs/diagrams/*.png (auto-copied from build)
 ```
 
 #### Detailed Documentation
@@ -231,15 +242,19 @@ buildTypes {
 
 ### Generated Documentation
 
-All documentation is **automatically generated on every build**:
+All documentation is **automatically generated on every build** and copied to the project docs directory:
 
 #### API Documentation
 ```bash
 # Auto-generated on build, or manually:
 ./gradlew generateApiDocs
 
-# Location: app/build/docs/api/index.html
-open app/build/docs/api/index.html
+# Locations:
+#   Build output: app/build/docs/api/index.html
+#   Project docs: docs/api/index.html (auto-copied)
+
+# View API docs:
+open docs/api/index.html
 ```
 
 #### Architecture Diagrams
@@ -250,14 +265,22 @@ open app/build/docs/api/index.html
 # List available diagrams:
 ./gradlew listDiagrams
 
-# Location: app/build/docs/diagrams/*.png
+# Locations:
+#   Build output: app/build/docs/diagrams/*.png
+#   Project docs: docs/diagrams/*.png (auto-copied)
+```
+
+#### Copy All Documentation
+```bash
+# Manually copy all generated docs to project/docs:
+./gradlew copyAllDocsToProject
 ```
 
 ### Manual Documentation
 
 - 📖 [Architecture Guide](docs/ARCHITECTURE.md) - Comprehensive architecture documentation
 - 🎨 [Mermaid Diagrams](docs/architecture/) - Source diagrams
-- 🔧 API Docs - Auto-generated from code comments
+- 🔧 [API Docs](docs/api/index.html) - Auto-generated from code comments (after build)
 
 ---
 
@@ -336,11 +359,11 @@ aimodeling/
 
 ### Build Outputs
 
-| Task | Output |
-|------|--------|
-| `assembleDebug` | `app/build/outputs/apk/debug/app-debug.apk` |
-| `generateApiDocs` | `app/build/docs/api/index.html` |
-| `generateMermaidDiagrams` | `app/build/docs/diagrams/*.png` |
+| Task | Build Output | Project Docs (Auto-Copied) |
+|------|--------------|----------------------------|
+| `assembleDebug` | `app/build/outputs/apk/debug/app-debug.apk` | N/A |
+| `generateApiDocs` | `app/build/docs/api/index.html` | `docs/api/index.html` |
+| `generateMermaidDiagrams` | `app/build/docs/diagrams/*.png` | `docs/diagrams/*.png` |
 
 ### Gradle Tasks
 
@@ -349,9 +372,12 @@ aimodeling/
 ./gradlew tasks
 
 # Documentation tasks
-./gradlew generateApiDocs          # Generate API documentation
-./gradlew generateMermaidDiagrams  # Generate PNG diagrams
+./gradlew generateApiDocs          # Generate API documentation (auto-copied to docs/)
+./gradlew generateMermaidDiagrams  # Generate PNG diagrams (auto-copied to docs/)
 ./gradlew listDiagrams             # List available diagrams
+./gradlew copyDocsToProject        # Copy API docs to project/docs/api/
+./gradlew copyDiagramsToProject    # Copy diagrams to project/docs/diagrams/
+./gradlew copyAllDocsToProject     # Copy all documentation to project/docs/
 
 # Testing tasks
 ./gradlew test                     # Run unit tests

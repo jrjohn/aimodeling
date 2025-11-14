@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html class="no-js" lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>hilt_aggregated_deps</title>
+    <link href="../../images/logo-icon.svg" rel="icon" type="image/svg">
+        <script>var pathToRoot = "../../";</script>
+    <script>document.documentElement.classList.replace("no-js", "js");</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+      if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      } else {
+        const savedDarkMode = JSON.parse(storage)
+        if (savedDarkMode === true) {
+          document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+      }
+    </script>
+<script type="text/javascript" src="https://unpkg.com/kotlin-playground@1/dist/playground.min.js" async="async"></script>
+<script type="text/javascript" src="../../scripts/sourceset_dependencies.js" async="async"></script>
+<link href="../../styles/style.css" rel="Stylesheet">
+<link href="../../styles/main.css" rel="Stylesheet">
+<link href="../../styles/prism.css" rel="Stylesheet">
+<link href="../../styles/logo-styles.css" rel="Stylesheet">
+<link href="../../ui-kit/ui-kit.min.css" rel="Stylesheet">
+<script type="text/javascript" src="../../scripts/safe-local-storage_blocking.js"></script>
+<script type="text/javascript" src="../../scripts/navigation-loader.js" async="async"></script>
+<script type="text/javascript" src="../../scripts/platform-content-handler.js" async="async"></script>
+<script type="text/javascript" src="../../scripts/main.js" defer="defer"></script>
+<script type="text/javascript" src="../../scripts/prism.js" async="async"></script>
+<script type="text/javascript" src="../../ui-kit/ui-kit.min.js" defer="defer"></script>
+</head>
+<body>
+<div class="root">
+    <header class="navigation theme-dark" id="navigation-wrapper" role="banner">
+            <a class="library-name--link" href="../../index.html" tabindex="1">
+                    AI Model Android App
+            </a>
+        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle"
+                type="button">Toggle table of contents
+        </button>
+        <div class="navigation-controls--break ui-kit_mobile-only"></div>
+        <div class="library-version" id="library-version">
+        </div>
+        <div class="navigation-controls">
+        <ul class="filter-section filter-section_loading" id="filter-section" aria-label="Target filter">
+                <button class="platform-tag platform-selector jvm-like" data-active="" aria-pressed="true"
+                        data-filter=":app/debug">debug</button>
+                <button class="platform-tag platform-selector jvm-like" data-active="" aria-pressed="true"
+                        data-filter=":app/release">release</button>
+            <div class="dropdown filter-section--dropdown" data-role="dropdown" id="filter-section-dropdown">
+                <button class="button button_dropdown filter-section--dropdown-toggle" role="combobox"
+                        data-role="dropdown-toggle"
+                        aria-controls="platform-tags-listbox"
+                        aria-haspopup="listbox"
+                        aria-expanded="false"
+                        aria-label="Toggle source sets"
+                ></button>
+                <ul role="listbox" id="platform-tags-listbox" class="dropdown--list" data-role="dropdown-listbox" aria-label="Target filter">
+                    <div class="dropdown--header"><span>Target filter</span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close target filter">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                        <li role="option" class="dropdown--option platform-selector-option jvm-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":app/debug"
+                                       data-filter=":app/debug"/>
+                                <span class="checkbox--icon"></span>
+                                debug
+                            </label>
+                        </li>
+                        <li role="option" class="dropdown--option platform-selector-option jvm-like" tabindex="0">
+                            <label class="checkbox">
+                                <input type="checkbox" class="checkbox--input" id=":app/release"
+                                       data-filter=":app/release"/>
+                                <span class="checkbox--icon"></span>
+                                release
+                            </label>
+                        </li>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </ul>
+            <button class="navigation-controls--btn navigation-controls--btn_theme" id="theme-toggle-button"
+                    type="button">Switch theme
+            </button>
+            <div class="navigation-controls--btn navigation-controls--btn_search" id="searchBar" role="button">Search in
+                API
+            </div>
+        </div>
+    </header>
+    <div id="container">
+        <nav id="leftColumn" class="sidebar" data-item-type="SECTION" data-item-config='{"defaultSize": 280, "minSize": 200, "maxSize": 400}'>
+            <a class="toc--skip-link" href="#main">Skip to content</a>
+            <div class="dropdown theme-dark_mobile" data-role="dropdown" id="toc-dropdown">
+                <ul role="listbox" id="toc-listbox" class="dropdown--list dropdown--list_toc-list"
+                    data-role="dropdown-listbox" aria-label="Table of contents">
+                    <div class="dropdown--header">
+                            <span>
+                                    AI Model Android App
+                            </span>
+                        <button class="button" data-role="dropdown-toggle" aria-label="Close table of contents">
+                            <i class="ui-kit-icon ui-kit-icon_cross"></i>
+                        </button>
+                    </div>
+                    <div class="sidebar--inner" id="sideMenu"></div>
+                </ul>
+                <div class="dropdown--overlay"></div>
+            </div>
+        </nav>
+        <div id="resizer" class="resizer" data-item-type="BAR"></div>
+        <div id="main" data-item-type="SECTION" role="main">
+<div class="main-content" data-page-type="package" id="content" pageIds="AI Model Android App::hilt_aggregated_deps////PointingToDeclaration//-19934098">
+  <div class="breadcrumbs"><a href="../../index.html">AI Model Android App</a><span class="delimiter">/</span><span class="current">hilt_aggregated_deps</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span><span>Package-level</span></span> <span><span>declarations</span></span></h1>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="TYPE">Types</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="TYPE">
+        <h2 class="tableheader">Types</h2>
+        <div class="table"><a data-name="-36650163%2FClasslikes%2F-19934098" anchor-label="_com_example_aimodel_data_worker_AnalyticsUploadWorker_HiltModule" id="-36650163%2FClasslikes%2F-19934098" data-filterable-set=":app/debug,:app/release"></a>
+          <div class="table-row table-row_content" data-filterable-current=":app/debug,:app/release" data-filterable-set=":app/debug,:app/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><span data-unresolved-link="hilt_aggregated_deps/_com_example_aimodel_data_worker_AnalyticsUploadWorker_HiltModule///PointingToDeclaration/"><span>_</span><wbr></wbr><span>com_</span><wbr></wbr><span>example_</span><wbr></wbr><span>aimodel_</span><wbr></wbr><span>data_</span><wbr></wbr><span>worker_</span><wbr></wbr><span>Analytics</span><wbr></wbr><span>Upload</span><wbr></wbr><span>Worker_</span><wbr></wbr><span>HiltModule</span></span></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-36650163%2FClasslikes%2F-19934098"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":app/debug" data-filterable-set=":app/debug" data-active="" data-toggle=":app/debug">debug</button><button class="platform-bookmark" data-filterable-current=":app/release" data-filterable-set=":app/release" data-toggle=":app/release">release</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":app/debug"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[debug]_com_example_aimodel_data_worker_-analytics-upload-worker_-hilt-module/index.html">_com_example_aimodel_data_worker_AnalyticsUploadWorker_HiltModule</a></div><div class="brief ">This class should only be referenced by generated code!</div></div><div class="content sourceset-dependent-content" data-togglable=":app/release"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[release]_com_example_aimodel_data_worker_-analytics-upload-worker_-hilt-module/index.html">_com_example_aimodel_data_worker_AnalyticsUploadWorker_HiltModule</a></div><div class="brief ">This class should only be referenced by generated code!</div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1693602640%2FClasslikes%2F-19934098" anchor-label="_com_example_aimodel_di_AnalyticsModule" id="1693602640%2FClasslikes%2F-19934098" data-filterable-set=":app/debug,:app/release"></a>
+          <div class="table-row table-row_content" data-filterable-current=":app/debug,:app/release" data-filterable-set=":app/debug,:app/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><span data-unresolved-link="hilt_aggregated_deps/_com_example_aimodel_di_AnalyticsModule///PointingToDeclaration/"><span>_</span><wbr></wbr><span>com_</span><wbr></wbr><span>example_</span><wbr></wbr><span>aimodel_</span><wbr></wbr><span>di_</span><wbr></wbr><span>Analytics</span><wbr></wbr><span><span>Module</span></span></span></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1693602640%2FClasslikes%2F-19934098"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":app/debug" data-filterable-set=":app/debug" data-active="" data-toggle=":app/debug">debug</button><button class="platform-bookmark" data-filterable-current=":app/release" data-filterable-set=":app/release" data-toggle=":app/release">release</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":app/debug"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[debug]_com_example_aimodel_di_-analytics-module/index.html">_com_example_aimodel_di_AnalyticsModule</a></div><div class="brief ">This class should only be referenced by generated code!</div></div><div class="content sourceset-dependent-content" data-togglable=":app/release"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[release]_com_example_aimodel_di_-analytics-module/index.html">_com_example_aimodel_di_AnalyticsModule</a></div><div class="brief ">This class should only be referenced by generated code!</div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1074757703%2FClasslikes%2F-19934098" anchor-label="_com_example_aimodel_di_DatabaseModule" id="-1074757703%2FClasslikes%2F-19934098" data-filterable-set=":app/debug,:app/release"></a>
+          <div class="table-row table-row_content" data-filterable-current=":app/debug,:app/release" data-filterable-set=":app/debug,:app/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><span data-unresolved-link="hilt_aggregated_deps/_com_example_aimodel_di_DatabaseModule///PointingToDeclaration/"><span>_</span><wbr></wbr><span>com_</span><wbr></wbr><span>example_</span><wbr></wbr><span>aimodel_</span><wbr></wbr><span>di_</span><wbr></wbr><span>Database</span><wbr></wbr><span><span>Module</span></span></span></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1074757703%2FClasslikes%2F-19934098"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":app/debug" data-filterable-set=":app/debug" data-active="" data-toggle=":app/debug">debug</button><button class="platform-bookmark" data-filterable-current=":app/release" data-filterable-set=":app/release" data-toggle=":app/release">release</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":app/debug"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[debug]_com_example_aimodel_di_-database-module/index.html">_com_example_aimodel_di_DatabaseModule</a></div><div class="brief ">This class should only be referenced by generated code!</div></div><div class="content sourceset-dependent-content" data-togglable=":app/release"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[release]_com_example_aimodel_di_-database-module/index.html">_com_example_aimodel_di_DatabaseModule</a></div><div class="brief ">This class should only be referenced by generated code!</div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-484924656%2FClasslikes%2F-19934098" anchor-label="_com_example_aimodel_di_DomainModule" id="-484924656%2FClasslikes%2F-19934098" data-filterable-set=":app/debug,:app/release"></a>
+          <div class="table-row table-row_content" data-filterable-current=":app/debug,:app/release" data-filterable-set=":app/debug,:app/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><span data-unresolved-link="hilt_aggregated_deps/_com_example_aimodel_di_DomainModule///PointingToDeclaration/"><span>_</span><wbr></wbr><span>com_</span><wbr></wbr><span>example_</span><wbr></wbr><span>aimodel_</span><wbr></wbr><span>di_</span><wbr></wbr><span>Domain</span><wbr></wbr><span><span>Module</span></span></span></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-484924656%2FClasslikes%2F-19934098"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":app/debug" data-filterable-set=":app/debug" data-active="" data-toggle=":app/debug">debug</button><button class="platform-bookmark" data-filterable-current=":app/release" data-filterable-set=":app/release" data-toggle=":app/release">release</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":app/debug"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[debug]_com_example_aimodel_di_-domain-module/index.html">_com_example_aimodel_di_DomainModule</a></div><div class="brief ">This class should only be referenced by generated code!</div></div><div class="content sourceset-dependent-content" data-togglable=":app/release"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[release]_com_example_aimodel_di_-domain-module/index.html">_com_example_aimodel_di_DomainModule</a></div><div class="brief ">This class should only be referenced by generated code!</div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1423091688%2FClasslikes%2F-19934098" anchor-label="_com_example_aimodel_di_NetworkModule" id="1423091688%2FClasslikes%2F-19934098" data-filterable-set=":app/debug,:app/release"></a>
+          <div class="table-row table-row_content" data-filterable-current=":app/debug,:app/release" data-filterable-set=":app/debug,:app/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><span data-unresolved-link="hilt_aggregated_deps/_com_example_aimodel_di_NetworkModule///PointingToDeclaration/"><span>_</span><wbr></wbr><span>com_</span><wbr></wbr><span>example_</span><wbr></wbr><span>aimodel_</span><wbr></wbr><span>di_</span><wbr></wbr><span>Network</span><wbr></wbr><span><span>Module</span></span></span></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1423091688%2FClasslikes%2F-19934098"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":app/debug" data-filterable-set=":app/debug" data-active="" data-toggle=":app/debug">debug</button><button class="platform-bookmark" data-filterable-current=":app/release" data-filterable-set=":app/release" data-toggle=":app/release">release</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":app/debug"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[debug]_com_example_aimodel_di_-network-module/index.html">_com_example_aimodel_di_NetworkModule</a></div><div class="brief ">This class should only be referenced by generated code!</div></div><div class="content sourceset-dependent-content" data-togglable=":app/release"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[release]_com_example_aimodel_di_-network-module/index.html">_com_example_aimodel_di_NetworkModule</a></div><div class="brief ">This class should only be referenced by generated code!</div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-587973496%2FClasslikes%2F-19934098" anchor-label="_com_example_aimodel_di_NetworkMonitorModule" id="-587973496%2FClasslikes%2F-19934098" data-filterable-set=":app/debug,:app/release"></a>
+          <div class="table-row table-row_content" data-filterable-current=":app/debug,:app/release" data-filterable-set=":app/debug,:app/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><span data-unresolved-link="hilt_aggregated_deps/_com_example_aimodel_di_NetworkMonitorModule///PointingToDeclaration/"><span>_</span><wbr></wbr><span>com_</span><wbr></wbr><span>example_</span><wbr></wbr><span>aimodel_</span><wbr></wbr><span>di_</span><wbr></wbr><span>Network</span><wbr></wbr><span>Monitor</span><wbr></wbr><span><span>Module</span></span></span></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-587973496%2FClasslikes%2F-19934098"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":app/debug" data-filterable-set=":app/debug" data-active="" data-toggle=":app/debug">debug</button><button class="platform-bookmark" data-filterable-current=":app/release" data-filterable-set=":app/release" data-toggle=":app/release">release</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":app/debug"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[debug]_com_example_aimodel_di_-network-monitor-module/index.html">_com_example_aimodel_di_NetworkMonitorModule</a></div><div class="brief ">This class should only be referenced by generated code!</div></div><div class="content sourceset-dependent-content" data-togglable=":app/release"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[release]_com_example_aimodel_di_-network-monitor-module/index.html">_com_example_aimodel_di_NetworkMonitorModule</a></div><div class="brief ">This class should only be referenced by generated code!</div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1785127862%2FClasslikes%2F-19934098" anchor-label="_com_example_aimodel_di_RepositoryModule" id="-1785127862%2FClasslikes%2F-19934098" data-filterable-set=":app/debug,:app/release"></a>
+          <div class="table-row table-row_content" data-filterable-current=":app/debug,:app/release" data-filterable-set=":app/debug,:app/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><span data-unresolved-link="hilt_aggregated_deps/_com_example_aimodel_di_RepositoryModule///PointingToDeclaration/"><span>_</span><wbr></wbr><span>com_</span><wbr></wbr><span>example_</span><wbr></wbr><span>aimodel_</span><wbr></wbr><span>di_</span><wbr></wbr><span>Repository</span><wbr></wbr><span><span>Module</span></span></span></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1785127862%2FClasslikes%2F-19934098"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":app/debug" data-filterable-set=":app/debug" data-active="" data-toggle=":app/debug">debug</button><button class="platform-bookmark" data-filterable-current=":app/release" data-filterable-set=":app/release" data-toggle=":app/release">release</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":app/debug"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[debug]_com_example_aimodel_di_-repository-module/index.html">_com_example_aimodel_di_RepositoryModule</a></div><div class="brief ">This class should only be referenced by generated code!</div></div><div class="content sourceset-dependent-content" data-togglable=":app/release"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[release]_com_example_aimodel_di_-repository-module/index.html">_com_example_aimodel_di_RepositoryModule</a></div><div class="brief ">This class should only be referenced by generated code!</div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-325817727%2FClasslikes%2F-19934098" anchor-label="_com_example_aimodel_di_ServiceModule" id="-325817727%2FClasslikes%2F-19934098" data-filterable-set=":app/debug,:app/release"></a>
+          <div class="table-row table-row_content" data-filterable-current=":app/debug,:app/release" data-filterable-set=":app/debug,:app/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><span data-unresolved-link="hilt_aggregated_deps/_com_example_aimodel_di_ServiceModule///PointingToDeclaration/"><span>_</span><wbr></wbr><span>com_</span><wbr></wbr><span>example_</span><wbr></wbr><span>aimodel_</span><wbr></wbr><span>di_</span><wbr></wbr><span>Service</span><wbr></wbr><span><span>Module</span></span></span></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-325817727%2FClasslikes%2F-19934098"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":app/debug" data-filterable-set=":app/debug" data-active="" data-toggle=":app/debug">debug</button><button class="platform-bookmark" data-filterable-current=":app/release" data-filterable-set=":app/release" data-toggle=":app/release">release</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":app/debug"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[debug]_com_example_aimodel_di_-service-module/index.html">_com_example_aimodel_di_ServiceModule</a></div><div class="brief ">This class should only be referenced by generated code!</div></div><div class="content sourceset-dependent-content" data-togglable=":app/release"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[release]_com_example_aimodel_di_-service-module/index.html">_com_example_aimodel_di_ServiceModule</a></div><div class="brief ">This class should only be referenced by generated code!</div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="874340889%2FClasslikes%2F-19934098" anchor-label="_com_example_aimodel_di_SyncModule" id="874340889%2FClasslikes%2F-19934098" data-filterable-set=":app/debug,:app/release"></a>
+          <div class="table-row table-row_content" data-filterable-current=":app/debug,:app/release" data-filterable-set=":app/debug,:app/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><span data-unresolved-link="hilt_aggregated_deps/_com_example_aimodel_di_SyncModule///PointingToDeclaration/"><span>_</span><wbr></wbr><span>com_</span><wbr></wbr><span>example_</span><wbr></wbr><span>aimodel_</span><wbr></wbr><span>di_</span><wbr></wbr><span>SyncModule</span></span></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="874340889%2FClasslikes%2F-19934098"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":app/debug" data-filterable-set=":app/debug" data-active="" data-toggle=":app/debug">debug</button><button class="platform-bookmark" data-filterable-current=":app/release" data-filterable-set=":app/release" data-toggle=":app/release">release</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":app/debug"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[debug]_com_example_aimodel_di_-sync-module/index.html">_com_example_aimodel_di_SyncModule</a></div><div class="brief ">This class should only be referenced by generated code!</div></div><div class="content sourceset-dependent-content" data-togglable=":app/release"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[release]_com_example_aimodel_di_-sync-module/index.html">_com_example_aimodel_di_SyncModule</a></div><div class="brief ">This class should only be referenced by generated code!</div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-493788228%2FClasslikes%2F-19934098" anchor-label="_com_example_aimodel_MainActivity_GeneratedInjector" id="-493788228%2FClasslikes%2F-19934098" data-filterable-set=":app/debug,:app/release"></a>
+          <div class="table-row table-row_content" data-filterable-current=":app/debug,:app/release" data-filterable-set=":app/debug,:app/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><span data-unresolved-link="hilt_aggregated_deps/_com_example_aimodel_MainActivity_GeneratedInjector///PointingToDeclaration/"><span>_</span><wbr></wbr><span>com_</span><wbr></wbr><span>example_</span><wbr></wbr><span>aimodel_</span><wbr></wbr><span>Main</span><wbr></wbr><span>Activity_</span><wbr></wbr><span>Generated</span><wbr></wbr><span><span>Injector</span></span></span></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-493788228%2FClasslikes%2F-19934098"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":app/debug" data-filterable-set=":app/debug" data-active="" data-toggle=":app/debug">debug</button><button class="platform-bookmark" data-filterable-current=":app/release" data-filterable-set=":app/release" data-toggle=":app/release">release</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":app/debug"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[debug]_com_example_aimodel_-main-activity_-generated-injector/index.html">_com_example_aimodel_MainActivity_GeneratedInjector</a></div><div class="brief ">This class should only be referenced by generated code!</div></div><div class="content sourceset-dependent-content" data-togglable=":app/release"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[release]_com_example_aimodel_-main-activity_-generated-injector/index.html">_com_example_aimodel_MainActivity_GeneratedInjector</a></div><div class="brief ">This class should only be referenced by generated code!</div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1242689170%2FClasslikes%2F-19934098" anchor-label="_com_example_aimodel_MyApplication_GeneratedInjector" id="1242689170%2FClasslikes%2F-19934098" data-filterable-set=":app/debug,:app/release"></a>
+          <div class="table-row table-row_content" data-filterable-current=":app/debug,:app/release" data-filterable-set=":app/debug,:app/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><span data-unresolved-link="hilt_aggregated_deps/_com_example_aimodel_MyApplication_GeneratedInjector///PointingToDeclaration/"><span>_</span><wbr></wbr><span>com_</span><wbr></wbr><span>example_</span><wbr></wbr><span>aimodel_</span><wbr></wbr><span>My</span><wbr></wbr><span>Application_</span><wbr></wbr><span>Generated</span><wbr></wbr><span><span>Injector</span></span></span></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1242689170%2FClasslikes%2F-19934098"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":app/debug" data-filterable-set=":app/debug" data-active="" data-toggle=":app/debug">debug</button><button class="platform-bookmark" data-filterable-current=":app/release" data-filterable-set=":app/release" data-toggle=":app/release">release</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":app/debug"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[debug]_com_example_aimodel_-my-application_-generated-injector/index.html">_com_example_aimodel_MyApplication_GeneratedInjector</a></div><div class="brief ">This class should only be referenced by generated code!</div></div><div class="content sourceset-dependent-content" data-togglable=":app/release"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[release]_com_example_aimodel_-my-application_-generated-injector/index.html">_com_example_aimodel_MyApplication_GeneratedInjector</a></div><div class="brief ">This class should only be referenced by generated code!</div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-2130848399%2FClasslikes%2F-19934098" anchor-label="_com_example_aimodel_sync_SyncWorker_HiltModule" id="-2130848399%2FClasslikes%2F-19934098" data-filterable-set=":app/debug,:app/release"></a>
+          <div class="table-row table-row_content" data-filterable-current=":app/debug,:app/release" data-filterable-set=":app/debug,:app/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><span data-unresolved-link="hilt_aggregated_deps/_com_example_aimodel_sync_SyncWorker_HiltModule///PointingToDeclaration/"><span>_</span><wbr></wbr><span>com_</span><wbr></wbr><span>example_</span><wbr></wbr><span>aimodel_</span><wbr></wbr><span>sync_</span><wbr></wbr><span>SyncWorker_</span><wbr></wbr><span>HiltModule</span></span></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-2130848399%2FClasslikes%2F-19934098"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":app/debug" data-filterable-set=":app/debug" data-active="" data-toggle=":app/debug">debug</button><button class="platform-bookmark" data-filterable-current=":app/release" data-filterable-set=":app/release" data-toggle=":app/release">release</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":app/debug"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[debug]_com_example_aimodel_sync_-sync-worker_-hilt-module/index.html">_com_example_aimodel_sync_SyncWorker_HiltModule</a></div><div class="brief ">This class should only be referenced by generated code!</div></div><div class="content sourceset-dependent-content" data-togglable=":app/release"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[release]_com_example_aimodel_sync_-sync-worker_-hilt-module/index.html">_com_example_aimodel_sync_SyncWorker_HiltModule</a></div><div class="brief ">This class should only be referenced by generated code!</div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="84387972%2FClasslikes%2F-19934098" anchor-label="_com_example_aimodel_ui_screens_HomeViewModel_HiltModules_BindsModule" id="84387972%2FClasslikes%2F-19934098" data-filterable-set=":app/debug,:app/release"></a>
+          <div class="table-row table-row_content" data-filterable-current=":app/debug,:app/release" data-filterable-set=":app/debug,:app/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><span data-unresolved-link="hilt_aggregated_deps/_com_example_aimodel_ui_screens_HomeViewModel_HiltModules_BindsModule///PointingToDeclaration/"><span>_</span><wbr></wbr><span>com_</span><wbr></wbr><span>example_</span><wbr></wbr><span>aimodel_</span><wbr></wbr><span>ui_</span><wbr></wbr><span>screens_</span><wbr></wbr><span>Home</span><wbr></wbr><span>View</span><wbr></wbr><span>Model_</span><wbr></wbr><span>Hilt</span><wbr></wbr><span>Modules_</span><wbr></wbr><span>Binds</span><wbr></wbr><span><span>Module</span></span></span></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="84387972%2FClasslikes%2F-19934098"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":app/debug" data-filterable-set=":app/debug" data-active="" data-toggle=":app/debug">debug</button><button class="platform-bookmark" data-filterable-current=":app/release" data-filterable-set=":app/release" data-toggle=":app/release">release</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":app/debug"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[debug]_com_example_aimodel_ui_screens_-home-view-model_-hilt-modules_-binds-module/index.html">_com_example_aimodel_ui_screens_HomeViewModel_HiltModules_BindsModule</a></div><div class="brief ">This class should only be referenced by generated code!</div></div><div class="content sourceset-dependent-content" data-togglable=":app/release"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[release]_com_example_aimodel_ui_screens_-home-view-model_-hilt-modules_-binds-module/index.html">_com_example_aimodel_ui_screens_HomeViewModel_HiltModules_BindsModule</a></div><div class="brief ">This class should only be referenced by generated code!</div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1425254885%2FClasslikes%2F-19934098" anchor-label="_com_example_aimodel_ui_screens_HomeViewModel_HiltModules_KeyModule" id="-1425254885%2FClasslikes%2F-19934098" data-filterable-set=":app/debug,:app/release"></a>
+          <div class="table-row table-row_content" data-filterable-current=":app/debug,:app/release" data-filterable-set=":app/debug,:app/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><span data-unresolved-link="hilt_aggregated_deps/_com_example_aimodel_ui_screens_HomeViewModel_HiltModules_KeyModule///PointingToDeclaration/"><span>_</span><wbr></wbr><span>com_</span><wbr></wbr><span>example_</span><wbr></wbr><span>aimodel_</span><wbr></wbr><span>ui_</span><wbr></wbr><span>screens_</span><wbr></wbr><span>Home</span><wbr></wbr><span>View</span><wbr></wbr><span>Model_</span><wbr></wbr><span>Hilt</span><wbr></wbr><span>Modules_</span><wbr></wbr><span>KeyModule</span></span></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1425254885%2FClasslikes%2F-19934098"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":app/debug" data-filterable-set=":app/debug" data-active="" data-toggle=":app/debug">debug</button><button class="platform-bookmark" data-filterable-current=":app/release" data-filterable-set=":app/release" data-toggle=":app/release">release</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":app/debug"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[debug]_com_example_aimodel_ui_screens_-home-view-model_-hilt-modules_-key-module/index.html">_com_example_aimodel_ui_screens_HomeViewModel_HiltModules_KeyModule</a></div><div class="brief ">This class should only be referenced by generated code!</div></div><div class="content sourceset-dependent-content" data-togglable=":app/release"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[release]_com_example_aimodel_ui_screens_-home-view-model_-hilt-modules_-key-module/index.html">_com_example_aimodel_ui_screens_HomeViewModel_HiltModules_KeyModule</a></div><div class="brief ">This class should only be referenced by generated code!</div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="522641520%2FClasslikes%2F-19934098" anchor-label="_com_example_aimodel_ui_screens_UserViewModel_HiltModules_BindsModule" id="522641520%2FClasslikes%2F-19934098" data-filterable-set=":app/debug,:app/release"></a>
+          <div class="table-row table-row_content" data-filterable-current=":app/debug,:app/release" data-filterable-set=":app/debug,:app/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><span data-unresolved-link="hilt_aggregated_deps/_com_example_aimodel_ui_screens_UserViewModel_HiltModules_BindsModule///PointingToDeclaration/"><span>_</span><wbr></wbr><span>com_</span><wbr></wbr><span>example_</span><wbr></wbr><span>aimodel_</span><wbr></wbr><span>ui_</span><wbr></wbr><span>screens_</span><wbr></wbr><span>User</span><wbr></wbr><span>View</span><wbr></wbr><span>Model_</span><wbr></wbr><span>Hilt</span><wbr></wbr><span>Modules_</span><wbr></wbr><span>Binds</span><wbr></wbr><span><span>Module</span></span></span></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="522641520%2FClasslikes%2F-19934098"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":app/debug" data-filterable-set=":app/debug" data-active="" data-toggle=":app/debug">debug</button><button class="platform-bookmark" data-filterable-current=":app/release" data-filterable-set=":app/release" data-toggle=":app/release">release</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":app/debug"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[debug]_com_example_aimodel_ui_screens_-user-view-model_-hilt-modules_-binds-module/index.html">_com_example_aimodel_ui_screens_UserViewModel_HiltModules_BindsModule</a></div><div class="brief ">This class should only be referenced by generated code!</div></div><div class="content sourceset-dependent-content" data-togglable=":app/release"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[release]_com_example_aimodel_ui_screens_-user-view-model_-hilt-modules_-binds-module/index.html">_com_example_aimodel_ui_screens_UserViewModel_HiltModules_BindsModule</a></div><div class="brief ">This class should only be referenced by generated code!</div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="-1120888569%2FClasslikes%2F-19934098" anchor-label="_com_example_aimodel_ui_screens_UserViewModel_HiltModules_KeyModule" id="-1120888569%2FClasslikes%2F-19934098" data-filterable-set=":app/debug,:app/release"></a>
+          <div class="table-row table-row_content" data-filterable-current=":app/debug,:app/release" data-filterable-set=":app/debug,:app/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><span data-unresolved-link="hilt_aggregated_deps/_com_example_aimodel_ui_screens_UserViewModel_HiltModules_KeyModule///PointingToDeclaration/"><span>_</span><wbr></wbr><span>com_</span><wbr></wbr><span>example_</span><wbr></wbr><span>aimodel_</span><wbr></wbr><span>ui_</span><wbr></wbr><span>screens_</span><wbr></wbr><span>User</span><wbr></wbr><span>View</span><wbr></wbr><span>Model_</span><wbr></wbr><span>Hilt</span><wbr></wbr><span>Modules_</span><wbr></wbr><span>KeyModule</span></span></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-1120888569%2FClasslikes%2F-19934098"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted  with-platform-tabs" data-platform-hinted="data-platform-hinted">
+                    <div class="platform-bookmarks-row" data-toggle-list="data-toggle-list"><button class="platform-bookmark" data-filterable-current=":app/debug" data-filterable-set=":app/debug" data-active="" data-toggle=":app/debug">debug</button><button class="platform-bookmark" data-filterable-current=":app/release" data-filterable-set=":app/release" data-toggle=":app/release">release</button></div>
+<div class="content sourceset-dependent-content" data-active="" data-togglable=":app/debug"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[debug]_com_example_aimodel_ui_screens_-user-view-model_-hilt-modules_-key-module/index.html">_com_example_aimodel_ui_screens_UserViewModel_HiltModules_KeyModule</a></div><div class="brief ">This class should only be referenced by generated code!</div></div><div class="content sourceset-dependent-content" data-togglable=":app/release"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><a href="https://developer.android.com/reference/kotlin/javax/annotation/processing/Generated.html"><span class="token annotation builtin">Generated</span></a><span class="token punctuation">(</span><span>value<span class="token operator"> = </span><span class="breakable-word"><span class="token string">&quot;dagger.hilt.processor.internal.aggregateddeps.AggregatedDepsGenerator&quot;</span></span></span><wbr></wbr><span class="token punctuation">)</span></div></div><span class="token keyword">open </span><span class="token keyword">class </span><a href="[release]_com_example_aimodel_ui_screens_-user-view-model_-hilt-modules_-key-module/index.html">_com_example_aimodel_ui_screens_UserViewModel_HiltModules_KeyModule</a></div><div class="brief ">This class should only be referenced by generated code!</div></div>                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    <div class="footer">
+        <div class="footer--container">
+            <a href="#content" id="go-to-top-link" class="footer--button footer--button_go-to-top"></a>
+            <div class="footer--content">
+                <div>
+                    <span>Generated by </span>
+                    <a class="footer--link footer--link_external" href="https://github.com/Kotlin/dokka">
+                        Dokka
+                    </a>
+                    <div>© 2025 Copyright</div>
+                </div>
+            </div>
+        </div>
+    </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
