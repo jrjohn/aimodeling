@@ -3,11 +3,11 @@ graph TB
         UI[Jetpack Compose UI]
         VM[ViewModels<br/>MVVM Pattern]
         UIS[UI State Management]
+        VAL[Validators]
     end
 
     subgraph "Domain Layer"
         US[User Service]
-        UC[Use Cases]
         MODELS[Domain Models]
     end
 
@@ -26,10 +26,10 @@ graph TB
     end
 
     UI --> VM
+    UI --> VAL
     VM --> US
     VM --> ANALYTICS
-    US --> UC
-    UC --> REPO
+    US --> REPO
     REPO --> CACHE
     REPO --> LOCAL
     REPO --> REMOTE
@@ -39,6 +39,7 @@ graph TB
 
     style UI fill:#e1f5fe
     style VM fill:#b3e5fc
+    style VAL fill:#b3e5fc
     style US fill:#fff9c4
     style REPO fill:#c8e6c9
     style ANALYTICS fill:#f8bbd0
