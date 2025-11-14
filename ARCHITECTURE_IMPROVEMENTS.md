@@ -8,7 +8,7 @@ This document summarizes the Priority 1-4 improvements implemented to enhance th
 
 #### 1. ✅ Conflict Resolution & Optimistic Locking
 **Files Modified:**
-- `app/src/main/java/com/example/aimodel/data/model/User.kt`
+- `app/src/main/java/com/example/arcana/data/model/User.kt`
   - Added `updatedAt: Long` timestamp field for conflict detection
   - Added `version: Int` field for optimistic locking
   - Default values ensure backward compatibility
@@ -20,9 +20,9 @@ This document summarizes the Priority 1-4 improvements implemented to enhance th
 
 #### 2. ✅ Database Migration (v3 → v4)
 **Files Modified:**
-- `app/src/main/java/com/example/aimodel/data/local/AppDatabase.kt`
+- `app/src/main/java/com/example/arcana/data/local/AppDatabase.kt`
   - Bumped version from 3 to 4
-- `app/src/main/java/com/example/aimodel/di/DatabaseModule.kt`
+- `app/src/main/java/com/example/arcana/di/DatabaseModule.kt`
   - Implemented `MIGRATION_3_4` with proper SQL ALTER TABLE statements
   - Replaced destructive migration with proper migration path
 
@@ -33,7 +33,7 @@ This document summarizes the Priority 1-4 improvements implemented to enhance th
 
 #### 3. ✅ Retry Logic with Exponential Backoff
 **New Files Created:**
-- `app/src/main/java/com/example/aimodel/core/common/RetryPolicy.kt`
+- `app/src/main/java/com/example/arcana/core/common/RetryPolicy.kt`
   - Configurable retry attempts (default: 3)
   - Exponential backoff algorithm (factor: 2.0)
   - Maximum delay protection (default: 30s)
@@ -52,7 +52,7 @@ This document summarizes the Priority 1-4 improvements implemented to enhance th
 
 #### 4. ✅ Domain Models & Value Objects
 **New Files Created:**
-- `app/src/main/java/com/example/aimodel/domain/model/EmailAddress.kt`
+- `app/src/main/java/com/example/arcana/domain/model/EmailAddress.kt`
   - Type-safe email address with validation
   - Compile-time safety with `@JvmInline value class`
   - Regex-based validation
@@ -67,7 +67,7 @@ This document summarizes the Priority 1-4 improvements implemented to enhance th
 
 #### 5. ✅ Validation Layer
 **New Files Created:**
-- `app/src/main/java/com/example/aimodel/domain/validation/UserValidator.kt`
+- `app/src/main/java/com/example/arcana/domain/validation/UserValidator.kt`
   - Comprehensive user data validation
   - Separate rules for creation vs. update
   - Field-specific error messages
@@ -81,12 +81,12 @@ This document summarizes the Priority 1-4 improvements implemented to enhance th
 
 #### 6. ✅ Use Case Layer
 **New Files Created:**
-- `app/src/main/java/com/example/aimodel/domain/usecase/CreateUserUseCase.kt`
+- `app/src/main/java/com/example/arcana/domain/usecase/CreateUserUseCase.kt`
   - Validation before creation
   - Business rule enforcement (no temp emails)
   - Automatic retry on network errors
 
-- `app/src/main/java/com/example/aimodel/domain/usecase/UpdateUserUseCase.kt`
+- `app/src/main/java/com/example/arcana/domain/usecase/UpdateUserUseCase.kt`
   - Validation before update
   - Automatic version incrementing
   - Timestamp updates
@@ -104,7 +104,7 @@ This document summarizes the Priority 1-4 improvements implemented to enhance th
 
 #### 7. ✅ Error Classification System
 **New Files Created:**
-- `app/src/main/java/com/example/aimodel/core/common/AppError.kt`
+- `app/src/main/java/com/example/arcana/core/common/AppError.kt`
   - Sealed hierarchy for type-safe error handling
   - Error types: Network, Validation, Server, Conflict, Auth, Unknown
   - User-friendly message generation
@@ -131,14 +131,14 @@ sealed class AppError {
 
 #### 8. ✅ Sync Status & Observability
 **New Files Created:**
-- `app/src/main/java/com/example/aimodel/sync/SyncStatus.kt`
+- `app/src/main/java/com/example/arcana/sync/SyncStatus.kt`
   - Data class tracking sync state
   - Computed properties: `hasPendingChanges`, `getStatusMessage()`
   - Relative time formatting ("just now", "5 minutes ago")
   - Factory methods: `idle()`, `syncing()`, `success()`, `error()`
 
 **Updated Files:**
-- `app/src/main/java/com/example/aimodel/sync/SyncManager.kt`
+- `app/src/main/java/com/example/arcana/sync/SyncManager.kt`
   - Added `observeSyncStatus()` - Flow of WorkInfo
   - Added `isSyncing()` - Boolean flow of sync state
   - Battery constraint added
@@ -150,7 +150,7 @@ sealed class AppError {
 
 #### 9. ✅ Periodic Background Sync
 **Updated Files:**
-- `app/src/main/java/com/example/aimodel/sync/SyncManager.kt`
+- `app/src/main/java/com/example/arcana/sync/SyncManager.kt`
   - `schedulePeriodicSync(intervalMinutes)` - Schedule periodic work
   - `cancelPeriodicSync()` - Stop periodic sync
   - Configurable interval (default: 15 minutes)
@@ -175,7 +175,7 @@ sealed class AppError {
   - Added `buildConfigField` for `ENABLE_LOGGING`
   - Separate values for debug and release builds
 
-- `app/src/main/java/com/example/aimodel/di/NetworkModule.kt`
+- `app/src/main/java/com/example/arcana/di/NetworkModule.kt`
   - Uses `BuildConfig.API_BASE_URL`
   - Uses `BuildConfig.API_KEY`
 
@@ -200,18 +200,18 @@ release {
 
 #### 11. ✅ Analytics & Monitoring
 **New Files Created:**
-- `app/src/main/java/com/example/aimodel/core/analytics/AnalyticsTracker.kt`
+- `app/src/main/java/com/example/arcana/core/analytics/AnalyticsTracker.kt`
   - Interface for analytics implementation
   - Methods: `trackEvent()`, `trackError()`, `trackScreen()`, `setUserProperty()`
   - Pre-defined event constants (USER_CREATED, SYNC_STARTED, etc.)
   - Pre-defined screen names
 
-- `app/src/main/java/com/example/aimodel/core/analytics/LoggingAnalyticsTracker.kt`
+- `app/src/main/java/com/example/arcana/core/analytics/LoggingAnalyticsTracker.kt`
   - Timber-based implementation for development
   - Structured logging with emojis for visual parsing
   - Easy to replace with Firebase, Mixpanel, etc.
 
-- `app/src/main/java/com/example/aimodel/di/AnalyticsModule.kt`
+- `app/src/main/java/com/example/arcana/di/AnalyticsModule.kt`
   - DI binding for AnalyticsTracker
 
 **Usage Example:**
@@ -224,7 +224,7 @@ analyticsTracker.trackEvent(AnalyticsEvents.USER_CREATED, mapOf(
 
 #### 12. ✅ Dependency Injection for New Components
 **New Files Created:**
-- `app/src/main/java/com/example/aimodel/di/DomainModule.kt`
+- `app/src/main/java/com/example/arcana/di/DomainModule.kt`
   - Provides `UserValidator` (Singleton)
   - Provides `RetryPolicy` (Singleton)
   - Auto-wired into use cases
@@ -300,7 +300,7 @@ Domain Models & Validation ← NEW
 ## 📁 File Structure (New/Modified)
 
 ```
-app/src/main/java/com/example/aimodel/
+app/src/main/java/com/example/arcana/
 ├── core/
 │   ├── common/
 │   │   ├── RetryPolicy.kt ✨ NEW

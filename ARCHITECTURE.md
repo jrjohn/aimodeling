@@ -1,6 +1,6 @@
 # Software Architecture
 
-This document describes the software architecture of the aimodel application.
+This document describes the software architecture of the arcana application.
 
 ## Overview
 

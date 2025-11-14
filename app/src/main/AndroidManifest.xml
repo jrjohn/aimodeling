@@ -14,7 +14,7 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Aimodel">
+        android:theme="@style/Theme.Arcana">
 
         <!-- Disable default WorkManager initialization so Hilt can provide custom configuration -->
         <provider
@@ -32,7 +32,7 @@
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
-            android:theme="@style/Theme.Aimodel">
+            android:theme="@style/Theme.Arcana">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

@@ -1,4 +1,4 @@
-# AI Model Android App
+# Arcana Android
 
 > A modern Android application demonstrating **Clean Architecture**, **Offline-First** design, and **AOP Analytics** with Jetpack Compose.
 
@@ -59,15 +59,20 @@ This application follows **Clean Architecture** principles with clear separation
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
 │  │   Compose    │→ │  ViewModels  │→ │  UI States   │      │
 │  │     UI       │  │    (MVVM)    │  │              │      │
-│  └──────────────┘  └──────────────┘  └──────────────┘      │
+│  └──────┬───────┘  └──────────────┘  └──────────────┘      │
+│         ↓                                                    │
+│  ┌──────────────┐                                           │
+│  │  Validation  │                                           │
+│  │   & Value    │                                           │
+│  │   Objects    │                                           │
+│  └──────────────┘                                           │
 └────────────────────────┬────────────────────────────────────┘
                          ↓
 ┌─────────────────────────────────────────────────────────────┐
 │                      Domain Layer                           │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │   Services   │→ │  Validation  │→ │Domain Models │      │
-│  │              │  │   & Value    │  │              │      │
-│  │              │  │   Objects    │  │              │      │
+│  │   Services   │→ │Business Logic│→ │Domain Models │      │
+│  │              │  │              │  │              │      │
 │  └──────────────┘  └──────────────┘  └──────────────┘      │
 └────────────────────────┬────────────────────────────────────┘
                          ↓
@@ -288,12 +293,12 @@ val isFormValid by remember {
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/aimodeling.git
-   cd aimodeling
+   git clone https://github.com/yourusername/arcanaing.git
+   cd arcanaing
    ```
 
 2. **Open in Android Studio**
-   - File → Open → Select `aimodeling` folder
+   - File → Open → Select `arcanaing` folder
    - Wait for Gradle sync to complete
 
 3. **Run the app**
@@ -373,11 +378,11 @@ open docs/api/index.html
 ## 📁 Project Structure
 
 ```
-aimodeling/
+arcanaing/
 ├── app/
 │   └── src/
 │       ├── main/
-│       │   └── java/com/example/aimodel/
+│       │   └── java/com/example/arcana/
 │       │       ├── core/                    # Cross-cutting concerns
 │       │       │   ├── analytics/          # AOP analytics system
 │       │       │   └── common/             # Utilities, DI
@@ -647,7 +652,7 @@ Contributions are welcome! Please follow these guidelines:
 ```
 MIT License
 
-Copyright (c) 2024 AI Model Project
+Copyright (c) 2024 Arcana Project
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -682,8 +687,8 @@ SOFTWARE.
 
 ## 📞 Contact & Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/aimodeling/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/aimodeling/discussions)
+- **Issues**: [GitHub Issues](https://github.com/yourusername/arcanaing/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/yourusername/arcanaing/discussions)
 - **Documentation**: [Architecture Guide](docs/ARCHITECTURE.md)
 
 ---
@@ -692,6 +697,6 @@ SOFTWARE.
 
 **Built with ❤️ using Kotlin & Jetpack Compose**
 
-[⬆ Back to Top](#ai-model-android-app)
+[⬆ Back to Top](#arcana-android)
 
 </div>

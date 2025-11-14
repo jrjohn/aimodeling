@@ -6,7 +6,7 @@ This document summarizes the implementation of the remaining architectural impro
 
 ### 1. Repository Caching Layer with LRU Cache
 
-**File Created:** `app/src/main/java/com/example/aimodel/data/repository/CachingDataRepository.kt`
+**File Created:** `app/src/main/java/com/example/arcana/data/repository/CachingDataRepository.kt`
 
 **Features:**
 - **LRU Cache for Pages**: Caches up to 20 pages of user data
@@ -41,7 +41,7 @@ fun getCacheStats(): CacheStats {
 
 ### 2. Smart Pagination with Page Caching
 
-**File Modified:** `app/src/main/java/com/example/aimodel/ui/screens/UserViewModel.kt`
+**File Modified:** `app/src/main/java/com/example/arcana/ui/screens/UserViewModel.kt`
 
 **Changes to UserUiState:**
 ```kotlin
@@ -86,7 +86,7 @@ User goes to page 5 → Loads, caches as pages[5]
 
 ### 3. Conflict Resolution with Last-Write-Wins Strategy
 
-**File Modified:** `app/src/main/java/com/example/aimodel/data/repository/OfflineFirstDataRepository.kt`
+**File Modified:** `app/src/main/java/com/example/arcana/data/repository/OfflineFirstDataRepository.kt`
 
 **New Methods Added:**
 ```kotlin
@@ -136,7 +136,7 @@ when {
 
 ### 4. Updated Dependency Injection
 
-**File Modified:** `app/src/main/java/com/example/aimodel/di/RepositoryModule.kt`
+**File Modified:** `app/src/main/java/com/example/arcana/di/RepositoryModule.kt`
 
 **New Qualifiers:**
 ```kotlin

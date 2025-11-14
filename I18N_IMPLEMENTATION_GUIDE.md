@@ -1,6 +1,6 @@
 # Internationalization (i18n) Implementation Guide
 
-This guide explains how to use the new i18n system in the AI Model Android app.
+This guide explains how to use the new i18n system in the Arcana Android app.
 
 ## ✅ What's Been Implemented
 
@@ -11,7 +11,7 @@ This guide explains how to use the new i18n system in the AI Model Android app.
 - **`app/src/main/res/values-es/plurals.xml`** - Spanish plurals
 
 ### 2. StringProvider Interface
-**Location:** `app/src/main/java/com/example/aimodel/core/common/StringProvider.kt`
+**Location:** `app/src/main/java/com/example/arcana/core/common/StringProvider.kt`
 
 ```kotlin
 interface StringProvider {
@@ -37,7 +37,7 @@ Use `stringResource()` directly:
 
 ```kotlin
 import androidx.compose.ui.res.stringResource
-import com.example.aimodel.R
+import com.example.arcana.R
 
 @Composable
 fun UserScreen() {

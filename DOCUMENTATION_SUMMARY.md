@@ -128,7 +128,7 @@ Available tasks:
 ## 📁 File Structure
 
 ```
-aimodeling/
+arcanaing/
 ├── docs/
 │   └── architecture/
 │       ├── README.md                      # Diagrams guide
@@ -165,7 +165,7 @@ Configured in `app/build.gradle.kts`:
 
 ```kotlin
 dokka {
-    moduleName.set("AI Model Android App")
+    moduleName.set("Arcana Android")
     dokkaPublications.html {
         outputDirectory.set(layout.buildDirectory.dir("docs/api"))
     }

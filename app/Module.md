@@ -1,4 +1,4 @@
-# Module AI Model Android App
+# Module Arcana Android
 
 ## Overview
 
@@ -13,28 +13,28 @@ This is a modern Android application built with Kotlin and Jetpack Compose, demo
 
 ## Architecture Layers
 
-### Data Layer (`com.example.aimodel.data`)
+### Data Layer (`com.example.arcana.data`)
 - **Repository Pattern**: Manages data sources (local database, network API)
 - **Caching Strategy**: LRU cache with TTL for optimal performance
 - **Offline Support**: SQLite Room database for local persistence
 - **Network**: Ktor client with Ktorfit for REST API communication
 
-### Domain Layer (`com.example.aimodel.domain`)
+### Domain Layer (`com.example.arcana.domain`)
 - **Use Cases**: Business logic encapsulation
 - **Services**: Application services for data operations
 - **Models**: Core business entities
 
-### UI Layer (`com.example.aimodel.ui`)
+### UI Layer (`com.example.arcana.ui`)
 - **Jetpack Compose**: Modern declarative UI framework
 - **ViewModels**: State management and business logic coordination
 - **Navigation**: Navigation Compose for app navigation
 
-### Core Layer (`com.example.aimodel.core`)
+### Core Layer (`com.example.arcana.core`)
 - **Common Utilities**: Shared utilities and helpers
 - **String Provider**: Abstraction for string resources
 - **Network Monitor**: Connectivity state monitoring
 
-### Sync Layer (`com.example.aimodel.sync`)
+### Sync Layer (`com.example.arcana.sync`)
 - **Background Sync**: WorkManager-based background synchronization
 - **Conflict Resolution**: Last-write-wins strategy for data conflicts
 - **Cache Invalidation**: Event-driven cache management
@@ -76,7 +76,7 @@ The application implements a sophisticated caching system with:
 ## Package Structure
 
 ```
-com.example.aimodel
+com.example.arcana
 ├── core/                   # Core utilities and common code
 │   └── common/            # Common helpers
 ├── data/                   # Data layer

@@ -166,11 +166,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.aimodel"
+    namespace = "com.example.arcana"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.aimodel"
+        applicationId = "com.example.arcana"
         minSdk = 28
         targetSdk = 36
         versionCode = 1

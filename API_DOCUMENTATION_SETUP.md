@@ -120,7 +120,7 @@ Documentation configuration is in `app/build.gradle.kts`:
 
 ```kotlin
 dokka {
-    moduleName.set("AI Model Android App")
+    moduleName.set("Arcana Android")
 
     dokkaPublications.html {
         outputDirectory.set(layout.buildDirectory.dir("docs/api"))

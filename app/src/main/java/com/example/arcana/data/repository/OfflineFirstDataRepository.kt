@@ -1,0 +1,366 @@
+package com.example.arcana.data.repository
+
+import com.example.arcana.core.common.NetworkMonitor
+import com.example.arcana.data.local.UserChangeDao
+import com.example.arcana.data.local.UserDao
+import com.example.arcana.data.model.ChangeType
+import com.example.arcana.data.model.User
+import com.example.arcana.data.model.UserChange
+import com.example.arcana.data.network.UserNetworkDataSource
+import com.example.arcana.data.remote.CreateUserRequest
+import com.example.arcana.sync.Syncable
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import timber.log.Timber
+import java.util.UUID
+import javax.inject.Inject
+
+class OfflineFirstDataRepository @Inject constructor(
+    private val userDao: UserDao,
+    private val userChangeDao: UserChangeDao,
+    private val networkDataSource: UserNetworkDataSource,
+    private val networkMonitor: NetworkMonitor,
+    private val cacheEventBus: CacheEventBus
+) : DataRepository, Syncable {
+
+    override fun getUsers(): Flow<List<User>> {
+        return userDao.getUsers()
+    }
+
+    override suspend fun getUsersPage(page: Int): Result<Pair<List<User>, Int>> {
+        return try {
+            if (!networkMonitor.isOnline.first()) {
+                // When offline, read from local database
+                Timber.d("Offline mode: Reading page $page from local database")
+                val allLocalUsers = userDao.getUsers().first()
+
+                // Calculate pagination from local data
+                val pageSize = 6 // Match API page size
+                val totalPages = (allLocalUsers.size + pageSize - 1) / pageSize // Ceiling division
+
+                if (page < 1 || (allLocalUsers.isNotEmpty() && page > totalPages)) {
+                    Timber.w("Invalid page $page requested (total pages: $totalPages)")
+                    return Result.failure(Exception("Invalid page number"))
+                }
+
+                // Get users for requested page
+                val startIndex = (page - 1) * pageSize
+                val endIndex = minOf(startIndex + pageSize, allLocalUsers.size)
+                val pageUsers = if (startIndex < allLocalUsers.size) {
+                    allLocalUsers.subList(startIndex, endIndex)
+                } else {
+                    emptyList()
+                }
+
+                Timber.d("Offline mode: Returning ${pageUsers.size} users for page $page/$totalPages")
+                Result.success(Pair(pageUsers, maxOf(totalPages, 1)))
+            } else {
+                // When online, fetch from network
+                Timber.d("Online mode: Fetching page $page from network")
+                val (users, totalPages) = networkDataSource.getUsersPage(page)
+                Result.success(Pair(users, totalPages))
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to get users page $page")
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun sync(): Boolean {
+        if (!networkMonitor.isOnline.first()) {
+            Timber.d("Sync skipped: Device is offline")
+            return false
+        }
+
+        try {
+            Timber.d("Starting sync process")
+            processOfflineChanges()
+
+            // Fetch all pages of users from the network
+            Timber.d("Fetching all users from network")
+            val allNetworkUsers = mutableListOf<User>()
+            var currentPage = 1
+            var totalPages = 1
+
+            do {
+                val (pageUsers, pages) = networkDataSource.getUsersPage(currentPage)
+                totalPages = pages
+                allNetworkUsers.addAll(pageUsers)
+                Timber.d("Fetched page $currentPage/$totalPages with ${pageUsers.size} users")
+                currentPage++
+            } while (currentPage <= totalPages)
+
+            Timber.d("Received ${allNetworkUsers.size} total users from network across $totalPages pages")
+
+            // Get local users for conflict resolution
+            val localUsers = userDao.getUsers().first()
+            Timber.d("Found ${localUsers.size} local users for conflict resolution")
+
+            // Resolve conflicts and merge data
+            val resolvedUsers = resolveConflicts(localUsers, allNetworkUsers)
+            Timber.d("Resolved conflicts, inserting ${resolvedUsers.size} users")
+
+            userDao.insertUsers(resolvedUsers)
+            Timber.d("Sync completed successfully")
+
+            // Emit cache invalidation event after successful sync
+            cacheEventBus.emit(CacheInvalidationEvent.SyncCompleted)
+
+            return true
+        } catch (e: Exception) {
+            Timber.e(e, "Sync failed for DataRepository")
+            return false
+        }
+    }
+
+    /**
+     * Resolves conflicts between local and network user data
+     * Strategy: Last-write-wins based on updatedAt timestamp
+     *
+     * @param localUsers Users from local database
+     * @param networkUsers Users from network
+     * @return Merged list of users with conflicts resolved
+     */
+    private suspend fun resolveConflicts(
+        localUsers: List<User>,
+        networkUsers: List<User>
+    ): List<User> {
+        val localMap = localUsers.associateBy { it.id }
+        val networkMap = networkUsers.associateBy { it.id }
+        val resolvedUsers = mutableListOf<User>()
+        var conflictsDetected = 0
+        var conflictsResolved = 0
+
+        // Process all network users
+        networkMap.forEach { (id, networkUser) ->
+            val localUser = localMap[id]
+
+            if (localUser == null) {
+                // User only exists on network, add it
+                Timber.d("ConflictResolution: User $id only on network, adding")
+                resolvedUsers.add(networkUser)
+            } else {
+                // User exists both locally and on network, resolve conflict
+                val resolved = resolveUserConflict(localUser, networkUser)
+                if (resolved != networkUser) {
+                    conflictsDetected++
+                    if (resolved == localUser) {
+                        Timber.d("ConflictResolution: User $id - local version newer, keeping local")
+                        // Local version is newer, push to network
+                        try {
+                            networkDataSource.updateUser(
+                                localUser.id,
+                                CreateUserRequest(localUser.name, "Developer")
+                            )
+                            conflictsResolved++
+                            Timber.d("ConflictResolution: Successfully pushed local user $id to network")
+                        } catch (e: Exception) {
+                            Timber.e(e, "ConflictResolution: Failed to push local user $id to network")
+                        }
+                    } else {
+                        Timber.d("ConflictResolution: User $id - network version newer, using network")
+                    }
+                }
+                resolvedUsers.add(resolved)
+            }
+        }
+
+        // Add any users that only exist locally (not on network)
+        localMap.forEach { (id, localUser) ->
+            if (!networkMap.containsKey(id)) {
+                Timber.d("ConflictResolution: User $id only exists locally, keeping")
+                resolvedUsers.add(localUser)
+            }
+        }
+
+        if (conflictsDetected > 0) {
+            Timber.d("ConflictResolution: Detected $conflictsDetected conflicts, resolved $conflictsResolved")
+        }
+
+        return resolvedUsers
+    }
+
+    /**
+     * Resolves conflict for a single user using last-write-wins strategy
+     * Compares timestamps and versions to determine which version to keep
+     *
+     * @param localUser User from local database
+     * @param networkUser User from network
+     * @return The user version to keep
+     */
+    private fun resolveUserConflict(localUser: User, networkUser: User): User {
+        // Compare timestamps first
+        return when {
+            localUser.updatedAt > networkUser.updatedAt -> {
+                // Local is newer
+                Timber.v("ConflictResolution: User ${localUser.id} - local timestamp ${localUser.updatedAt} > network ${networkUser.updatedAt}")
+                localUser
+            }
+            localUser.updatedAt < networkUser.updatedAt -> {
+                // Network is newer
+                Timber.v("ConflictResolution: User ${localUser.id} - network timestamp ${networkUser.updatedAt} > local ${localUser.updatedAt}")
+                networkUser
+            }
+            else -> {
+                // Same timestamp, compare versions
+                if (localUser.version > networkUser.version) {
+                    Timber.v("ConflictResolution: User ${localUser.id} - same timestamp, local version ${localUser.version} > network ${networkUser.version}")
+                    localUser
+                } else {
+                    Timber.v("ConflictResolution: User ${localUser.id} - same timestamp, network version ${networkUser.version} >= local ${localUser.version}")
+                    networkUser
+                }
+            }
+        }
+    }
+
+    override suspend fun getTotalUserCount(): Int {
+        return try {
+            if (networkMonitor.isOnline.first()) {
+                val (_, total) = networkDataSource.getUsersWithTotal()
+                total
+            } else {
+                userDao.getUsers().first().size
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to get total user count")
+            userDao.getUsers().first().size
+        }
+    }
+
+    override suspend fun createUser(user: User): Boolean {
+        if (networkMonitor.isOnline.first()) {
+            return try {
+                networkDataSource.createUser(CreateUserRequest(user.name, "Developer"))
+                sync()
+                // Emit cache invalidation event (sync already emits SyncCompleted, but emit UserCreated for clarity)
+                cacheEventBus.emit(CacheInvalidationEvent.InvalidateAll)
+                true
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to create user online, will queue for offline")
+                queueCreateUser(user)
+                false
+            }
+        } else {
+            queueCreateUser(user)
+            // Emit event even for offline creation
+            cacheEventBus.emit(CacheInvalidationEvent.InvalidateAll)
+            return true
+        }
+    }
+
+    override suspend fun updateUser(user: User): Boolean {
+        if (networkMonitor.isOnline.first()) {
+            return try {
+                networkDataSource.updateUser(user.id, CreateUserRequest(user.name, "Developer"))
+                sync()
+                // Emit cache invalidation event
+                cacheEventBus.emit(CacheInvalidationEvent.UserUpdated(user.id))
+                true
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to update user online, will queue for offline")
+                queueUpdateUser(user)
+                false
+            }
+        } else {
+            queueUpdateUser(user)
+            // Emit event even for offline update
+            cacheEventBus.emit(CacheInvalidationEvent.UserUpdated(user.id))
+            return true
+        }
+    }
+
+    override suspend fun deleteUser(id: Int): Boolean {
+        if (networkMonitor.isOnline.first()) {
+            return try {
+                networkDataSource.deleteUser(id)
+                sync()
+                // Emit cache invalidation event
+                cacheEventBus.emit(CacheInvalidationEvent.UserDeleted(id))
+                true
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to delete user online, will queue for offline")
+                queueDeleteUser(id)
+                false
+            }
+        } else {
+            queueDeleteUser(id)
+            // Emit event even for offline deletion
+            cacheEventBus.emit(CacheInvalidationEvent.UserDeleted(id))
+            return true
+        }
+    }
+
+    private suspend fun queueCreateUser(user: User) {
+        val tempId = UUID.randomUUID().hashCode()
+        userDao.upsertUser(
+            user.copy(id = tempId)
+        )
+        userChangeDao.insert(
+            UserChange(
+                userId = tempId,
+                type = ChangeType.CREATE,
+                name = user.name,
+                job = "Developer"
+            )
+        )
+    }
+
+    private suspend fun queueUpdateUser(user: User) {
+        userDao.upsertUser(user)
+        userChangeDao.insert(
+            UserChange(
+                userId = user.id,
+                type = ChangeType.UPDATE,
+                name = user.name,
+                job = "Developer"
+            )
+        )
+    }
+
+    private suspend fun queueDeleteUser(id: Int) {
+        userDao.deleteUser(User(id = id))
+        userChangeDao.insert(UserChange(userId = id, type = ChangeType.DELETE))
+    }
+
+    private suspend fun processOfflineChanges() {
+        val pendingChanges = userChangeDao.getAll()
+        Timber.d("Processing ${pendingChanges.size} offline changes")
+        val processedIds = mutableListOf<Long>()
+
+        pendingChanges.forEach { change ->
+            try {
+                Timber.d("Processing offline change: ${change.type} for user ${change.userId}")
+                when (change.type) {
+                    ChangeType.CREATE -> {
+                        networkDataSource.createUser(
+                            CreateUserRequest(
+                                change.name!!,
+                                change.job!!
+                            )
+                        )
+                        Timber.d("Successfully processed CREATE for user ${change.userId}")
+                    }
+                    ChangeType.UPDATE -> {
+                        networkDataSource.updateUser(
+                            change.userId,
+                            CreateUserRequest(change.name!!, change.job!!)
+                        )
+                        Timber.d("Successfully processed UPDATE for user ${change.userId}")
+                    }
+                    ChangeType.DELETE -> {
+                        networkDataSource.deleteUser(change.userId)
+                        Timber.d("Successfully processed DELETE for user ${change.userId}")
+                    }
+                }
+                processedIds.add(change.id)
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to process offline change: $change")
+            }
+        }
+        if (processedIds.isNotEmpty()) {
+            userChangeDao.delete(processedIds)
+            Timber.d("Deleted ${processedIds.size} processed offline changes from queue")
+        }
+    }
+}

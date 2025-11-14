@@ -204,7 +204,7 @@ classDiagram
 ## 📁 File Structure
 
 ```
-aimodeling/
+arcanaing/
 ├── docs/
 │   └── architecture/
 │       ├── 01-layers.mmd

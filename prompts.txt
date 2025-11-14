@@ -23,11 +23,11 @@ User: modify UserDAO for testing
 
 Assistant: To make `UserDao` testable, I'll create a "fake" implementation. This fake will use an in-memory list of users instead of a real database, which is a common practice for testing data layers in isolation.
 
-I will create a new file at `app/src/test/java/com/example/aimodel/data/local/FakeUserDao.kt` with the testing implementation. You can then use this fake in your unit tests. 
+I will create a new file at `app/src/test/java/com/example/arcana/data/local/FakeUserDao.kt` with the testing implementation. You can then use this fake in your unit tests. 
 [TOOL_CODE]
-write_file(absolutePath = '/Users/jrjohn/Documents/projects/aimodeling/app/src/test/java/com/example/aimodel/data/local/FakeUserDao.kt', text = '''package com.example.aimodel.data.local
+write_file(absolutePath = '/Users/jrjohn/Documents/projects/arcanaing/app/src/test/java/com/example/arcana/data/local/FakeUserDao.kt', text = '''package com.example.arcana.data.local
 
-import com.example.aimodel.data.model.User
+import com.example.arcana.data.model.User
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
