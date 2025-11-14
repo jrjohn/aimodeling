@@ -165,7 +165,33 @@ class HomeViewModel : AnalyticsViewModel(analyticsTracker) {
 
 ### 📊 View Architecture Diagrams
 
-Comprehensive architecture diagrams are available in Mermaid format:
+Comprehensive architecture diagrams are available below:
+
+#### Architecture Diagrams
+
+**1. Overall Architecture**
+
+![Overall Architecture](docs/diagrams/01-overall-architecture.png)
+
+**2. Clean Architecture Layers**
+
+![Clean Architecture Layers](docs/diagrams/02-clean-architecture-layers.png)
+
+**3. Caching System**
+
+![Caching System](docs/diagrams/03-caching-system.png)
+
+**4. Data Flow**
+
+![Data Flow](docs/diagrams/04-data-flow.png)
+
+**5. Offline-First Sync**
+
+![Offline-First Sync](docs/diagrams/05-offline-first-sync.png)
+
+**6. Dependency Graph**
+
+![Dependency Graph](docs/diagrams/06-dependency-graph.png)
 
 #### Source Files (Mermaid)
 View and edit online at [Mermaid Live](https://mermaid.live):
@@ -175,6 +201,14 @@ View and edit online at [Mermaid Live](https://mermaid.live):
 4. [Data Flow](docs/architecture/04-data-flow.mmd)
 5. [Offline-First Sync](docs/architecture/05-offline-first-sync.mmd)
 6. [Dependency Graph](docs/architecture/06-dependency-graph.mmd)
+
+#### Generate Diagrams
+```bash
+# Generate PNG diagrams from Mermaid source files
+./gradlew generateMermaidDiagrams
+
+# Output: docs/diagrams/*.png
+```
 
 #### Detailed Documentation
 📖 Read the complete [Architecture Documentation](docs/ARCHITECTURE.md)
