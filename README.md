@@ -13,6 +13,9 @@
 
 - [Features](#-features)
 - [Architecture](#-architecture)
+  - [High-Level Architecture](#high-level-architecture)
+  - [Key Architectural Patterns](#key-architectural-patterns)
+  - [View Architecture Diagrams](#-view-architecture-diagrams)
 - [Input Validation](#-input-validation)
 - [Technology Stack](#-technology-stack)
 - [Getting Started](#-getting-started)
@@ -22,6 +25,7 @@
 - [Testing](#-testing)
 - [Analytics](#-analytics)
 - [Contributing](#-contributing)
+- [License](#-license)
 
 ---
 
@@ -38,12 +42,13 @@
 ### Advanced Features
 - 📊 **AOP Analytics** - Comprehensive user behavior tracking
 - 🔄 **Background Sync** - WorkManager-powered automatic sync
-- 📱 **Modern UI** - Beautiful Jetpack Compose interface
+- 📱 **Modern UI** - Beautiful Jetpack Compose interface with Arcana theme
 - ✅ **Input Validation** - Real-time form validation with user-friendly error messages
 - 🎯 **Type-Safe Navigation** - Compose Navigation
 - 💾 **Persistent Storage** - Room Database
 - 🌐 **RESTful API** - Ktorfit + Ktor Client
 - 🧪 **Well-Tested** - 100% test coverage for business logic (256/256 tests passing)
+- 🏗️ **Input/Output Pattern** - Clean ViewModel architecture with structured events and state
 
 ---
 
@@ -98,7 +103,40 @@ User Action
             Apply Queued Changes → API → Sync
 ```
 
-#### 2. **AOP Analytics**
+#### 2. **Input/Output ViewModel Pattern**
+```kotlin
+class UserViewModel : AnalyticsViewModel(analyticsTracker) {
+
+    // Input - Events from UI to ViewModel
+    sealed interface Input {
+        data object LoadInitial : Input
+        data class CreateUser(val user: User) : Input
+        data class DeleteUser(val user: User) : Input
+    }
+
+    // Output - State and Effects to UI
+    sealed interface Output {
+        data class State(
+            val users: List<User> = emptyList(),
+            val isLoading: Boolean = false
+        )
+
+        sealed interface Effect {
+            data class ShowError(val message: String) : Effect
+            data class ShowSuccess(val message: String) : Effect
+        }
+    }
+
+    val state: StateFlow<Output.State>
+    val effect: Flow<Output.Effect>
+
+    fun onEvent(input: Input) { /* Handle events */ }
+}
+```
+
+📖 See [ViewModel Pattern Documentation](docs/VIEWMODEL_PATTERN.md) for detailed implementation.
+
+#### 3. **AOP Analytics**
 ```kotlin
 @TrackScreen(AnalyticsScreens.HOME)
 class HomeViewModel : AnalyticsViewModel(analyticsTracker) {
@@ -112,11 +150,18 @@ class HomeViewModel : AnalyticsViewModel(analyticsTracker) {
 }
 ```
 
-#### 3. **Cache Management**
+#### 4. **Cache Management**
 - **LRU Cache** with configurable size
 - **TTL (Time-To-Live)** expiration
 - **Event-driven invalidation** via CacheEventBus
 - **Automatic cleanup** of stale entries
+
+#### 5. **Arcana UI Theme**
+- **Deep Purple Gradient** backgrounds with mystical aesthetic
+- **Gold & Violet Accents** for interactive elements
+- **Glowing Effects** with radial gradients
+- **Custom Icon** with arcane symbols and golden "A"
+- **Responsive Design** adapting to dark/light modes
 
 ### 📊 View Architecture Diagrams
 
@@ -190,36 +235,54 @@ This application implements **production-ready input validation** following Andr
 ### Implementation Pattern
 
 ```kotlin
-// Efficient validation with derivedStateOf
-val firstNameError by remember {
-    derivedStateOf {
-        when {
-            !firstNameTouched -> null
-            firstName.isBlank() -> "First name is required"
-            !UserValidator.isValidName(firstName) -> "First name is too long (max 100 characters)"
-            else -> null
+@Composable
+fun UserDialog(
+    viewModel: UserViewModel = hiltViewModel()
+) {
+    val state by viewModel.state.collectAsState()
+
+    // Efficient validation with derivedStateOf
+    val firstNameError by remember {
+        derivedStateOf {
+            when {
+                !firstNameTouched -> null
+                firstName.isBlank() -> "First name is required"
+                !UserValidator.isValidName(firstName) ->
+                    "First name is too long (max 100 characters)"
+                else -> null
+            }
         }
     }
-}
 
-// Professional error display
-OutlinedTextField(
-    value = firstName,
-    onValueChange = {
-        firstName = it
-        firstNameTouched = true
-    },
-    isError = firstNameError != null,
-    supportingText = firstNameError?.let { { Text(it) } }
-)
+    // Professional error display
+    OutlinedTextField(
+        value = firstName,
+        onValueChange = {
+            firstName = it
+            firstNameTouched = true
+        },
+        isError = firstNameError != null,
+        supportingText = firstNameError?.let { { Text(it) } }
+    )
 
-// Form validation state
-val isFormValid by remember {
-    derivedStateOf {
-        firstName.isNotBlank() &&
-        firstNameError == null &&
-        lastNameError == null &&
-        emailError == null
+    // Form validation state
+    val isFormValid by remember {
+        derivedStateOf {
+            firstName.isNotBlank() &&
+            firstNameError == null &&
+            lastNameError == null &&
+            emailError == null
+        }
+    }
+
+    // Submit with ViewModel Input event
+    Button(
+        onClick = {
+            viewModel.onEvent(UserViewModel.Input.CreateUser(user))
+        },
+        enabled = isFormValid
+    ) {
+        Text("Create User")
     }
 }
 ```
@@ -293,12 +356,12 @@ val isFormValid by remember {
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/arcanaing.git
-   cd arcanaing
+   git clone https://github.com/yourusername/arcana-android.git
+   cd arcana-android
    ```
 
 2. **Open in Android Studio**
-   - File → Open → Select `arcanaing` folder
+   - File → Open → Select `arcana-android` folder
    - Wait for Gradle sync to complete
 
 3. **Run the app**
@@ -369,6 +432,7 @@ open docs/api/index.html
 ### Manual Documentation
 
 - 📖 [Architecture Guide](docs/ARCHITECTURE.md) - Comprehensive architecture documentation
+- 🏗️ [ViewModel Pattern](docs/VIEWMODEL_PATTERN.md) - Input/Output pattern implementation guide
 - ✅ [Input Validation Implementation](USER_DIALOG_VALIDATION_IMPLEMENTATION.md) - UserDialog validation details
 - 🎨 [Mermaid Diagrams](docs/architecture/) - Source diagrams
 - 🔧 [API Docs](docs/api/index.html) - Auto-generated from code comments (after build)
@@ -378,7 +442,7 @@ open docs/api/index.html
 ## 📁 Project Structure
 
 ```
-arcanaing/
+arcana-android/
 ├── app/
 │   └── src/
 │       ├── main/
@@ -569,10 +633,41 @@ This app includes a **production-ready analytics system** using Aspect-Oriented 
 ```kotlin
 @TrackScreen(AnalyticsScreens.HOME)
 class HomeViewModel @Inject constructor(
+    private val userService: UserService,
     analyticsTracker: AnalyticsTracker
 ) : AnalyticsViewModel(analyticsTracker) {
 
-    fun loadData() {
+    // Input/Output Pattern
+    sealed interface Input {
+        data object LoadUsers : Input
+        data object Refresh : Input
+    }
+
+    sealed interface Output {
+        data class State(
+            val users: List<User> = emptyList(),
+            val isLoading: Boolean = false
+        )
+
+        sealed interface Effect {
+            data class ShowSnackbar(val message: String) : Effect
+        }
+    }
+
+    private val _state = MutableStateFlow(Output.State())
+    val state: StateFlow<Output.State> = _state.asStateFlow()
+
+    private val _effect = Channel<Output.Effect>(Channel.BUFFERED)
+    val effect = _effect.receiveAsFlow()
+
+    fun onEvent(input: Input) {
+        when (input) {
+            is Input.LoadUsers -> loadUsers()
+            is Input.Refresh -> refresh()
+        }
+    }
+
+    private fun loadUsers() {
         // Automatically tracked with performance metrics
         userService.getUsers()
             .trackFlow(
@@ -580,16 +675,51 @@ class HomeViewModel @Inject constructor(
                 eventName = Events.PAGE_LOADED,
                 trackPerformance = true
             )
-            .collect { users -> /* ... */ }
+            .onEach { users ->
+                _state.value = _state.value.copy(users = users)
+            }
+            .launchIn(viewModelScope)
+    }
+}
+```
+
+### UI Integration
+
+```kotlin
+@Composable
+fun HomeScreen(
+    viewModel: HomeViewModel = hiltViewModel()
+) {
+    val state by viewModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    // Handle one-time effects
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is HomeViewModel.Output.Effect.ShowSnackbar -> {
+                    snackbarHostState.showSnackbar(effect.message)
+                }
+            }
+        }
     }
 
-    fun createUser(user: User) {
-        // Automatic success/failure tracking
-        trackCrudOperation(
-            operation = CrudOperation.CREATE,
-            entity = "User"
-        ) {
-            userService.createUser(user)
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) {
+        if (state.isLoading) {
+            CircularProgressIndicator()
+        } else {
+            LazyColumn {
+                items(state.users) { user ->
+                    UserItem(user)
+                }
+            }
+        }
+
+        // Send events to ViewModel
+        Button(onClick = { viewModel.onEvent(HomeViewModel.Input.Refresh) }) {
+            Text("Refresh")
         }
     }
 }
@@ -687,8 +817,8 @@ SOFTWARE.
 
 ## 📞 Contact & Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/arcanaing/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/arcanaing/discussions)
+- **Issues**: [GitHub Issues](https://github.com/yourusername/arcana-android/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/yourusername/arcana-android/discussions)
 - **Documentation**: [Architecture Guide](docs/ARCHITECTURE.md)
 
 ---

@@ -75,7 +75,7 @@ class UserViewModelTest {
         advanceUntilIdle()
 
         // Then
-        val state = viewModel.uiState.value
+        val state = viewModel.state.value
         assertEquals(testUsers, state.users)
         assertEquals(1, state.currentPage)
         assertEquals(5, state.totalPages)
@@ -96,8 +96,8 @@ class UserViewModelTest {
         viewModel.effect.test {
             advanceUntilIdle()
             val effect = awaitItem()
-            assertTrue(effect is UserEffect.ShowError)
-            assertEquals(errorMessage, (effect as UserEffect.ShowError).message)
+            assertTrue(effect is UserViewModel.Output.Effect.ShowError)
+            assertEquals(errorMessage, (effect as UserViewModel.Output.Effect.ShowError).message)
         }
     }
 
@@ -113,11 +113,11 @@ class UserViewModelTest {
         advanceUntilIdle()
 
         // When
-        viewModel.onEvent(UserEvent.LoadNextPage)
+        viewModel.onEvent(UserViewModel.Input.LoadNextPage)
         advanceUntilIdle()
 
         // Then
-        val state = viewModel.uiState.value
+        val state = viewModel.state.value
         assertEquals(page2Users, state.users) // Current page users
         assertEquals(page1Users + page2Users, state.allUsers) // All loaded users
         assertEquals(2, state.currentPage)
@@ -135,10 +135,10 @@ class UserViewModelTest {
         advanceUntilIdle()
 
         // When - trigger LoadNextPage once, should work
-        viewModel.onEvent(UserEvent.LoadNextPage)
+        viewModel.onEvent(UserViewModel.Input.LoadNextPage)
 
         // Trigger again while still loading (before advanceUntilIdle)
-        viewModel.onEvent(UserEvent.LoadNextPage)  // Should be ignored
+        viewModel.onEvent(UserViewModel.Input.LoadNextPage)  // Should be ignored
 
         advanceUntilIdle()
 
@@ -154,7 +154,7 @@ class UserViewModelTest {
         advanceUntilIdle()
 
         // When
-        viewModel.onEvent(UserEvent.LoadNextPage)
+        viewModel.onEvent(UserViewModel.Input.LoadNextPage)
         advanceUntilIdle()
 
         // Then - should not try to load page 2
@@ -172,14 +172,14 @@ class UserViewModelTest {
         advanceUntilIdle()
 
         // When
-        viewModel.onEvent(UserEvent.CreateUser(newUser))
+        viewModel.onEvent(UserViewModel.Input.CreateUser(newUser))
 
         // Then
         viewModel.effect.test {
             advanceUntilIdle()
             val effect = awaitItem()
-            assertTrue(effect is UserEffect.ShowSuccess)
-            assertEquals("User created successfully", (effect as UserEffect.ShowSuccess).message)
+            assertTrue(effect is UserViewModel.Output.Effect.ShowSuccess)
+            assertEquals("User created successfully", (effect as UserViewModel.Output.Effect.ShowSuccess).message)
         }
 
         advanceUntilIdle()
@@ -199,14 +199,14 @@ class UserViewModelTest {
         advanceUntilIdle()
 
         // When
-        viewModel.onEvent(UserEvent.CreateUser(newUser))
+        viewModel.onEvent(UserViewModel.Input.CreateUser(newUser))
 
         // Then
         viewModel.effect.test {
             advanceUntilIdle()
             val effect = awaitItem()
-            assertTrue(effect is UserEffect.ShowError)
-            assertEquals("Failed to create user", (effect as UserEffect.ShowError).message)
+            assertTrue(effect is UserViewModel.Output.Effect.ShowError)
+            assertEquals("Failed to create user", (effect as UserViewModel.Output.Effect.ShowError).message)
         }
     }
 
@@ -221,14 +221,14 @@ class UserViewModelTest {
         advanceUntilIdle()
 
         // When
-        viewModel.onEvent(UserEvent.UpdateUser(updatedUser))
+        viewModel.onEvent(UserViewModel.Input.UpdateUser(updatedUser))
 
         // Then
         viewModel.effect.test {
             advanceUntilIdle()
             val effect = awaitItem()
-            assertTrue(effect is UserEffect.ShowSuccess)
-            assertEquals("User updated successfully", (effect as UserEffect.ShowSuccess).message)
+            assertTrue(effect is UserViewModel.Output.Effect.ShowSuccess)
+            assertEquals("User updated successfully", (effect as UserViewModel.Output.Effect.ShowSuccess).message)
         }
 
         advanceUntilIdle()
@@ -246,14 +246,14 @@ class UserViewModelTest {
         advanceUntilIdle()
 
         // When
-        viewModel.onEvent(UserEvent.UpdateUser(updatedUser))
+        viewModel.onEvent(UserViewModel.Input.UpdateUser(updatedUser))
 
         // Then
         viewModel.effect.test {
             advanceUntilIdle()
             val effect = awaitItem()
-            assertTrue(effect is UserEffect.ShowError)
-            assertEquals("Failed to update user", (effect as UserEffect.ShowError).message)
+            assertTrue(effect is UserViewModel.Output.Effect.ShowError)
+            assertEquals("Failed to update user", (effect as UserViewModel.Output.Effect.ShowError).message)
         }
     }
 
@@ -268,18 +268,18 @@ class UserViewModelTest {
         advanceUntilIdle()
 
         // When
-        viewModel.onEvent(UserEvent.DeleteUser(userToDelete))
+        viewModel.onEvent(UserViewModel.Input.DeleteUser(userToDelete))
 
         // Then
         viewModel.effect.test {
             advanceUntilIdle()
             val effect = awaitItem()
-            assertTrue(effect is UserEffect.ShowSuccess)
-            assertEquals("User deleted successfully", (effect as UserEffect.ShowSuccess).message)
+            assertTrue(effect is UserViewModel.Output.Effect.ShowSuccess)
+            assertEquals("User deleted successfully", (effect as UserViewModel.Output.Effect.ShowSuccess).message)
         }
 
         advanceUntilIdle()
-        val state = viewModel.uiState.value
+        val state = viewModel.state.value
         assertFalse(state.users.contains(userToDelete))
         verify(userService).deleteUser(userToDelete.id)
     }
@@ -295,14 +295,14 @@ class UserViewModelTest {
         advanceUntilIdle()
 
         // When
-        viewModel.onEvent(UserEvent.DeleteUser(userToDelete))
+        viewModel.onEvent(UserViewModel.Input.DeleteUser(userToDelete))
 
         // Then
         viewModel.effect.test {
             advanceUntilIdle()
             val effect = awaitItem()
-            assertTrue(effect is UserEffect.ShowError)
-            assertEquals("Failed to delete user", (effect as UserEffect.ShowError).message)
+            assertTrue(effect is UserViewModel.Output.Effect.ShowError)
+            assertEquals("Failed to delete user", (effect as UserViewModel.Output.Effect.ShowError).message)
         }
     }
 
@@ -319,11 +319,11 @@ class UserViewModelTest {
         advanceUntilIdle()
 
         // When
-        viewModel.onEvent(UserEvent.Refresh)
+        viewModel.onEvent(UserViewModel.Input.Refresh)
         advanceUntilIdle()
 
         // Then
-        val state = viewModel.uiState.value
+        val state = viewModel.state.value
         assertEquals(refreshedUsers, state.users)
         assertEquals(1, state.currentPage)
     }
@@ -339,11 +339,11 @@ class UserViewModelTest {
         advanceUntilIdle()
 
         // When
-        viewModel.onEvent(UserEvent.GoToPage(3))
+        viewModel.onEvent(UserViewModel.Input.GoToPage(3))
         advanceUntilIdle()
 
         // Then
-        val state = viewModel.uiState.value
+        val state = viewModel.state.value
         assertEquals(page3Users, state.users)
         assertEquals(3, state.currentPage)
         verify(userService).getUsersPage(3)
@@ -357,7 +357,7 @@ class UserViewModelTest {
         advanceUntilIdle()
 
         // When - try to go to page 100 (invalid)
-        viewModel.onEvent(UserEvent.GoToPage(100))
+        viewModel.onEvent(UserViewModel.Input.GoToPage(100))
         advanceUntilIdle()
 
         // Then - should not attempt to load
@@ -374,11 +374,11 @@ class UserViewModelTest {
         advanceUntilIdle()
 
         // When
-        viewModel.onEvent(UserEvent.GoToNextPage)
+        viewModel.onEvent(UserViewModel.Input.GoToNextPage)
         advanceUntilIdle()
 
         // Then
-        val state = viewModel.uiState.value
+        val state = viewModel.state.value
         assertEquals(2, state.currentPage)
         verify(userService).getUsersPage(2)
     }
@@ -393,15 +393,15 @@ class UserViewModelTest {
         advanceUntilIdle()
 
         // Navigate to page 2 first
-        viewModel.onEvent(UserEvent.GoToPage(2))
+        viewModel.onEvent(UserViewModel.Input.GoToPage(2))
         advanceUntilIdle()
 
         // When - go back to page 1
-        viewModel.onEvent(UserEvent.GoToPreviousPage)
+        viewModel.onEvent(UserViewModel.Input.GoToPreviousPage)
         advanceUntilIdle()
 
         // Then
-        val state = viewModel.uiState.value
+        val state = viewModel.state.value
         assertEquals(1, state.currentPage)
     }
 
@@ -415,7 +415,7 @@ class UserViewModelTest {
         advanceUntilIdle()
 
         // Then - after completion, loading should be false
-        assertFalse(viewModel.uiState.value.isLoading)
-        assertEquals(testUsers, viewModel.uiState.value.users)
+        assertFalse(viewModel.state.value.isLoading)
+        assertEquals(testUsers, viewModel.state.value.users)
     }
 }

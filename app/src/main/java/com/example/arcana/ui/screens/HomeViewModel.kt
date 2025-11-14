@@ -12,23 +12,16 @@ import com.example.arcana.core.analytics.trackSync
 import com.example.arcana.data.model.User
 import com.example.arcana.domain.service.UserService
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
-sealed class HomeUIEvent {
-    data class ShowSnackbar(val message: String) : HomeUIEvent()
-}
-
-data class HomeUIState(
-    val users: List<User> = emptyList(),
-    val totalUserCount: Int = 0,
-    val isLoading: Boolean = false
-)
 
 @HiltViewModel
 @TrackScreen(AnalyticsScreens.HOME)
@@ -37,18 +30,65 @@ class HomeViewModel @Inject constructor(
     analyticsTracker: AnalyticsTracker
 ) : AnalyticsViewModel(analyticsTracker) {
 
-    private val _uiState = MutableStateFlow(HomeUIState())
-    val uiState: StateFlow<HomeUIState> = _uiState
+    // ============================================
+    // Input - Events from UI to ViewModel
+    // ============================================
+    sealed interface Input {
+        data object LoadUsers : Input
+        data object SyncData : Input
+        data object Refresh : Input
+    }
 
-    private val _event = MutableStateFlow<HomeUIEvent?>(null)
-    val event: StateFlow<HomeUIEvent?> = _event
+    // ============================================
+    // Output - State and Effects to UI
+    // ============================================
+    sealed interface Output {
+        /**
+         * State - Represents the current UI state for binding
+         */
+        data class State(
+            val users: List<User> = emptyList(),
+            val totalUserCount: Int = 0,
+            val isLoading: Boolean = false
+        )
+
+        /**
+         * Effect - One-time events from ViewModel to UI
+         */
+        sealed interface Effect {
+            data class ShowSnackbar(val message: String) : Effect
+        }
+    }
+
+    // ============================================
+    // State & Effect Channels
+    // ============================================
+    private val _state = MutableStateFlow(Output.State())
+    val state: StateFlow<Output.State> = _state.asStateFlow()
+
+    private val _effect = Channel<Output.Effect>(Channel.BUFFERED)
+    val effect = _effect.receiveAsFlow()
 
     init {
         // Screen view automatically tracked via @TrackScreen annotation
-        loadUsers()
-        syncData()
+        onEvent(Input.LoadUsers)
+        onEvent(Input.SyncData)
     }
 
+    // ============================================
+    // Event Handler
+    // ============================================
+    fun onEvent(input: Input) {
+        when (input) {
+            is Input.LoadUsers -> loadUsers()
+            is Input.SyncData -> syncData()
+            is Input.Refresh -> refresh()
+        }
+    }
+
+    // ============================================
+    // Private Methods
+    // ============================================
     private fun loadUsers() {
         userService.getUsers()
             .trackFlow(
@@ -60,17 +100,19 @@ class HomeViewModel @Inject constructor(
                 onData = { users -> mapOf(Params.ITEM_COUNT to users.size.toString()) }
             )
             .onEach { users ->
-                _uiState.value = _uiState.value.copy(users = users)
+                _state.value = _state.value.copy(users = users)
             }
             .catch { error ->
-                _event.value = HomeUIEvent.ShowSnackbar("Error loading users from local source")
+                viewModelScope.launch {
+                    _effect.send(Output.Effect.ShowSnackbar("Error loading users from local source"))
+                }
             }
             .launchIn(viewModelScope)
     }
 
     private fun syncData() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
+            _state.value = _state.value.copy(isLoading = true)
 
             // Use trackSync extension for automatic sync event tracking
             val syncSuccessful = try {
@@ -82,24 +124,27 @@ class HomeViewModel @Inject constructor(
                     userService.syncUsers()
                 }
             } catch (error: Exception) {
-                _event.value = HomeUIEvent.ShowSnackbar("Sync failed")
+                _effect.send(Output.Effect.ShowSnackbar("Sync failed"))
                 false
             }
 
             if (!syncSuccessful) {
-                _event.value = HomeUIEvent.ShowSnackbar("Sync failed")
+                _effect.send(Output.Effect.ShowSnackbar("Sync failed"))
             }
 
             // Fetch total user count from API
             val totalCount = userService.getTotalUserCount()
-            _uiState.value = _uiState.value.copy(
+            _state.value = _state.value.copy(
                 isLoading = false,
                 totalUserCount = totalCount
             )
         }
     }
 
-    fun onEvent(event: HomeUIEvent) {
-        // Handle UI events here
+    private fun refresh() {
+        // Invalidate cache and reload
+        userService.invalidateCache()
+        onEvent(Input.LoadUsers)
+        onEvent(Input.SyncData)
     }
 }

@@ -28,7 +28,7 @@ import kotlin.test.assertTrue
 class UserScreenTest {
 
     private lateinit var viewModel: UserViewModel
-    private lateinit var uiStateFlow: MutableStateFlow<UserUiState>
+    private lateinit var uiStateFlow: MutableStateFlow<UserViewModel.Output.State>
 
     private val testUsers = listOf(
         User(id = 1, firstName = "John", lastName = "Doe", email = "john@example.com", avatar = "avatar1.jpg"),
@@ -38,8 +38,8 @@ class UserScreenTest {
     @Before
     fun setup() {
         viewModel = mock()
-        uiStateFlow = MutableStateFlow(UserUiState())
-        whenever(viewModel.uiState).thenReturn(uiStateFlow)
+        uiStateFlow = MutableStateFlow(UserViewModel.Output.State())
+        whenever(viewModel.state).thenReturn(uiStateFlow)
         whenever(viewModel.effect).thenReturn(emptyFlow())
     }
 
@@ -48,7 +48,7 @@ class UserScreenTest {
     @Test
     fun `initial state should be empty`() {
         // Given
-        val initialState = UserUiState()
+        val initialState = UserViewModel.Output.State()
 
         // Then
         assertTrue(initialState.users.isEmpty())
@@ -61,7 +61,7 @@ class UserScreenTest {
     @Test
     fun `state with users should contain user list`() {
         // Given
-        val state = UserUiState(userPages = mapOf(1 to testUsers), currentPage = 1)
+        val state = UserViewModel.Output.State(userPages = mapOf(1 to testUsers), currentPage = 1)
 
         // Then
         assertEquals(testUsers, state.users)
@@ -72,7 +72,7 @@ class UserScreenTest {
     @Test
     fun `loading state should be true when loading`() {
         // Given
-        val state = UserUiState(isLoading = true)
+        val state = UserViewModel.Output.State(isLoading = true)
 
         // Then
         assertTrue(state.isLoading)
@@ -81,7 +81,7 @@ class UserScreenTest {
     @Test
     fun `loading more state should be true when loading more`() {
         // Given
-        val state = UserUiState(
+        val state = UserViewModel.Output.State(
             userPages = mapOf(1 to testUsers),
             isLoadingMore = true,
             currentPage = 1,
@@ -96,7 +96,7 @@ class UserScreenTest {
     @Test
     fun `state should track current page and total pages`() {
         // Given
-        val state = UserUiState(
+        val state = UserViewModel.Output.State(
             userPages = mapOf(3 to testUsers),
             currentPage = 3,
             totalPages = 10
@@ -176,19 +176,19 @@ class UserScreenTest {
     @Test
     fun `Refresh event should trigger viewModel onEvent`() {
         // When
-        viewModel.onEvent(UserEvent.Refresh)
+        viewModel.onEvent(UserViewModel.Input.Refresh)
 
         // Then
-        verify(viewModel).onEvent(UserEvent.Refresh)
+        verify(viewModel).onEvent(UserViewModel.Input.Refresh)
     }
 
     @Test
     fun `LoadNextPage event should trigger viewModel onEvent`() {
         // When
-        viewModel.onEvent(UserEvent.LoadNextPage)
+        viewModel.onEvent(UserViewModel.Input.LoadNextPage)
 
         // Then
-        verify(viewModel).onEvent(UserEvent.LoadNextPage)
+        verify(viewModel).onEvent(UserViewModel.Input.LoadNextPage)
     }
 
     @Test
@@ -197,10 +197,10 @@ class UserScreenTest {
         val newUser = User(id = 0, firstName = "New", lastName = "User", email = "new@example.com")
 
         // When
-        viewModel.onEvent(UserEvent.CreateUser(newUser))
+        viewModel.onEvent(UserViewModel.Input.CreateUser(newUser))
 
         // Then
-        verify(viewModel).onEvent(UserEvent.CreateUser(newUser))
+        verify(viewModel).onEvent(UserViewModel.Input.CreateUser(newUser))
     }
 
     @Test
@@ -209,10 +209,10 @@ class UserScreenTest {
         val updatedUser = testUsers[0].copy(firstName = "Updated")
 
         // When
-        viewModel.onEvent(UserEvent.UpdateUser(updatedUser))
+        viewModel.onEvent(UserViewModel.Input.UpdateUser(updatedUser))
 
         // Then
-        verify(viewModel).onEvent(UserEvent.UpdateUser(updatedUser))
+        verify(viewModel).onEvent(UserViewModel.Input.UpdateUser(updatedUser))
     }
 
     @Test
@@ -221,19 +221,19 @@ class UserScreenTest {
         val userToDelete = testUsers[0]
 
         // When
-        viewModel.onEvent(UserEvent.DeleteUser(userToDelete))
+        viewModel.onEvent(UserViewModel.Input.DeleteUser(userToDelete))
 
         // Then
-        verify(viewModel).onEvent(UserEvent.DeleteUser(userToDelete))
+        verify(viewModel).onEvent(UserViewModel.Input.DeleteUser(userToDelete))
     }
 
     @Test
     fun `GoToPage event should trigger viewModel onEvent with page number`() {
         // When
-        viewModel.onEvent(UserEvent.GoToPage(5))
+        viewModel.onEvent(UserViewModel.Input.GoToPage(5))
 
         // Then
-        verify(viewModel).onEvent(UserEvent.GoToPage(5))
+        verify(viewModel).onEvent(UserViewModel.Input.GoToPage(5))
     }
 
     // ==================== UI State Mapping Tests ====================
@@ -241,7 +241,7 @@ class UserScreenTest {
     @Test
     fun `empty user list should show empty state`() {
         // Given
-        val state = UserUiState(userPages = emptyMap(), isLoading = false)
+        val state = UserViewModel.Output.State(userPages = emptyMap(), isLoading = false)
 
         // Then
         assertTrue(state.users.isEmpty())
@@ -251,7 +251,7 @@ class UserScreenTest {
     @Test
     fun `user list with data should show users`() {
         // Given
-        val state = UserUiState(userPages = mapOf(1 to testUsers), currentPage = 1, isLoading = false)
+        val state = UserViewModel.Output.State(userPages = mapOf(1 to testUsers), currentPage = 1, isLoading = false)
 
         // Then
         assertEquals(2, state.users.size)
@@ -261,7 +261,7 @@ class UserScreenTest {
     @Test
     fun `loading state should be shown correctly`() {
         // Given
-        val loadingState = UserUiState(userPages = emptyMap(), isLoading = true)
+        val loadingState = UserViewModel.Output.State(userPages = emptyMap(), isLoading = true)
 
         // Then
         assertTrue(loadingState.isLoading)
@@ -271,7 +271,7 @@ class UserScreenTest {
     @Test
     fun `loading more state should be shown with existing users`() {
         // Given
-        val loadingMoreState = UserUiState(
+        val loadingMoreState = UserViewModel.Output.State(
             userPages = mapOf(1 to testUsers),
             currentPage = 1,
             isLoadingMore = true
@@ -287,7 +287,7 @@ class UserScreenTest {
     @Test
     fun `pagination should have correct page info`() {
         // Given
-        val state = UserUiState(
+        val state = UserViewModel.Output.State(
             userPages = mapOf(2 to testUsers),
             currentPage = 2,
             totalPages = 5
@@ -302,7 +302,7 @@ class UserScreenTest {
     @Test
     fun `last page should be correctly identified`() {
         // Given
-        val lastPageState = UserUiState(
+        val lastPageState = UserViewModel.Output.State(
             userPages = mapOf(5 to testUsers),
             currentPage = 5,
             totalPages = 5
@@ -316,7 +316,7 @@ class UserScreenTest {
     @Test
     fun `first page should be correctly identified`() {
         // Given
-        val firstPageState = UserUiState(
+        val firstPageState = UserViewModel.Output.State(
             userPages = mapOf(1 to testUsers),
             currentPage = 1,
             totalPages = 5
@@ -333,22 +333,22 @@ class UserScreenTest {
     fun `ShowError effect should contain error message`() {
         // Given
         val errorMessage = "Failed to load users"
-        val effect: UserEffect = UserEffect.ShowError(errorMessage)
+        val effect: UserViewModel.Output.Effect = UserViewModel.Output.Effect.ShowError(errorMessage)
 
         // Then
-        assertTrue(effect is UserEffect.ShowError)
-        assertEquals(errorMessage, (effect as UserEffect.ShowError).message)
+        assertTrue(effect is UserViewModel.Output.Effect.ShowError)
+        assertEquals(errorMessage, (effect as UserViewModel.Output.Effect.ShowError).message)
     }
 
     @Test
     fun `ShowSuccess effect should contain success message`() {
         // Given
         val successMessage = "User created successfully"
-        val effect: UserEffect = UserEffect.ShowSuccess(successMessage)
+        val effect: UserViewModel.Output.Effect = UserViewModel.Output.Effect.ShowSuccess(successMessage)
 
         // Then
-        assertTrue(effect is UserEffect.ShowSuccess)
-        assertEquals(successMessage, (effect as UserEffect.ShowSuccess).message)
+        assertTrue(effect is UserViewModel.Output.Effect.ShowSuccess)
+        assertEquals(successMessage, (effect as UserViewModel.Output.Effect.ShowSuccess).message)
     }
 
     // ==================== User Copy Tests ====================
@@ -386,7 +386,7 @@ class UserScreenTest {
     @Test
     fun `state update should preserve other fields`() {
         // Given
-        val originalState = UserUiState(
+        val originalState = UserViewModel.Output.State(
             userPages = mapOf(2 to testUsers),
             isLoading = false,
             currentPage = 2,
@@ -406,7 +406,7 @@ class UserScreenTest {
     @Test
     fun `state with loading more should not affect loading flag`() {
         // Given
-        val state = UserUiState(
+        val state = UserViewModel.Output.State(
             userPages = mapOf(1 to testUsers),
             currentPage = 1,
             isLoading = false,
