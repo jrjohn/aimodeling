@@ -3,6 +3,7 @@ package com.example.arcana.core.analytics
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.arcana.core.analytics.annotations.TrackScreen
+import com.example.arcana.core.common.AppError
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -79,6 +80,22 @@ abstract class AnalyticsViewModel(
                 analyticsTracker.trackError(error, params)
             } catch (e: Exception) {
                 Timber.e(e, "Failed to track error")
+            }
+        }
+    }
+
+    /**
+     * Track an AppError with full error code information
+     */
+    protected fun trackAppError(
+        appError: AppError,
+        params: Map<String, String> = emptyMap()
+    ) {
+        viewModelScope.launch {
+            try {
+                analyticsTracker.trackAppError(appError, params)
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to track AppError")
             }
         }
     }

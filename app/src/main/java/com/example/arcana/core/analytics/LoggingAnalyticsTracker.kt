@@ -1,5 +1,6 @@
 package com.example.arcana.core.analytics
 
+import com.example.arcana.core.common.AppError
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -27,6 +28,18 @@ class LoggingAnalyticsTracker @Inject constructor() : AnalyticsTracker {
             " | Context: ${context.entries.joinToString(", ") { "${it.key}=${it.value}" }}"
         }
         Timber.e(error, "❌ Analytics Error: ${error.message}$contextString")
+    }
+
+    override fun trackAppError(appError: AppError, context: Map<String, Any>) {
+        val contextString = if (context.isEmpty()) {
+            ""
+        } else {
+            " | Context: ${context.entries.joinToString(", ") { "${it.key}=${it.value}" }}"
+        }
+        Timber.e(
+            appError.throwable,
+            "❌ Analytics AppError: [${appError.errorCode.code}] ${appError.errorCode.description} | ${appError.message}$contextString"
+        )
     }
 
     override fun trackScreen(screenName: String, params: Map<String, Any>) {

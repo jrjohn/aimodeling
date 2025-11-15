@@ -4,6 +4,8 @@ import android.content.Context
 import android.os.Build
 import android.provider.Settings
 import com.example.arcana.BuildConfig
+import com.example.arcana.core.common.AppError
+import com.example.arcana.core.common.isRetryable
 import com.example.arcana.data.local.dao.AnalyticsEventDao
 import com.example.arcana.data.local.entity.AnalyticsEventEntity
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -69,6 +71,7 @@ class PersistentAnalyticsTracker @Inject constructor(
         val params = context.mapValues { it.value.toString() }.toMutableMap()
         params[Params.ERROR_MESSAGE] = error.message ?: "Unknown error"
         params[Params.ERROR_TYPE] = error::class.simpleName ?: "Unknown"
+        params[Params.ERROR_CLASS] = error::class.java.name
 
         val analyticsEvent = createAnalyticsEvent(
             eventType = EventType.ERROR,
@@ -77,6 +80,63 @@ class PersistentAnalyticsTracker @Inject constructor(
         )
         persistEvent(analyticsEvent)
         Timber.e(error, "❌ Error tracked: ${error.message}")
+    }
+
+    override fun trackAppError(appError: AppError, context: Map<String, Any>) {
+        val params = context.mapValues { it.value.toString() }.toMutableMap()
+
+        // Add error code information
+        params[Params.ERROR_CODE] = appError.errorCode.code
+        params[Params.ERROR_CODE_DESCRIPTION] = appError.errorCode.description
+        params[Params.ERROR_CODE_CATEGORY] = appError.errorCode.category
+        params[Params.ERROR_MESSAGE] = appError.message
+
+        // Add error-specific information
+        when (appError) {
+            is AppError.NetworkError -> {
+                params[Params.ERROR_TYPE] = "NetworkError"
+                params[Params.IS_RETRYABLE] = appError.isRetryable.toString()
+            }
+            is AppError.ValidationError -> {
+                params[Params.ERROR_TYPE] = "ValidationError"
+                params["field"] = appError.field
+            }
+            is AppError.ServerError -> {
+                params[Params.ERROR_TYPE] = "ServerError"
+                params[Params.HTTP_STATUS_CODE] = appError.code.toString()
+                params[Params.IS_RETRYABLE] = appError.isRetryable().toString()
+            }
+            is AppError.ConflictError -> {
+                params[Params.ERROR_TYPE] = "ConflictError"
+                params[Params.IS_RETRYABLE] = "true"
+            }
+            is AppError.AuthError -> {
+                params[Params.ERROR_TYPE] = "AuthError"
+                params[Params.IS_RETRYABLE] = "false"
+            }
+            is AppError.UnknownError -> {
+                params[Params.ERROR_TYPE] = "UnknownError"
+                params[Params.ERROR_CLASS] = appError.throwable::class.java.name
+            }
+        }
+
+        // Add throwable information if available
+        appError.throwable?.let { throwable ->
+            params["throwable_class"] = throwable::class.java.name
+            params["throwable_message"] = throwable.message ?: "No message"
+            params["stack_trace_top"] = throwable.stackTraceToString().take(500)
+        }
+
+        val analyticsEvent = createAnalyticsEvent(
+            eventType = EventType.ERROR,
+            eventName = Events.ERROR_OCCURRED,
+            params = params
+        )
+        persistEvent(analyticsEvent)
+        Timber.e(
+            appError.throwable,
+            "❌ AppError tracked: [${appError.errorCode.code}] ${appError.errorCode.description} - ${appError.message}"
+        )
     }
 
     override fun trackScreen(screenName: String, params: Map<String, Any>) {

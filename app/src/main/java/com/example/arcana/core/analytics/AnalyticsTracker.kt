@@ -1,5 +1,7 @@
 package com.example.arcana.core.analytics
 
+import com.example.arcana.core.common.AppError
+
 /**
  * Interface for tracking analytics events and errors
  */
@@ -19,6 +21,14 @@ interface AnalyticsTracker {
      * @param context Optional context information
      */
     fun trackError(error: Throwable, context: Map<String, Any> = emptyMap())
+
+    /**
+     * Tracks an AppError with full error code information
+     *
+     * @param appError The AppError to track with error code and details
+     * @param context Optional context information
+     */
+    fun trackAppError(appError: AppError, context: Map<String, Any> = emptyMap())
 
     /**
      * Tracks a screen view
