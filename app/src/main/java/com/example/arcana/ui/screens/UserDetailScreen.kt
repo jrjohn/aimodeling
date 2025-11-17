@@ -32,11 +32,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
@@ -57,13 +60,31 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserDetailScreen(
-    user: User,
-    onNavigateBack: () -> Unit,
-    onUpdateUser: (User) -> Unit,
-    onDeleteUser: (User) -> Unit
+    viewModel: UserDetailViewModel = hiltViewModel(),
+    onNavigateBack: () -> Unit
 ) {
+    val uiState by viewModel.output.collectAsState()
     var showEditDialog by remember { mutableStateOf(false) }
     var showDeleteDialog by remember { mutableStateOf(false) }
+
+    // Handle effects from ViewModel
+    LaunchedEffect(Unit) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is UserDetailViewModel.Effect.ShowError -> {
+                    // Could show snackbar here
+                }
+                is UserDetailViewModel.Effect.ShowSuccess -> {
+                    // Could show snackbar here
+                }
+                is UserDetailViewModel.Effect.NavigateBack -> {
+                    onNavigateBack()
+                }
+            }
+        }
+    }
+
+    val user = uiState.user ?: return
 
     Scaffold(
         topBar = {
@@ -262,12 +283,14 @@ fun UserDetailScreen(
             user = user,
             onDismiss = { showEditDialog = false },
             onConfirm = { firstName, lastName, email, avatar ->
-                onUpdateUser(
-                    user.copy(
-                        firstName = firstName,
-                        lastName = lastName,
-                        email = email,
-                        avatar = avatar
+                viewModel.onEvent(
+                    UserDetailViewModel.Input.UpdateUser(
+                        user.copy(
+                            firstName = firstName,
+                            lastName = lastName,
+                            email = email,
+                            avatar = avatar
+                        )
                     )
                 )
                 showEditDialog = false
@@ -283,7 +306,7 @@ fun UserDetailScreen(
             confirmText = "Delete",
             dismissText = "Cancel",
             onConfirm = {
-                onDeleteUser(user)
+                viewModel.onEvent(UserDetailViewModel.Input.DeleteUser(user))
                 showDeleteDialog = false
             },
             onDismiss = { showDeleteDialog = false }

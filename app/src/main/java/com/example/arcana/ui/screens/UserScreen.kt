@@ -78,8 +78,8 @@ fun UserScreen(
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                is UserViewModel.Output.Effect.ShowError -> snackbarHostState.showSnackbar(effect.message)
-                is UserViewModel.Output.Effect.ShowSuccess -> snackbarHostState.showSnackbar(effect.message)
+                is UserViewModel.Effect.ShowError -> snackbarHostState.showSnackbar(effect.message)
+                is UserViewModel.Effect.ShowSuccess -> snackbarHostState.showSnackbar(effect.message)
             }
         }
     }

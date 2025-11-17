@@ -96,8 +96,8 @@ class UserViewModelTest {
         viewModel.effect.test {
             advanceUntilIdle()
             val effect = awaitItem()
-            assertTrue(effect is UserViewModel.Output.Effect.ShowError)
-            assertEquals(errorMessage, (effect as UserViewModel.Output.Effect.ShowError).message)
+            assertTrue(effect is UserViewModel.Effect.ShowError)
+            assertEquals(errorMessage, (effect as UserViewModel.Effect.ShowError).message)
         }
     }
 
@@ -178,8 +178,8 @@ class UserViewModelTest {
         viewModel.effect.test {
             advanceUntilIdle()
             val effect = awaitItem()
-            assertTrue(effect is UserViewModel.Output.Effect.ShowSuccess)
-            assertEquals("User created successfully", (effect as UserViewModel.Output.Effect.ShowSuccess).message)
+            assertTrue(effect is UserViewModel.Effect.ShowSuccess)
+            assertEquals("User created successfully", (effect as UserViewModel.Effect.ShowSuccess).message)
         }
 
         advanceUntilIdle()
@@ -205,8 +205,8 @@ class UserViewModelTest {
         viewModel.effect.test {
             advanceUntilIdle()
             val effect = awaitItem()
-            assertTrue(effect is UserViewModel.Output.Effect.ShowError)
-            assertEquals("Failed to create user", (effect as UserViewModel.Output.Effect.ShowError).message)
+            assertTrue(effect is UserViewModel.Effect.ShowError)
+            assertEquals("Failed to create user", (effect as UserViewModel.Effect.ShowError).message)
         }
     }
 
@@ -227,8 +227,8 @@ class UserViewModelTest {
         viewModel.effect.test {
             advanceUntilIdle()
             val effect = awaitItem()
-            assertTrue(effect is UserViewModel.Output.Effect.ShowSuccess)
-            assertEquals("User updated successfully", (effect as UserViewModel.Output.Effect.ShowSuccess).message)
+            assertTrue(effect is UserViewModel.Effect.ShowSuccess)
+            assertEquals("User updated successfully", (effect as UserViewModel.Effect.ShowSuccess).message)
         }
 
         advanceUntilIdle()
@@ -252,8 +252,8 @@ class UserViewModelTest {
         viewModel.effect.test {
             advanceUntilIdle()
             val effect = awaitItem()
-            assertTrue(effect is UserViewModel.Output.Effect.ShowError)
-            assertEquals("Failed to update user", (effect as UserViewModel.Output.Effect.ShowError).message)
+            assertTrue(effect is UserViewModel.Effect.ShowError)
+            assertEquals("Failed to update user", (effect as UserViewModel.Effect.ShowError).message)
         }
     }
 
@@ -274,8 +274,8 @@ class UserViewModelTest {
         viewModel.effect.test {
             advanceUntilIdle()
             val effect = awaitItem()
-            assertTrue(effect is UserViewModel.Output.Effect.ShowSuccess)
-            assertEquals("User deleted successfully", (effect as UserViewModel.Output.Effect.ShowSuccess).message)
+            assertTrue(effect is UserViewModel.Effect.ShowSuccess)
+            assertEquals("User deleted successfully", (effect as UserViewModel.Effect.ShowSuccess).message)
         }
 
         advanceUntilIdle()
@@ -301,8 +301,8 @@ class UserViewModelTest {
         viewModel.effect.test {
             advanceUntilIdle()
             val effect = awaitItem()
-            assertTrue(effect is UserViewModel.Output.Effect.ShowError)
-            assertEquals("Failed to delete user", (effect as UserViewModel.Output.Effect.ShowError).message)
+            assertTrue(effect is UserViewModel.Effect.ShowError)
+            assertEquals("Failed to delete user", (effect as UserViewModel.Effect.ShowError).message)
         }
     }
 

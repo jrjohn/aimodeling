@@ -238,7 +238,7 @@
         <div class="header">
             <h1>📊 Architecture Verification Report</h1>
             <p><strong>Project:</strong> app</p>
-            <p><strong>Generated:</strong> 2025-11-17 13:57:01</p>
+            <p><strong>Generated:</strong> 2025-11-17 14:13:13</p>
         </div>
 
         <div class="content">
@@ -248,11 +248,11 @@
                 <div class="metric-grid">
                     <div class="metric-card">
                         <div class="label">Total Kotlin Files</div>
-                        <div class="value">63</div>
+                        <div class="value">64</div>
                     </div>
                     <div class="metric-card">
                         <div class="label">ViewModels</div>
-                        <div class="value">2</div>
+                        <div class="value">3</div>
                     </div>
                     <div class="metric-card">
                         <div class="label">Services</div>
@@ -268,7 +268,7 @@
                     </div>
                     <div class="metric-card">
                         <div class="label">Lines of Code</div>
-                        <div class="value">6,664</div>
+                        <div class="value">6,901</div>
                     </div>
                 </div>
             </div>
@@ -291,9 +291,18 @@
                         <tbody>
                             
                                 <tr>
+                                    <td><strong>UserDetailViewModel</strong></td>
+                                    <td><span class='checkmark icon-success'>✅</span></td>
+                                    <td><span class='checkmark icon-error'>❌</span></td>
+                                    <td><span class='checkmark icon-success'>✅</span></td>
+                                    <td><span class='checkmark icon-success'>✅</span></td>
+                                    <td><span class='checkmark icon-success'>✅</span></td>
+                                </tr>
+                                
+                                <tr>
                                     <td><strong>HomeViewModel</strong></td>
                                     <td><span class='checkmark icon-success'>✅</span></td>
-                                    <td><span class='checkmark icon-success'>✅</span></td>
+                                    <td><span class='checkmark icon-error'>❌</span></td>
                                     <td><span class='checkmark icon-success'>✅</span></td>
                                     <td><span class='checkmark icon-success'>✅</span></td>
                                     <td><span class='checkmark icon-success'>✅</span></td>
@@ -302,7 +311,7 @@
                                 <tr>
                                     <td><strong>UserViewModel</strong></td>
                                     <td><span class='checkmark icon-success'>✅</span></td>
-                                    <td><span class='checkmark icon-success'>✅</span></td>
+                                    <td><span class='checkmark icon-error'>❌</span></td>
                                     <td><span class='checkmark icon-success'>✅</span></td>
                                     <td><span class='checkmark icon-success'>✅</span></td>
                                     <td><span class='checkmark icon-success'>✅</span></td>
@@ -320,8 +329,8 @@
                 <div class="layer-card">
                     <h4>🎨 UI Layer</h4>
                     <ul>
-                        <li>Files: 9</li>
-                        <li>ViewModels: 2</li>
+                        <li>Files: 10</li>
+                        <li>ViewModels: 3</li>
                     </ul>
                 </div>
 
@@ -368,13 +377,37 @@
             <!-- Recommendations -->
             <div class="section">
                 <h2 class="section-title">Recommendations</h2>
-                <p class='icon-success'><span class='checkmark'>✅</span> No recommendations - excellent architecture compliance!</p>
+                
+                        <div class="recommendation-card">
+                            <h4>UserDetailViewModel - Missing Input/Output Pattern Components</h4>
+                            <p><strong>Priority:</strong> <span class="priority-high">HIGH</span></p>
+                            <p>The ViewModel is missing required components:
+- Missing 'data class State'
+</p>
+                        </div>
+                        
+                        <div class="recommendation-card">
+                            <h4>HomeViewModel - Missing Input/Output Pattern Components</h4>
+                            <p><strong>Priority:</strong> <span class="priority-high">HIGH</span></p>
+                            <p>The ViewModel is missing required components:
+- Missing 'data class State'
+</p>
+                        </div>
+                        
+                        <div class="recommendation-card">
+                            <h4>UserViewModel - Missing Input/Output Pattern Components</h4>
+                            <p><strong>Priority:</strong> <span class="priority-high">HIGH</span></p>
+                            <p>The ViewModel is missing required components:
+- Missing 'data class State'
+</p>
+                        </div>
+                        
             </div>
         </div>
 
         <div class="footer">
             <p><strong>Report Generated by:</strong> Architecture Verification Plugin</p>
-            <p><strong>Timestamp:</strong> 2025-11-17 13:57:01</p>
+            <p><strong>Timestamp:</strong> 2025-11-17 14:13:13</p>
         </div>
     </div>
 </body>

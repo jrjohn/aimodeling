@@ -18,6 +18,10 @@ class UserServiceImpl @Inject constructor(
         return dataRepository.getUsers()
     }
 
+    override suspend fun getUserById(id: Int): Result<User> {
+        return dataRepository.getUserById(id)
+    }
+
     override suspend fun getUsersPage(page: Int): Result<Pair<List<User>, Int>> {
         return dataRepository.getUsersPage(page)
     }

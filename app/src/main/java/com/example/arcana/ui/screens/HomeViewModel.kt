@@ -40,33 +40,31 @@ class HomeViewModel @Inject constructor(
     }
 
     // ============================================
-    // Output - State and Effects to UI
+    // Output - UI State for binding
     // ============================================
-    sealed interface Output {
-        /**
-         * State - Represents the current UI state for binding
-         */
-        data class State(
-            val users: List<User> = emptyList(),
-            val totalUserCount: Int = 0,
-            val isLoading: Boolean = false
-        )
+    /**
+     * Output - Represents the current UI state for binding
+     */
+    data class Output(
+        val users: List<User> = emptyList(),
+        val totalUserCount: Int = 0,
+        val isLoading: Boolean = false
+    )
 
-        /**
-         * Effect - One-time events from ViewModel to UI
-         */
-        sealed interface Effect {
-            data class ShowSnackbar(val message: String) : Effect
-        }
+    // ============================================
+    // Effect - One-time events from ViewModel to UI
+    // ============================================
+    sealed interface Effect {
+        data class ShowSnackbar(val message: String) : Effect
     }
 
     // ============================================
-    // State & Effect Channels
+    // Output & Effect Channels
     // ============================================
-    private val _output = MutableStateFlow(Output.State())
-    val output: StateFlow<Output.State> = _output.asStateFlow()
+    private val _output = MutableStateFlow(Output())
+    val output: StateFlow<Output> = _output.asStateFlow()
 
-    private val _effect = Channel<Output.Effect>(Channel.BUFFERED)
+    private val _effect = Channel<Effect>(Channel.BUFFERED)
     val effect = _effect.receiveAsFlow()
 
     init {
@@ -104,7 +102,7 @@ class HomeViewModel @Inject constructor(
             }
             .catch { error ->
                 viewModelScope.launch {
-                    _effect.send(Output.Effect.ShowSnackbar("Error loading users from local source"))
+                    _effect.send(Effect.ShowSnackbar("Error loading users from local source"))
                 }
             }
             .launchIn(viewModelScope)
@@ -124,12 +122,12 @@ class HomeViewModel @Inject constructor(
                     userService.syncUsers()
                 }
             } catch (error: Exception) {
-                _effect.send(Output.Effect.ShowSnackbar("Sync failed"))
+                _effect.send(Effect.ShowSnackbar("Sync failed"))
                 false
             }
 
             if (!syncSuccessful) {
-                _effect.send(Output.Effect.ShowSnackbar("Sync failed"))
+                _effect.send(Effect.ShowSnackbar("Sync failed"))
             }
 
             // Fetch total user count from API

@@ -27,6 +27,20 @@ class OfflineFirstDataRepository @Inject constructor(
         return userDao.getUsers()
     }
 
+    override suspend fun getUserById(id: Int): Result<User> {
+        return try {
+            val user = userDao.getUserById(id)
+            if (user != null) {
+                Result.success(user)
+            } else {
+                Result.failure(Exception("User with id $id not found"))
+            }
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to get user by id $id")
+            Result.failure(e)
+        }
+    }
+
     override suspend fun getUsersPage(page: Int): Result<Pair<List<User>, Int>> {
         return try {
             if (!networkMonitor.isOnline.first()) {

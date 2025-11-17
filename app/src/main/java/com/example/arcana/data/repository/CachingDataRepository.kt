@@ -155,6 +155,11 @@ class CachingDataRepository @Inject constructor(
             }
     }
 
+    override suspend fun getUserById(id: Int): Result<User> {
+        // Delegate directly to underlying repository (no caching for single user)
+        return delegate.getUserById(id)
+    }
+
     override suspend fun createUser(user: User): Boolean {
         val result = delegate.createUser(user)
         if (result) {

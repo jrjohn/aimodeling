@@ -1,8 +1,6 @@
 package com.example.arcana.nav
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -14,7 +12,6 @@ import com.example.arcana.core.analytics.NavigationAnalyticsObserver
 import com.example.arcana.ui.screens.HomeScreen
 import com.example.arcana.ui.screens.UserDetailScreen
 import com.example.arcana.ui.screens.UserScreen
-import com.example.arcana.ui.screens.UserViewModel
 
 /**
  * Main navigation graph with automatic analytics tracking
@@ -60,28 +57,10 @@ fun NavGraph(
         composable(
             route = "user_detail/{userId}",
             arguments = listOf(navArgument("userId") { type = NavType.IntType })
-        ) { backStackEntry ->
-            val userId = backStackEntry.arguments?.getInt("userId") ?: return@composable
-            val parentViewModel: UserViewModel = hiltViewModel(
-                remember(backStackEntry) {
-                    navController.getBackStackEntry("user_crud")
-                }
+        ) {
+            UserDetailScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
-            val user = parentViewModel.output.value.allUsers.find { it.id == userId }
-
-            user?.let {
-                UserDetailScreen(
-                    user = it,
-                    onNavigateBack = { navController.popBackStack() },
-                    onUpdateUser = { updatedUser ->
-                        parentViewModel.onEvent(UserViewModel.Input.UpdateUser(updatedUser))
-                    },
-                    onDeleteUser = { userToDelete ->
-                        parentViewModel.onEvent(UserViewModel.Input.DeleteUser(userToDelete))
-                        navController.popBackStack()
-                    }
-                )
-            }
         }
     }
 }

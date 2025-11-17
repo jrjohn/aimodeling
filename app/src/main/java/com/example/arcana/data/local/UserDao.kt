@@ -14,6 +14,9 @@ interface UserDao {
     @Query("SELECT * FROM user")
     fun getUsers(): Flow<List<User>>
 
+    @Query("SELECT * FROM user WHERE id = :id LIMIT 1")
+    suspend fun getUserById(id: Int): User?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertUsers(users: List<User>)
 

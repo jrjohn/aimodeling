@@ -48,61 +48,59 @@ class UserViewModel @Inject constructor(
     }
 
     // ============================================
-    // Output - State and Effects to UI
+    // Output - UI State for binding
     // ============================================
-    sealed interface Output {
+    /**
+     * Output - Represents the current UI state for binding
+     */
+    data class Output(
+        val userPages: Map<Int, List<User>> = emptyMap(), // All loaded pages
+        val isLoading: Boolean = false,
+        val isLoadingMore: Boolean = false,
+        val currentPage: Int = 1,
+        val totalPages: Int = 1
+    ) {
         /**
-         * State - Represents the current UI state for binding
+         * Returns all users from loaded pages in order
          */
-        data class State(
-            val userPages: Map<Int, List<User>> = emptyMap(), // All loaded pages
-            val isLoading: Boolean = false,
-            val isLoadingMore: Boolean = false,
-            val currentPage: Int = 1,
-            val totalPages: Int = 1
-        ) {
-            /**
-             * Returns all users from loaded pages in order
-             */
-            val allUsers: List<User>
-                get() = userPages.entries
-                    .sortedBy { it.key }
-                    .flatMap { it.value }
-
-            /**
-             * Returns users for the current page
-             */
-            val users: List<User>
-                get() = userPages[currentPage] ?: emptyList()
-
-            /**
-             * Checks if a specific page is loaded
-             */
-            fun isPageLoaded(page: Int): Boolean = userPages.containsKey(page)
-
-            /**
-             * Gets the number of loaded pages
-             */
-            val loadedPagesCount: Int
-                get() = userPages.size
-        }
+        val allUsers: List<User>
+            get() = userPages.entries
+                .sortedBy { it.key }
+                .flatMap { it.value }
 
         /**
-         * Effect - One-time events from ViewModel to UI
+         * Returns users for the current page
          */
-        sealed interface Effect {
-            data class ShowError(val message: String) : Effect
-            data class ShowSuccess(val message: String) : Effect
-        }
+        val users: List<User>
+            get() = userPages[currentPage] ?: emptyList()
+
+        /**
+         * Checks if a specific page is loaded
+         */
+        fun isPageLoaded(page: Int): Boolean = userPages.containsKey(page)
+
+        /**
+         * Gets the number of loaded pages
+         */
+        val loadedPagesCount: Int
+            get() = userPages.size
     }
 
     // ============================================
-    // State & Effect Channels
+    // Effect - One-time events from ViewModel to UI
     // ============================================
-    private val _output = MutableStateFlow(Output.State())
-    val output: StateFlow<Output.State> = _output.asStateFlow()
+    sealed interface Effect {
+        data class ShowError(val message: String) : Effect
+        data class ShowSuccess(val message: String) : Effect
+    }
 
-    private val _effect = Channel<Output.Effect>(Channel.BUFFERED)
+    // ============================================
+    // Output & Effect Channels
+    // ============================================
+    private val _output = MutableStateFlow(Output())
+    val output: StateFlow<Output> = _output.asStateFlow()
+
+    private val _effect = Channel<Effect>(Channel.BUFFERED)
     val effect = _effect.receiveAsFlow()
 
     init {
@@ -155,7 +153,7 @@ class UserViewModel @Inject constructor(
                 },
                 onFailure = { error ->
                     _output.update { it.copy(isLoading = false) }
-                    _effect.send(Output.Effect.ShowError(
+                    _effect.send(Effect.ShowError(
                         error.message ?: stringProvider.getString(R.string.error_failed_load_users)
                     ))
                     trackError(error, mapOf(
@@ -220,7 +218,7 @@ class UserViewModel @Inject constructor(
                 onFailure = { error ->
                     Timber.e(error, "Failed to load page $nextPage")
                     _output.update { it.copy(isLoadingMore = false) }
-                    _effect.send(Output.Effect.ShowError(
+                    _effect.send(Effect.ShowError(
                         error.message ?: stringProvider.getString(R.string.error_failed_load_more_users)
                     ))
                     trackError(error, mapOf(
@@ -261,12 +259,12 @@ class UserViewModel @Inject constructor(
             }
 
             if (success) {
-                _effect.send(Output.Effect.ShowSuccess(
+                _effect.send(Effect.ShowSuccess(
                     stringProvider.getString(R.string.user_created_success)
                 ))
                 loadUsers() // Refresh the list
             } else {
-                _effect.send(Output.Effect.ShowError(
+                _effect.send(Effect.ShowError(
                     stringProvider.getString(R.string.user_create_failed)
                 ))
             }
@@ -303,12 +301,12 @@ class UserViewModel @Inject constructor(
             }
 
             if (success) {
-                _effect.send(Output.Effect.ShowSuccess(
+                _effect.send(Effect.ShowSuccess(
                     stringProvider.getString(R.string.user_updated_success)
                 ))
                 loadUsers() // Refresh the list
             } else {
-                _effect.send(Output.Effect.ShowError(
+                _effect.send(Effect.ShowError(
                     stringProvider.getString(R.string.user_update_failed)
                 ))
             }
@@ -351,12 +349,12 @@ class UserViewModel @Inject constructor(
                     }
                     state.copy(userPages = updatedPages)
                 }
-                _effect.send(Output.Effect.ShowSuccess(
+                _effect.send(Effect.ShowSuccess(
                     stringProvider.getString(R.string.user_deleted_success)
                 ))
                 Timber.d("User ${user.id} deleted successfully")
             } else {
-                _effect.send(Output.Effect.ShowError(
+                _effect.send(Effect.ShowError(
                     stringProvider.getString(R.string.user_delete_failed)
                 ))
             }
@@ -432,7 +430,7 @@ class UserViewModel @Inject constructor(
                 onFailure = { error ->
                     Timber.e(error, "Failed to load page $page")
                     _output.update { it.copy(isLoading = false) }
-                    _effect.send(Output.Effect.ShowError(
+                    _effect.send(Effect.ShowError(
                         error.message ?: stringProvider.getString(R.string.error_failed_load_page, page)
                     ))
                     trackError(error, mapOf(
