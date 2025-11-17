@@ -45,7 +45,7 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
     onNavigateToUserCrud: () -> Unit
 ) {
-    val uiState by viewModel.state.collectAsState()
+    val uiState by viewModel.output.collectAsState()
 
     Box(
         modifier = Modifier

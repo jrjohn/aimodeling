@@ -13,8 +13,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Link
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -25,6 +29,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -57,6 +62,13 @@ fun UserDialog(
     var lastName by remember { mutableStateOf(user?.lastName ?: "") }
     var email by remember { mutableStateOf(user?.email ?: "") }
     var avatar by remember { mutableStateOf(user?.avatar ?: AVATAR_OPTIONS[0]) }
+    var customAvatarUrl by remember { mutableStateOf("") }
+    var useCustomUrl by remember { mutableStateOf(user?.avatar?.let { it !in AVATAR_OPTIONS } ?: false) }
+
+    // Initialize custom URL if user's avatar is not in predefined options
+    if (user != null && user.avatar !in AVATAR_OPTIONS && customAvatarUrl.isEmpty()) {
+        customAvatarUrl = user.avatar
+    }
 
     // Touched state - track if user has interacted with each field
     var firstNameTouched by remember { mutableStateOf(false) }
@@ -101,13 +113,20 @@ fun UserDialog(
         }
     }
 
+    // Compute final avatar URL
+    val finalAvatarUrl by remember {
+        derivedStateOf {
+            if (useCustomUrl) customAvatarUrl else avatar
+        }
+    }
+
     // Form is valid if all fields have no errors and at least one name is provided
     val isFormValid by remember {
         derivedStateOf {
             firstName.isNotBlank() &&
             lastName.isNotBlank() &&
             email.isNotBlank() &&
-            avatar.isNotBlank() &&
+            finalAvatarUrl.isNotBlank() &&
             firstNameError == null &&
             lastNameError == null &&
             emailError == null
@@ -190,36 +209,110 @@ fun UserDialog(
 
                 // Avatar Picker
                 Text(
-                    text = "Select Avatar *",
+                    text = "Avatar *",
                     style = MaterialTheme.typography.labelLarge
                 )
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Avatar Grid
-                Column(
-                    modifier = Modifier.fillMaxWidth()
+                // Toggle between predefined and custom URL
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    AVATAR_OPTIONS.chunked(4).forEach { rowAvatars ->
+                    FilterChip(
+                        selected = !useCustomUrl,
+                        onClick = { useCustomUrl = false },
+                        label = { Text("Predefined") }
+                    )
+                    FilterChip(
+                        selected = useCustomUrl,
+                        onClick = { useCustomUrl = true },
+                        label = { Text("Custom URL") },
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Link,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+                    )
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+
+                if (useCustomUrl) {
+                    // Custom URL Input
+                    OutlinedTextField(
+                        value = customAvatarUrl,
+                        onValueChange = { customAvatarUrl = it },
+                        label = { Text("Avatar URL *") },
+                        placeholder = { Text("https://example.com/avatar.jpg") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        leadingIcon = {
+                            Icon(
+                                imageVector = Icons.Default.Link,
+                                contentDescription = null
+                            )
+                        }
+                    )
+
+                    // Preview custom avatar
+                    if (customAvatarUrl.isNotBlank()) {
+                        Spacer(modifier = Modifier.height(12.dp))
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            rowAvatars.forEach { avatarUrl ->
-                                AvatarOption(
-                                    avatarUrl = avatarUrl,
-                                    isSelected = avatar == avatarUrl,
-                                    onClick = { avatar = avatarUrl }
-                                )
-                            }
+                            Text(
+                                text = "Preview:",
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                            AsyncImage(
+                                model = customAvatarUrl,
+                                contentDescription = "Avatar preview",
+                                modifier = Modifier
+                                    .size(80.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    .border(
+                                        width = 2.dp,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        shape = CircleShape
+                                    ),
+                                contentScale = ContentScale.Crop
+                            )
                         }
-                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                } else {
+                    // Avatar Grid
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        AVATAR_OPTIONS.chunked(4).forEach { rowAvatars ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                rowAvatars.forEach { avatarUrl ->
+                                    AvatarOption(
+                                        avatarUrl = avatarUrl,
+                                        isSelected = avatar == avatarUrl && !useCustomUrl,
+                                        onClick = {
+                                            avatar = avatarUrl
+                                        }
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
                     }
                 }
             }
         },
         confirmButton = {
             Button(
-                onClick = { onConfirm(firstName, lastName, email, avatar) },
+                onClick = { onConfirm(firstName, lastName, email, finalAvatarUrl) },
                 enabled = isFormValid
             ) {
                 Text(if (user == null) "Create" else "Update")

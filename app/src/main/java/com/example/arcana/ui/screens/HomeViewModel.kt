@@ -63,8 +63,8 @@ class HomeViewModel @Inject constructor(
     // ============================================
     // State & Effect Channels
     // ============================================
-    private val _state = MutableStateFlow(Output.State())
-    val state: StateFlow<Output.State> = _state.asStateFlow()
+    private val _output = MutableStateFlow(Output.State())
+    val output: StateFlow<Output.State> = _output.asStateFlow()
 
     private val _effect = Channel<Output.Effect>(Channel.BUFFERED)
     val effect = _effect.receiveAsFlow()
@@ -100,7 +100,7 @@ class HomeViewModel @Inject constructor(
                 onData = { users -> mapOf(Params.ITEM_COUNT to users.size.toString()) }
             )
             .onEach { users ->
-                _state.value = _state.value.copy(users = users)
+                _output.value = _output.value.copy(users = users)
             }
             .catch { error ->
                 viewModelScope.launch {
@@ -112,7 +112,7 @@ class HomeViewModel @Inject constructor(
 
     private fun syncData() {
         viewModelScope.launch {
-            _state.value = _state.value.copy(isLoading = true)
+            _output.value = _output.value.copy(isLoading = true)
 
             // Use trackSync extension for automatic sync event tracking
             val syncSuccessful = try {
@@ -134,7 +134,7 @@ class HomeViewModel @Inject constructor(
 
             // Fetch total user count from API
             val totalCount = userService.getTotalUserCount()
-            _state.value = _state.value.copy(
+            _output.value = _output.value.copy(
                 isLoading = false,
                 totalUserCount = totalCount
             )

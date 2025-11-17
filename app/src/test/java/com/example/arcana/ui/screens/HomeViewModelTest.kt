@@ -53,7 +53,7 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         // Then
-        val state = viewModel.state.value
+        val state = viewModel.output.value
         assertEquals(emptyList(), state.users)
         assertFalse(state.isLoading)
     }
@@ -74,7 +74,7 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         // Then
-        viewModel.state.test {
+        viewModel.output.test {
             val state = awaitItem()
             assertEquals(testUsers, state.users)
         }
@@ -92,7 +92,7 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         // Then - verify sync was called (private method)
-        val state = viewModel.state.value
+        val state = viewModel.output.value
         assertFalse(state.isLoading)
     }
 

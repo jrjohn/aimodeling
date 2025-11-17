@@ -75,7 +75,7 @@ class UserViewModelTest {
         advanceUntilIdle()
 
         // Then
-        val state = viewModel.state.value
+        val state = viewModel.output.value
         assertEquals(testUsers, state.users)
         assertEquals(1, state.currentPage)
         assertEquals(5, state.totalPages)
@@ -117,7 +117,7 @@ class UserViewModelTest {
         advanceUntilIdle()
 
         // Then
-        val state = viewModel.state.value
+        val state = viewModel.output.value
         assertEquals(page2Users, state.users) // Current page users
         assertEquals(page1Users + page2Users, state.allUsers) // All loaded users
         assertEquals(2, state.currentPage)
@@ -279,7 +279,7 @@ class UserViewModelTest {
         }
 
         advanceUntilIdle()
-        val state = viewModel.state.value
+        val state = viewModel.output.value
         assertFalse(state.users.contains(userToDelete))
         verify(userService).deleteUser(userToDelete.id)
     }
@@ -323,7 +323,7 @@ class UserViewModelTest {
         advanceUntilIdle()
 
         // Then
-        val state = viewModel.state.value
+        val state = viewModel.output.value
         assertEquals(refreshedUsers, state.users)
         assertEquals(1, state.currentPage)
     }
@@ -343,7 +343,7 @@ class UserViewModelTest {
         advanceUntilIdle()
 
         // Then
-        val state = viewModel.state.value
+        val state = viewModel.output.value
         assertEquals(page3Users, state.users)
         assertEquals(3, state.currentPage)
         verify(userService).getUsersPage(3)
@@ -378,7 +378,7 @@ class UserViewModelTest {
         advanceUntilIdle()
 
         // Then
-        val state = viewModel.state.value
+        val state = viewModel.output.value
         assertEquals(2, state.currentPage)
         verify(userService).getUsersPage(2)
     }
@@ -401,7 +401,7 @@ class UserViewModelTest {
         advanceUntilIdle()
 
         // Then
-        val state = viewModel.state.value
+        val state = viewModel.output.value
         assertEquals(1, state.currentPage)
     }
 
@@ -415,7 +415,7 @@ class UserViewModelTest {
         advanceUntilIdle()
 
         // Then - after completion, loading should be false
-        assertFalse(viewModel.state.value.isLoading)
-        assertEquals(testUsers, viewModel.state.value.users)
+        assertFalse(viewModel.output.value.isLoading)
+        assertEquals(testUsers, viewModel.output.value.users)
     }
 }

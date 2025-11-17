@@ -63,9 +63,10 @@ import timber.log.Timber
 @Composable
 fun UserScreen(
     viewModel: UserViewModel = hiltViewModel(),
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateToUserDetail: (Int) -> Unit = {}
 ) {
-    val uiState by viewModel.state.collectAsState()
+    val uiState by viewModel.output.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
     var userToUpdate by remember { mutableStateOf<User?>(null) }
     var userToDelete by remember { mutableStateOf<User?>(null) }
@@ -149,6 +150,7 @@ fun UserScreen(
                             ) { user ->
                                 UserCard(
                                     user = user,
+                                    onClick = { onNavigateToUserDetail(user.id) },
                                     onUpdate = { userToUpdate = user },
                                     onDelete = { userToDelete = user }
                                 )
@@ -249,13 +251,14 @@ fun UserScreen(
 @Composable
 fun UserCard(
     user: User,
+    onClick: () -> Unit = {},
     onUpdate: () -> Unit,
     onDelete: () -> Unit
 ) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onUpdate() },
+            .clickable { onClick() },
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(

@@ -39,7 +39,7 @@ class UserScreenTest {
     fun setup() {
         viewModel = mock()
         uiStateFlow = MutableStateFlow(UserViewModel.Output.State())
-        whenever(viewModel.state).thenReturn(uiStateFlow)
+        whenever(viewModel.output).thenReturn(uiStateFlow)
         whenever(viewModel.effect).thenReturn(emptyFlow())
     }
 

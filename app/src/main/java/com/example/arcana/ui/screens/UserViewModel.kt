@@ -99,8 +99,8 @@ class UserViewModel @Inject constructor(
     // ============================================
     // State & Effect Channels
     // ============================================
-    private val _state = MutableStateFlow(Output.State())
-    val state: StateFlow<Output.State> = _state.asStateFlow()
+    private val _output = MutableStateFlow(Output.State())
+    val output: StateFlow<Output.State> = _output.asStateFlow()
 
     private val _effect = Channel<Output.Effect>(Channel.BUFFERED)
     val effect = _effect.receiveAsFlow()
@@ -131,7 +131,7 @@ class UserViewModel @Inject constructor(
     // ============================================
     private fun loadUsers() {
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true) }
+            _output.update { it.copy(isLoading = true) }
 
             // Track page load with performance metrics
             trackPerformance(
@@ -144,7 +144,7 @@ class UserViewModel @Inject constructor(
                 userService.getUsersPage(1)
             }.fold(
                 onSuccess = { (users, totalPages) ->
-                    _state.update {
+                    _output.update {
                         it.copy(
                             userPages = mapOf(1 to users), // Reset cache with page 1
                             currentPage = 1,
@@ -154,7 +154,7 @@ class UserViewModel @Inject constructor(
                     }
                 },
                 onFailure = { error ->
-                    _state.update { it.copy(isLoading = false) }
+                    _output.update { it.copy(isLoading = false) }
                     _effect.send(Output.Effect.ShowError(
                         error.message ?: stringProvider.getString(R.string.error_failed_load_users)
                     ))
@@ -172,7 +172,7 @@ class UserViewModel @Inject constructor(
         var shouldLoad = false
         var nextPage = 1
 
-        _state.update { currentState ->
+        _output.update { currentState ->
             Timber.d("loadNextPage called - currentPage: ${currentState.currentPage}, totalPages: ${currentState.totalPages}, isLoadingMore: ${currentState.isLoadingMore}")
 
             if (currentState.isLoadingMore || currentState.currentPage >= currentState.totalPages) {
@@ -208,7 +208,7 @@ class UserViewModel @Inject constructor(
             }.fold(
                 onSuccess = { (newUsers, totalPages) ->
                     Timber.d("Successfully loaded ${newUsers.size} users from page $nextPage")
-                    _state.update {
+                    _output.update {
                         it.copy(
                             userPages = it.userPages + (nextPage to newUsers), // Add page to cache
                             currentPage = nextPage,
@@ -219,7 +219,7 @@ class UserViewModel @Inject constructor(
                 },
                 onFailure = { error ->
                     Timber.e(error, "Failed to load page $nextPage")
-                    _state.update { it.copy(isLoadingMore = false) }
+                    _output.update { it.copy(isLoadingMore = false) }
                     _effect.send(Output.Effect.ShowError(
                         error.message ?: stringProvider.getString(R.string.error_failed_load_more_users)
                     ))
@@ -345,7 +345,7 @@ class UserViewModel @Inject constructor(
 
             if (success) {
                 // Remove from all cached pages for better UX
-                _state.update { state ->
+                _output.update { state ->
                     val updatedPages = state.userPages.mapValues { (_, users) ->
                         users.filter { u -> u.id != user.id }
                     }
@@ -375,38 +375,38 @@ class UserViewModel @Inject constructor(
     }
 
     private fun goToNextPage() {
-        val currentState = _state.value
+        val currentState = _output.value
         if (currentState.currentPage < currentState.totalPages && !currentState.isLoading) {
             loadSpecificPage(currentState.currentPage + 1)
         }
     }
 
     private fun goToPreviousPage() {
-        val currentState = _state.value
+        val currentState = _output.value
         if (currentState.currentPage > 1 && !currentState.isLoading) {
             loadSpecificPage(currentState.currentPage - 1)
         }
     }
 
     private fun goToPage(page: Int) {
-        val currentState = _state.value
+        val currentState = _output.value
         if (page in 1..currentState.totalPages && !currentState.isLoading) {
             loadSpecificPage(page)
         }
     }
 
     private fun loadSpecificPage(page: Int) {
-        val currentState = _state.value
+        val currentState = _output.value
 
         // Check if page is already cached
         if (currentState.isPageLoaded(page)) {
             Timber.d("Page $page already loaded, switching to it")
-            _state.update { it.copy(currentPage = page) }
+            _output.update { it.copy(currentPage = page) }
             return
         }
 
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true) }
+            _output.update { it.copy(isLoading = true) }
             Timber.d("Loading specific page $page")
 
             trackPerformance(
@@ -420,7 +420,7 @@ class UserViewModel @Inject constructor(
             }.fold(
                 onSuccess = { (users, totalPages) ->
                     Timber.d("Successfully loaded ${users.size} users from page $page")
-                    _state.update {
+                    _output.update {
                         it.copy(
                             userPages = it.userPages + (page to users), // Add page to cache
                             currentPage = page,
@@ -431,7 +431,7 @@ class UserViewModel @Inject constructor(
                 },
                 onFailure = { error ->
                     Timber.e(error, "Failed to load page $page")
-                    _state.update { it.copy(isLoading = false) }
+                    _output.update { it.copy(isLoading = false) }
                     _effect.send(Output.Effect.ShowError(
                         error.message ?: stringProvider.getString(R.string.error_failed_load_page, page)
                     ))
