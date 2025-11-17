@@ -333,22 +333,22 @@ class UserScreenTest {
     fun `ShowError effect should contain error message`() {
         // Given
         val errorMessage = "Failed to load users"
-        val effect: UserViewModel.Output.Effect = UserViewModel.Output.Effect.ShowError(errorMessage)
+        val effect: UserViewModel.Effect = UserViewModel.Effect.ShowError(errorMessage)
 
         // Then
-        assertTrue(effect is UserViewModel.Output.Effect.ShowError)
-        assertEquals(errorMessage, (effect as UserViewModel.Output.Effect.ShowError).message)
+        assertTrue(effect is UserViewModel.Effect.ShowError)
+        assertEquals(errorMessage, (effect as UserViewModel.Effect.ShowError).message)
     }
 
     @Test
     fun `ShowSuccess effect should contain success message`() {
         // Given
         val successMessage = "User created successfully"
-        val effect: UserViewModel.Output.Effect = UserViewModel.Output.Effect.ShowSuccess(successMessage)
+        val effect: UserViewModel.Effect = UserViewModel.Effect.ShowSuccess(successMessage)
 
         // Then
-        assertTrue(effect is UserViewModel.Output.Effect.ShowSuccess)
-        assertEquals(successMessage, (effect as UserViewModel.Output.Effect.ShowSuccess).message)
+        assertTrue(effect is UserViewModel.Effect.ShowSuccess)
+        assertEquals(successMessage, (effect as UserViewModel.Effect.ShowSuccess).message)
     }
 
     // ==================== User Copy Tests ====================

@@ -156,8 +156,13 @@ class CachingDataRepository @Inject constructor(
     }
 
     override suspend fun getUserById(id: Int): Result<User> {
-        // Delegate directly to underlying repository (no caching for single user)
+        // Delegate directly to underlying repository (cache is in OfflineFirstDataRepository)
         return delegate.getUserById(id)
+    }
+
+    override fun getUserFlow(id: Int): Flow<User?> {
+        // Delegate to underlying repository's shared cache
+        return delegate.getUserFlow(id)
     }
 
     override suspend fun createUser(user: User): Boolean {
@@ -173,10 +178,11 @@ class CachingDataRepository @Inject constructor(
     override suspend fun updateUser(user: User): Boolean {
         val result = delegate.updateUser(user)
         if (result) {
-            // Invalidate page and user list caches as user data changed
+            // Optimistic update already handled by delegate
+            // Just invalidate page and user list caches
             invalidatePageCaches()
             fullUserListCache = null
-            Timber.d("CachingDataRepository: Invalidated caches after user update")
+            Timber.d("CachingDataRepository: Invalidated caches after optimistic user update")
         }
         return result
     }
@@ -184,9 +190,10 @@ class CachingDataRepository @Inject constructor(
     override suspend fun deleteUser(id: Int): Boolean {
         val result = delegate.deleteUser(id)
         if (result) {
-            // Invalidate all caches as list changed
+            // Optimistic delete already handled by delegate
+            // Just invalidate all caches as list changed
             invalidateAllCaches()
-            Timber.d("CachingDataRepository: Invalidated caches after user deletion")
+            Timber.d("CachingDataRepository: Invalidated caches after optimistic user deletion")
         }
         return result
     }

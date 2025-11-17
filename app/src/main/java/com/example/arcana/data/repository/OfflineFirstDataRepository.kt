@@ -9,12 +9,21 @@ import com.example.arcana.data.model.UserChange
 import com.example.arcana.data.network.UserNetworkDataSource
 import com.example.arcana.data.remote.CreateUserRequest
 import com.example.arcana.sync.Syncable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.util.UUID
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class OfflineFirstDataRepository @Inject constructor(
     private val userDao: UserDao,
     private val userChangeDao: UserChangeDao,
@@ -23,12 +32,50 @@ class OfflineFirstDataRepository @Inject constructor(
     private val cacheEventBus: CacheEventBus
 ) : DataRepository, Syncable {
 
+    // ============================================
+    // Shared StateFlow Cache (Optimization #1)
+    // ============================================
+    /**
+     * Shared in-memory cache of users
+     * - Single source of truth for all ViewModels
+     * - Automatically updated from Room Flow
+     * - Enables instant access without DB queries
+     */
+    private val usersCache = MutableStateFlow<Map<Int, User>>(emptyMap())
+
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+
+    init {
+        // Keep cache in sync with database
+        // This ensures cache is always up-to-date
+        scope.launch {
+            userDao.getUsers().collect { users ->
+                usersCache.update { users.associateBy { it.id } }
+                Timber.d("UsersCache updated: ${users.size} users")
+            }
+        }
+    }
+
     override fun getUsers(): Flow<List<User>> {
+        // Return Room Flow (reactive to DB changes)
         return userDao.getUsers()
     }
 
+    /**
+     * Get user by ID from shared cache (instant, no DB query)
+     * Falls back to DB if cache miss
+     */
     override suspend fun getUserById(id: Int): Result<User> {
         return try {
+            // Try cache first (Optimization #1)
+            val cachedUser = usersCache.value[id]
+            if (cachedUser != null) {
+                Timber.d("Cache HIT for user $id")
+                return Result.success(cachedUser)
+            }
+
+            // Cache miss - query DB
+            Timber.d("Cache MISS for user $id - querying DB")
             val user = userDao.getUserById(id)
             if (user != null) {
                 Result.success(user)
@@ -39,6 +86,14 @@ class OfflineFirstDataRepository @Inject constructor(
             Timber.e(e, "Failed to get user by id $id")
             Result.failure(e)
         }
+    }
+
+    /**
+     * Get reactive Flow for specific user (Optimization #1)
+     * Automatically emits when user changes
+     */
+    override fun getUserFlow(id: Int): Flow<User?> {
+        return usersCache.map { cache -> cache[id] }
     }
 
     override suspend fun getUsersPage(page: Int): Result<Pair<List<User>, Int>> {
@@ -263,46 +318,55 @@ class OfflineFirstDataRepository @Inject constructor(
         }
     }
 
+    /**
+     * Optimistic Update (Optimization #3)
+     * Updates DB immediately for instant UI feedback
+     * Then syncs with network in background
+     */
     override suspend fun updateUser(user: User): Boolean {
+        // Step 1: Update local DB immediately (instant UI update)
+        queueUpdateUser(user)
+        cacheEventBus.emit(CacheInvalidationEvent.UserUpdated(user.id))
+        Timber.d("Optimistic update: Updated user ${user.id} locally")
+
+        // Step 2: Sync with network in background
         if (networkMonitor.isOnline.first()) {
-            return try {
+            try {
                 networkDataSource.updateUser(user.id, CreateUserRequest(user.name, "Developer"))
+                Timber.d("Optimistic update: Network sync successful for user ${user.id}")
+                // Sync again to get any server-side changes
                 sync()
-                // Emit cache invalidation event
-                cacheEventBus.emit(CacheInvalidationEvent.UserUpdated(user.id))
-                true
             } catch (e: Exception) {
-                Timber.e(e, "Failed to update user online, will queue for offline")
-                queueUpdateUser(user)
-                false
+                Timber.w(e, "Optimistic update: Network sync failed for user ${user.id}, will retry later")
+                // Change is already queued, will sync later
             }
-        } else {
-            queueUpdateUser(user)
-            // Emit event even for offline update
-            cacheEventBus.emit(CacheInvalidationEvent.UserUpdated(user.id))
-            return true
         }
+        return true
     }
 
+    /**
+     * Optimistic Delete (Optimization #3)
+     * Deletes from DB immediately for instant UI feedback
+     * Then syncs with network in background
+     */
     override suspend fun deleteUser(id: Int): Boolean {
+        // Step 1: Delete from local DB immediately (instant UI update)
+        queueDeleteUser(id)
+        cacheEventBus.emit(CacheInvalidationEvent.UserDeleted(id))
+        Timber.d("Optimistic delete: Deleted user $id locally")
+
+        // Step 2: Sync with network in background
         if (networkMonitor.isOnline.first()) {
-            return try {
+            try {
                 networkDataSource.deleteUser(id)
+                Timber.d("Optimistic delete: Network sync successful for user $id")
                 sync()
-                // Emit cache invalidation event
-                cacheEventBus.emit(CacheInvalidationEvent.UserDeleted(id))
-                true
             } catch (e: Exception) {
-                Timber.e(e, "Failed to delete user online, will queue for offline")
-                queueDeleteUser(id)
-                false
+                Timber.w(e, "Optimistic delete: Network sync failed for user $id, will retry later")
+                // Change is already queued, will sync later
             }
-        } else {
-            queueDeleteUser(id)
-            // Emit event even for offline deletion
-            cacheEventBus.emit(CacheInvalidationEvent.UserDeleted(id))
-            return true
         }
+        return true
     }
 
     private suspend fun queueCreateUser(user: User) {

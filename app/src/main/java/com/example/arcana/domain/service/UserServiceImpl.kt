@@ -18,6 +18,10 @@ class UserServiceImpl @Inject constructor(
         return dataRepository.getUsers()
     }
 
+    override fun getUserFlow(id: Int): Flow<User?> {
+        return dataRepository.getUserFlow(id)
+    }
+
     override suspend fun getUserById(id: Int): Result<User> {
         return dataRepository.getUserById(id)
     }

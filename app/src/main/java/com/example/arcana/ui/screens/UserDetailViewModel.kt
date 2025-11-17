@@ -37,7 +37,6 @@ class UserDetailViewModel @Inject constructor(
     // Input - Events from UI to ViewModel
     // ============================================
     sealed interface Input {
-        data object LoadUser : Input
         data class UpdateUser(val user: User) : Input
         data class DeleteUser(val user: User) : Input
     }
@@ -70,7 +69,12 @@ class UserDetailViewModel @Inject constructor(
     val effect = _effect.receiveAsFlow()
 
     init {
-        onEvent(Input.LoadUser)
+        // Use reactive Flow for automatic updates (Optimization #1)
+        viewModelScope.launch {
+            userService.getUserFlow(userId).collect { user ->
+                _output.update { it.copy(user = user, isLoading = false) }
+            }
+        }
     }
 
     // ============================================
@@ -78,7 +82,6 @@ class UserDetailViewModel @Inject constructor(
     // ============================================
     fun onEvent(input: Input) {
         when (input) {
-            is Input.LoadUser -> loadUser()
             is Input.UpdateUser -> updateUser(input.user)
             is Input.DeleteUser -> deleteUser(input.user)
         }
@@ -87,41 +90,6 @@ class UserDetailViewModel @Inject constructor(
     // ============================================
     // Private Methods
     // ============================================
-    private fun loadUser() {
-        viewModelScope.launch {
-            _output.update { it.copy(isLoading = true) }
-
-            trackPerformance(
-                eventName = Events.PAGE_LOADED,
-                params = mapOf(
-                    Params.SCREEN_NAME to "user_detail",
-                    Params.USER_ID to userId.toString()
-                )
-            ) {
-                userService.getUserById(userId)
-            }.fold(
-                onSuccess = { user ->
-                    _output.update {
-                        it.copy(
-                            user = user,
-                            isLoading = false
-                        )
-                    }
-                },
-                onFailure = { error ->
-                    _output.update { it.copy(isLoading = false) }
-                    _effect.send(Effect.ShowError(
-                        error.message ?: stringProvider.getString(R.string.error_failed_load_users)
-                    ))
-                    trackError(error, mapOf(
-                        Params.SCREEN_NAME to "user_detail",
-                        Params.SOURCE to "loadUser",
-                        Params.USER_ID to userId.toString()
-                    ))
-                }
-            )
-        }
-    }
 
     private fun updateUser(user: User) {
         viewModelScope.launch {
@@ -133,7 +101,7 @@ class UserDetailViewModel @Inject constructor(
                 Params.USER_ID to user.id.toString()
             ))
 
-            // Use trackCrudOperation for automatic success/failure tracking
+            // Use optimistic update for instant UI feedback
             val success = try {
                 trackCrudOperation(
                     analyticsTracker = analyticsTracker,
@@ -146,6 +114,7 @@ class UserDetailViewModel @Inject constructor(
                         Params.SCREEN_NAME to "user_detail"
                     )
                 ) {
+                    // updateUser now uses optimistic pattern - UI updates instantly!
                     userService.updateUser(user)
                 }
             } catch (e: Exception) {
@@ -153,8 +122,7 @@ class UserDetailViewModel @Inject constructor(
             }
 
             if (success) {
-                // Update local state
-                _output.update { it.copy(user = user) }
+                // No need to update local state - getUserFlow() handles it automatically!
                 _effect.send(Effect.ShowSuccess(
                     stringProvider.getString(R.string.user_updated_success)
                 ))
@@ -176,7 +144,7 @@ class UserDetailViewModel @Inject constructor(
                 Params.USER_ID to user.id.toString()
             ))
 
-            // Use trackCrudOperation for automatic success/failure tracking
+            // Use optimistic delete for instant UI feedback
             val success = try {
                 trackCrudOperation(
                     analyticsTracker = analyticsTracker,
@@ -188,6 +156,7 @@ class UserDetailViewModel @Inject constructor(
                         Params.SCREEN_NAME to "user_detail"
                     )
                 ) {
+                    // deleteUser now uses optimistic pattern - user disappears instantly!
                     userService.deleteUser(user.id)
                 }
             } catch (e: Exception) {

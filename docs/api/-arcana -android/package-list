@@ -670,6 +670,7 @@ $dokka.location:com.example.arcana.data.repository/CachingDataRepository/deleteU
 $dokka.location:com.example.arcana.data.repository/CachingDataRepository/getCacheStats/#/PointingToDeclaration/-arcana -android/com.example.arcana.data.repository/-caching-data-repository/get-cache-stats.html
 $dokka.location:com.example.arcana.data.repository/CachingDataRepository/getTotalUserCount/#/PointingToDeclaration/-arcana -android/com.example.arcana.data.repository/-caching-data-repository/get-total-user-count.html
 $dokka.location:com.example.arcana.data.repository/CachingDataRepository/getUserById/#kotlin.Int/PointingToDeclaration/-arcana -android/com.example.arcana.data.repository/-caching-data-repository/get-user-by-id.html
+$dokka.location:com.example.arcana.data.repository/CachingDataRepository/getUserFlow/#kotlin.Int/PointingToDeclaration/-arcana -android/com.example.arcana.data.repository/-caching-data-repository/get-user-flow.html
 $dokka.location:com.example.arcana.data.repository/CachingDataRepository/getUsers/#/PointingToDeclaration/-arcana -android/com.example.arcana.data.repository/-caching-data-repository/get-users.html
 $dokka.location:com.example.arcana.data.repository/CachingDataRepository/getUsersPage/#kotlin.Int/PointingToDeclaration/-arcana -android/com.example.arcana.data.repository/-caching-data-repository/get-users-page.html
 $dokka.location:com.example.arcana.data.repository/CachingDataRepository/invalidate/#/PointingToDeclaration/-arcana -android/com.example.arcana.data.repository/-caching-data-repository/invalidate.html
@@ -684,6 +685,7 @@ $dokka.location:com.example.arcana.data.repository/DataRepository/createUser/#co
 $dokka.location:com.example.arcana.data.repository/DataRepository/deleteUser/#kotlin.Int/PointingToDeclaration/-arcana -android/com.example.arcana.data.repository/-data-repository/delete-user.html
 $dokka.location:com.example.arcana.data.repository/DataRepository/getTotalUserCount/#/PointingToDeclaration/-arcana -android/com.example.arcana.data.repository/-data-repository/get-total-user-count.html
 $dokka.location:com.example.arcana.data.repository/DataRepository/getUserById/#kotlin.Int/PointingToDeclaration/-arcana -android/com.example.arcana.data.repository/-data-repository/get-user-by-id.html
+$dokka.location:com.example.arcana.data.repository/DataRepository/getUserFlow/#kotlin.Int/PointingToDeclaration/-arcana -android/com.example.arcana.data.repository/-data-repository/get-user-flow.html
 $dokka.location:com.example.arcana.data.repository/DataRepository/getUsers/#/PointingToDeclaration/-arcana -android/com.example.arcana.data.repository/-data-repository/get-users.html
 $dokka.location:com.example.arcana.data.repository/DataRepository/getUsersPage/#kotlin.Int/PointingToDeclaration/-arcana -android/com.example.arcana.data.repository/-data-repository/get-users-page.html
 $dokka.location:com.example.arcana.data.repository/DataRepository/updateUser/#com.example.arcana.data.model.User/PointingToDeclaration/-arcana -android/com.example.arcana.data.repository/-data-repository/update-user.html
@@ -693,6 +695,7 @@ $dokka.location:com.example.arcana.data.repository/OfflineFirstDataRepository/cr
 $dokka.location:com.example.arcana.data.repository/OfflineFirstDataRepository/deleteUser/#kotlin.Int/PointingToDeclaration/-arcana -android/com.example.arcana.data.repository/-offline-first-data-repository/delete-user.html
 $dokka.location:com.example.arcana.data.repository/OfflineFirstDataRepository/getTotalUserCount/#/PointingToDeclaration/-arcana -android/com.example.arcana.data.repository/-offline-first-data-repository/get-total-user-count.html
 $dokka.location:com.example.arcana.data.repository/OfflineFirstDataRepository/getUserById/#kotlin.Int/PointingToDeclaration/-arcana -android/com.example.arcana.data.repository/-offline-first-data-repository/get-user-by-id.html
+$dokka.location:com.example.arcana.data.repository/OfflineFirstDataRepository/getUserFlow/#kotlin.Int/PointingToDeclaration/-arcana -android/com.example.arcana.data.repository/-offline-first-data-repository/get-user-flow.html
 $dokka.location:com.example.arcana.data.repository/OfflineFirstDataRepository/getUsers/#/PointingToDeclaration/-arcana -android/com.example.arcana.data.repository/-offline-first-data-repository/get-users.html
 $dokka.location:com.example.arcana.data.repository/OfflineFirstDataRepository/getUsersPage/#kotlin.Int/PointingToDeclaration/-arcana -android/com.example.arcana.data.repository/-offline-first-data-repository/get-users-page.html
 $dokka.location:com.example.arcana.data.repository/OfflineFirstDataRepository/sync/#/PointingToDeclaration/-arcana -android/com.example.arcana.data.repository/-offline-first-data-repository/sync.html
@@ -828,6 +831,7 @@ $dokka.location:com.example.arcana.domain.service/UserService/createUser/#com.ex
 $dokka.location:com.example.arcana.domain.service/UserService/deleteUser/#kotlin.Int/PointingToDeclaration/-arcana -android/com.example.arcana.domain.service/-user-service/delete-user.html
 $dokka.location:com.example.arcana.domain.service/UserService/getTotalUserCount/#/PointingToDeclaration/-arcana -android/com.example.arcana.domain.service/-user-service/get-total-user-count.html
 $dokka.location:com.example.arcana.domain.service/UserService/getUserById/#kotlin.Int/PointingToDeclaration/-arcana -android/com.example.arcana.domain.service/-user-service/get-user-by-id.html
+$dokka.location:com.example.arcana.domain.service/UserService/getUserFlow/#kotlin.Int/PointingToDeclaration/-arcana -android/com.example.arcana.domain.service/-user-service/get-user-flow.html
 $dokka.location:com.example.arcana.domain.service/UserService/getUsers/#/PointingToDeclaration/-arcana -android/com.example.arcana.domain.service/-user-service/get-users.html
 $dokka.location:com.example.arcana.domain.service/UserService/getUsersPage/#kotlin.Int/PointingToDeclaration/-arcana -android/com.example.arcana.domain.service/-user-service/get-users-page.html
 $dokka.location:com.example.arcana.domain.service/UserService/invalidateCache/#/PointingToDeclaration/-arcana -android/com.example.arcana.domain.service/-user-service/invalidate-cache.html
@@ -839,6 +843,7 @@ $dokka.location:com.example.arcana.domain.service/UserServiceImpl/createUser/#co
 $dokka.location:com.example.arcana.domain.service/UserServiceImpl/deleteUser/#kotlin.Int/PointingToDeclaration/-arcana -android/com.example.arcana.domain.service/-user-service-impl/delete-user.html
 $dokka.location:com.example.arcana.domain.service/UserServiceImpl/getTotalUserCount/#/PointingToDeclaration/-arcana -android/com.example.arcana.domain.service/-user-service-impl/get-total-user-count.html
 $dokka.location:com.example.arcana.domain.service/UserServiceImpl/getUserById/#kotlin.Int/PointingToDeclaration/-arcana -android/com.example.arcana.domain.service/-user-service-impl/get-user-by-id.html
+$dokka.location:com.example.arcana.domain.service/UserServiceImpl/getUserFlow/#kotlin.Int/PointingToDeclaration/-arcana -android/com.example.arcana.domain.service/-user-service-impl/get-user-flow.html
 $dokka.location:com.example.arcana.domain.service/UserServiceImpl/getUsers/#/PointingToDeclaration/-arcana -android/com.example.arcana.domain.service/-user-service-impl/get-users.html
 $dokka.location:com.example.arcana.domain.service/UserServiceImpl/getUsersPage/#kotlin.Int/PointingToDeclaration/-arcana -android/com.example.arcana.domain.service/-user-service-impl/get-users-page.html
 $dokka.location:com.example.arcana.domain.service/UserServiceImpl/invalidateCache/#/PointingToDeclaration/-arcana -android/com.example.arcana.domain.service/-user-service-impl/invalidate-cache.html
@@ -985,7 +990,6 @@ $dokka.location:com.example.arcana.ui.screens/UserDetailViewModel.Input.DeleteUs
 $dokka.location:com.example.arcana.ui.screens/UserDetailViewModel.Input.DeleteUser/component1/#/PointingToDeclaration/-arcana -android/com.example.arcana.ui.screens/-user-detail-view-model/-input/-delete-user/component1.html
 $dokka.location:com.example.arcana.ui.screens/UserDetailViewModel.Input.DeleteUser/copy/#com.example.arcana.data.model.User/PointingToDeclaration/-arcana -android/com.example.arcana.ui.screens/-user-detail-view-model/-input/-delete-user/copy.html
 $dokka.location:com.example.arcana.ui.screens/UserDetailViewModel.Input.DeleteUser/user/#/PointingToDeclaration/-arcana -android/com.example.arcana.ui.screens/-user-detail-view-model/-input/-delete-user/user.html
-$dokka.location:com.example.arcana.ui.screens/UserDetailViewModel.Input.LoadUser///PointingToDeclaration/-arcana -android/com.example.arcana.ui.screens/-user-detail-view-model/-input/-load-user/index.html
 $dokka.location:com.example.arcana.ui.screens/UserDetailViewModel.Input.UpdateUser///PointingToDeclaration/-arcana -android/com.example.arcana.ui.screens/-user-detail-view-model/-input/-update-user/index.html
 $dokka.location:com.example.arcana.ui.screens/UserDetailViewModel.Input.UpdateUser/UpdateUser/#com.example.arcana.data.model.User/PointingToDeclaration/-arcana -android/com.example.arcana.ui.screens/-user-detail-view-model/-input/-update-user/-update-user.html
 $dokka.location:com.example.arcana.ui.screens/UserDetailViewModel.Input.UpdateUser/component1/#/PointingToDeclaration/-arcana -android/com.example.arcana.ui.screens/-user-detail-view-model/-input/-update-user/component1.html
